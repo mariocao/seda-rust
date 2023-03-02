@@ -11,6 +11,12 @@ pub struct AddEventToQueue {
     pub event: Event,
 }
 
+impl AddEventToQueue {
+    pub fn new(event: Event) -> Self {
+        AddEventToQueue { event }
+    }
+}
+
 impl<HA: HostAdapter> Handler<AddEventToQueue> for App<HA> {
     type Result = ();
 

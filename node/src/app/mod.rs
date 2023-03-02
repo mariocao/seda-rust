@@ -11,7 +11,7 @@ use tracing::info;
 
 use crate::{
     event_queue::EventQueue,
-    host::{Host, SetAppAddress},
+    host::{BatchTickManager, Host, SetAppAddress},
     rpc::JsonRpcServer,
     runtime_job::RuntimeWorker,
 };
@@ -89,6 +89,7 @@ impl<HA: HostAdapter> Actor for App<HA> {
 
         let host = Host::from_registry();
         host.do_send(SetAppAddress { address: app_address });
+        host.do_send(BatchTickManager);
 
         ctx.notify(job_manager::StartJobManager);
     }

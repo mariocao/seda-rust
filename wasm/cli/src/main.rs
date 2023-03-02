@@ -18,6 +18,7 @@ struct Options {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    Batch,
     P2p {
         message: String,
     },
@@ -46,6 +47,9 @@ fn main() {
 
     if let Some(command) = options.command {
         match command {
+            Commands::Batch => {
+                println!("batch")
+            }
             Commands::HttpFetch { url } => {
                 http_fetch(&url).start().then(call_self("http_fetch_result", vec![]));
             }
