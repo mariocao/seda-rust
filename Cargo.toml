@@ -94,6 +94,7 @@ tracing = { version = "0.1", features = ["log-always"] }
 tracing-appender = "0.2"
 tracing-subscriber = { version = "0.3", default-features = false }
 uint = { version = "0.8", default-features = false }
+url = { version = "2.3", default-features = false }
 wasmer = { version = "2.3", default-features = false }
 wasmer-wasi = { version = "2.3", default-features = false }
 workspaces = "0.7"

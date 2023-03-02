@@ -8,6 +8,8 @@ mod bytes;
 pub use bytes::*;
 pub mod p2p;
 mod promises;
+mod url;
+pub use self::url::*;
 
 #[cfg(feature = "wasm")]
 pub mod wasm;
@@ -25,5 +27,6 @@ pub use promises::{
     Promise,
     PromiseAction,
     PromiseStatus,
+    RpcAction,
     TriggerEventAction,
 };

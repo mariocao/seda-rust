@@ -4807,6 +4807,7 @@ dependencies = [
  "async-trait",
  "bn254",
  "futures",
+ "jsonrpsee",
  "lazy_static",
  "parking_lot 0.12.1",
  "reqwest",
@@ -4843,6 +4844,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tracing",
+ "url",
 ]
 
 [[package]]

@@ -1,6 +1,7 @@
 use core::fmt;
 
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::{events::Event, Chain};
 
@@ -13,6 +14,7 @@ pub enum PromiseAction {
     Http(HttpAction),
     ChainView(ChainViewAction),
     ChainCall(ChainCallAction),
+    Rpc(RpcAction),
     TriggerEvent(TriggerEventAction),
     P2PBroadcast(P2PBroadcastAction),
 }
@@ -33,6 +35,7 @@ impl fmt::Display for PromiseAction {
             Self::Http(_) => write!(f, "http"),
             Self::ChainView(_) => write!(f, "chain_view"),
             Self::ChainCall(_) => write!(f, "chain_call"),
+            Self::Rpc(_) => write!(f, "rpc_event"),
             Self::TriggerEvent(_) => write!(f, "trigger_event"),
             Self::P2PBroadcast(_) => write!(f, "p2p_broadcast"),
         }
@@ -77,6 +80,13 @@ pub struct ChainCallAction {
     pub method_name: String,
     pub args:        Vec<u8>,
     pub deposit:     u128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct RpcAction {
+    pub url:    Url,
+    pub method: String,
+    pub args:   Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
