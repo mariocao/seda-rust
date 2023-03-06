@@ -72,7 +72,9 @@ run-build-delegate: build
 
 # Runs cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin.
 test:
+	# $($(MAKE) start-test-rpc)
 	cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin --exclude seda-delegate-cli
+	# $(MAKE) stop-test-rpc
 
 # Builds the wasm binaries and then runs the same command as make test.
 test-build: wasm-test build-contracts
@@ -91,5 +93,9 @@ build-contracts:
 	cargo build -p seda-mainchain --target wasm32-unknown-unknown --release
 
 # Runs the Test RPC Server
-test-rpc:
-	$(SEDA_BIN_PATH) debug-mode
+start-test-rpc:
+	$(SEDA_BIN_PATH) debug-mode test-rpc start
+
+# Stops the Test RPC Server
+stop-test-rpc:
+	$(SEDA_BIN_PATH) debug-mode test-rpc stop

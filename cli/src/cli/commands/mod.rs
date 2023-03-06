@@ -1,7 +1,7 @@
 #[cfg(debug_assertions)]
-mod debug_mode;
+mod debug;
 #[cfg(debug_assertions)]
-pub(crate) use debug_mode::*;
+pub(crate) use debug::*;
 
 mod node;
 pub(crate) use node::*;

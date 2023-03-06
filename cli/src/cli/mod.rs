@@ -26,7 +26,8 @@ pub struct CliOptions {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     #[cfg(debug_assertions)]
-    /// Runs the Debug and Test RPC
+    #[command(subcommand)]
+    /// For debugging and testing the seda node and tools
     DebugMode(DebugMode),
     #[cfg(debug_assertions)]
     // seda document

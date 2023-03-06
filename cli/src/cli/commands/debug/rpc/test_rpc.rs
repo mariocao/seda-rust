@@ -1,21 +1,9 @@
 use async_trait::async_trait;
-use clap::Args;
-use jsonrpsee::{core::Error, proc_macros::rpc, server::ServerBuilder};
-use seda_config::{AppConfig, PartialChainConfigs, PartialNodeConfig, PartialP2PConfig};
+use jsonrpsee::{core::Error, proc_macros::rpc};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
 use crate::Result;
-
-#[derive(Debug, Args)]
-pub struct DebugMode {
-    #[command(flatten)]
-    pub node_config:   PartialNodeConfig,
-    #[command(flatten)]
-    pub chains_config: PartialChainConfigs,
-    #[command(flatten)]
-    pub p2p_config:    PartialP2PConfig,
-}
 
 // TODO move to common shared module between contracts and rest of seda
 #[derive(Debug, Deserialize, Serialize, Default)]
@@ -61,22 +49,5 @@ impl MockNearRpcServer for MockNearRpc {
     async fn stop_server(&self) -> Result<(), Error> {
         debug!("stopping debug RPC server");
         self.stop_server().await
-    }
-}
-
-impl DebugMode {
-    #[tokio::main]
-    pub async fn handle(self, config: AppConfig) -> Result<()> {
-        let server = ServerBuilder::default().build(&config.seda_server_url).await?;
-
-        let handle = server.start(MockNearRpc.into_rpc())?;
-        tokio::spawn(async move {
-            tokio::signal::ctrl_c().await.expect("failed to listen for event");
-            debug!("Shutting down debug RPC");
-            handle.stopped().await
-        })
-        .await
-        .expect("FOO");
-        Ok(())
     }
 }
