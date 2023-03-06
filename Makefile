@@ -89,3 +89,7 @@ wasm-test:
 # Builds contracts wasm binaries.
 build-contracts:
 	cargo build -p seda-mainchain --target wasm32-unknown-unknown --release
+
+# Runs the Test RPC Server
+test-rpc:
+	$(SEDA_BIN_PATH) debug-mode

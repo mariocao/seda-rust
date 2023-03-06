@@ -20,7 +20,7 @@ near-jsonrpc-client = { workspace = true }
 near-jsonrpc-primitives = { workspace = true }
 near-primitives = { workspace = true }
 seda-chains = { workspace = true }
-seda-config = { workspace = true, features = ["cli"]}
+seda-config = { workspace = true, features = ["cli"] }
 seda-logger = { workspace = true }
 seda-node = { workspace = true }
 seda-runtime-sdk = { workspace = true }
@@ -29,3 +29,6 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+
+[dev-dependencies]
+jsonrpsee = { workspace = true }
