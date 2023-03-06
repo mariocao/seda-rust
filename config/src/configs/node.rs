@@ -102,6 +102,11 @@ impl PartialNodeConfig {
             |f| f as usize
         )?;
 
+        // Make sure we will not run the node with the account secret key
+        if std::env::var("ACCOUNT_SECRET_KEY").is_ok() {
+            return Err(ConfigError::UnwantedConfig("ACCOUNT_SECRET_KEY".to_string()));
+        }
+
         Ok(Arc::new(NodeConfigInner {
             deposit,
             gas,

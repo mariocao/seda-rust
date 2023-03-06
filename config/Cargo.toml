@@ -7,6 +7,7 @@ rust-version.workspace = true
 [features]
 default = []
 cli = ["clap"]
+delegate-cli = []
 
 [dependencies]
 clap = { workspace = true, features = ["derive", "std"], optional = true }

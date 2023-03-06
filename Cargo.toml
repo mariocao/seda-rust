@@ -1,9 +1,10 @@
 [workspace]
 resolver = "2"
-default-members = ["cli"]
+default-members = ["cli", "delegate-cli"]
 members = [
 	"chains",
 	"cli",
+	"delegate-cli",
 	"config",
 	"crypto",
 	"contracts",

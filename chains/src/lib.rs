@@ -90,6 +90,25 @@ pub mod chain {
         }
     }
 
+    pub async fn construct_transfer_tx(
+        chain: Chain,
+        signer_acc_str: &str,
+        signer_sk_str: &str,
+        receiver_id: &str,
+        amount: u128,
+        server_url: &str,
+    ) -> Result<Vec<u8>> {
+        match chain {
+            Chain::Another => {
+                AnotherChain::construct_transfer_tx(signer_acc_str, signer_sk_str, receiver_id, amount, server_url)
+                    .await
+            }
+            Chain::Near => {
+                NearChain::construct_transfer_tx(signer_acc_str, signer_sk_str, receiver_id, amount, server_url).await
+            }
+        }
+    }
+
     pub async fn send_tx(chain: Chain, client: Client, signed_tx: &[u8]) -> Result<Vec<u8>> {
         match chain {
             Chain::Another => AnotherChain::send_tx(client.another(), signed_tx).await,

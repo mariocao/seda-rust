@@ -1,4 +1,4 @@
-.PHONY: build build-wasm check clean fmt run run-build run-build-all run-build-wasm test test-build wasm
+.PHONY: build build-wasm check clean fmt run run-build run-build-all run-build-wasm run-build-delegate test test-build wasm
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MKFILE_DIR := $(dir $(MKFILE_PATH))
@@ -9,7 +9,14 @@ else
 	SEDA_BIN := seda
 endif
 
+ifeq ($(OS),Windows_NT)
+	SEDA_DELEGATE_BIN := seda-delegate.exe
+else
+	SEDA_DELEGATE_BIN := seda-delegate
+endif
+
 SEDA_BIN_PATH := $(MKFILE_DIR)target/debug/$(SEDA_BIN)
+SEDA_DELEGATE_BIN_PATH := $(MKFILE_DIR)target/debug/$(SEDA_DELEGATE_BIN)
 
 WASM_MODULES := $(notdir $(filter-out $(MKFILE_DIR)wasm/test,$(wildcard $(MKFILE_DIR)wasm/*)))
 WASM_TEST_MODULES := $(notdir $(wildcard $(MKFILE_DIR)wasm/test/*))
@@ -58,13 +65,18 @@ run-build-all: build-wasm
 run-build-wasm: wasm
 	$(SEDA_BIN_PATH) $(RUN_ARGS)
 
+# Builds only seda before executing the delegation binary
+run-build-delegate: build
+	$(SEDA_DELEGATE_BIN_PATH) $(RUN_ARGS)
+
+
 # Runs cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin.
 test:
-	cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin
+	cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin --exclude seda-delegate-cli
 
 # Builds the wasm binaries and then runs the same command as make test.
 test-build: wasm-test build-contracts
-	cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin
+	cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin --exclude seda-delegate-cli
 
 # Builds the wasm binaries.
 wasm:

@@ -18,6 +18,8 @@ pub enum ConfigError {
     MustProvideField(String),
     #[error("Failed to get current directory for logging file path: `{0}.")]
     FailedToGetCurrentDir(String),
+    #[error("Unwanted config field `{0}`, due security concerns")]
+    UnwantedConfig(String),
 }
 
 impl From<String> for ConfigError {

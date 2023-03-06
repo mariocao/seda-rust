@@ -25,6 +25,14 @@ pub trait ChainAdapterTrait: Debug + Send + Sync + 'static {
         server_url: &str,
     ) -> Result<Vec<u8>>;
 
+    async fn construct_transfer_tx(
+        signer_acc_str: &str,
+        signer_sk_str: &str,
+        receiver_id: &str,
+        amount: u128,
+        server_url: &str,
+    ) -> Result<Vec<u8>>;
+
     /// To send a transaction for the adapter specific implementation.
     async fn send_tx(client: Self::Client, signed_tx: &[u8]) -> Result<Vec<u8>>;
     /// To view for the adapter specific implementation.

@@ -1,0 +1,19 @@
+[package]
+name = "seda-delegate-cli"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+
+[[bin]]
+name = "seda-delegate"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true, features = ["default"] }
+clap-markdown = { workspace = true }
+clap_complete = { workspace = true }
+dotenv = { workspace = true }
+seda-chains = { workspace = true }
+seda-config = { workspace = true, features = ["cli", "delegate-cli"]}
+seda-runtime-sdk = { workspace = true }
+tokio = { workspace = true }

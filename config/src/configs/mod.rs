@@ -13,6 +13,9 @@ pub use node::*;
 mod p2p;
 pub use p2p::*;
 
+mod delegate;
+pub use delegate::*;
+
 pub trait Config: std::fmt::Debug + Default + serde::Serialize + serde::de::DeserializeOwned {
     fn template() -> Self;
     fn overwrite_from_env(&mut self) {}

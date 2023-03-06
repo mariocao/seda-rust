@@ -30,6 +30,16 @@ impl ChainAdapterTrait for AnotherChain {
         unimplemented!()
     }
 
+    async fn construct_transfer_tx(
+        _signer_acc_str: &str,
+        _signer_sk_str: &str,
+        _receiver_id: &str,
+        _deposit: u128,
+        _server_url: &str,
+    ) -> Result<Vec<u8>> {
+        unimplemented!()
+    }
+
     async fn send_tx(_client: Self::Client, _signed_tx: &[u8]) -> Result<Vec<u8>> {
         unimplemented!()
     }
