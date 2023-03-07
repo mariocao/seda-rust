@@ -1,6 +1,10 @@
 use async_trait::async_trait;
 use jsonrpsee::{core::Error, proc_macros::rpc};
+use near_jsonrpc_client::methods::query::RpcQueryResponse;
+use near_jsonrpc_primitives::types::query::QueryResponseKind;
+use near_primitives::{hash::CryptoHash, views::CallResult};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
 use crate::Result;
@@ -33,6 +37,16 @@ pub trait MockNearRpc {
     #[method(name = "compute_merkle_root")]
     async fn compute_merkle_root(&self, args: Vec<String>) -> Result<Batch, Error>;
 
+    #[method(name = "query")]
+    async fn query(
+        &self,
+        account_id: String,
+        args_base64: String,
+        finality: String,
+        method_name: String,
+        request_type: String,
+    ) -> Result<RpcQueryResponse, Error>;
+
     #[method(name = "stop_server")]
     async fn stop_server(&self) -> Result<(), Error>;
 }
@@ -52,6 +66,49 @@ impl MockNearRpcServer for MockNearRpc {
     async fn compute_merkle_root(&self, _: Vec<String>) -> Result<Batch, Error> {
         println!("Calling compute_merkle_root");
         Ok(Batch::dummy())
+    }
+
+    async fn query(
+        &self,
+        _account_id: String,
+        _args_base64: String,
+        _finality: String,
+        method_name: String,
+        _request_type: String,
+    ) -> Result<RpcQueryResponse, Error> {
+        match method_name.as_str() {
+            "get_node" => Ok(RpcQueryResponse {
+                kind:         QueryResponseKind::CallResult(CallResult {
+                    // TODO we have this structure defined already in the CLI
+                    // So we can move it to somewhere common
+                    result: serde_json::to_vec_pretty(&json!({
+                            "owner":          "near_rpc_mocked",
+                            "pending_owner":  None::<String>,
+                            "socket_address": "127.0.0.1:6666"
+                    }))
+                    .unwrap(),
+                    logs:   Default::default(),
+                }),
+                block_height: 119467302,
+                block_hash:   CryptoHash::new(),
+            }),
+            "get_nodes" => Ok(RpcQueryResponse {
+                kind:         QueryResponseKind::CallResult(CallResult {
+                    // TODO we have this structure defined already in the CLI
+                    // So we can move it to somewhere common
+                    result: serde_json::to_vec_pretty(&json!([{
+                                    "owner":          "near_rpc_mocked",
+                                    "pending_owner":  None::<String>,
+                                    "socket_address": "127.0.0.1:6666"
+                    }]))
+                    .unwrap(),
+                    logs:   Default::default(),
+                }),
+                block_height: 119467302,
+                block_hash:   CryptoHash::new(),
+            }),
+            _ => unimplemented!(),
+        }
     }
 
     async fn stop_server(&self) -> Result<(), Error> {
