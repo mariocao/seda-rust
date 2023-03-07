@@ -13,7 +13,6 @@ use crate::{
 pub fn new_contract() -> MainchainContract {
     MainchainContract::new(
         "dao_near".to_string().try_into().unwrap(),
-        "seda_token".to_string().try_into().unwrap(),
         U128(INITIAL_SUPPLY),
         FungibleTokenMetadata {
             spec:           FT_METADATA_SPEC.to_string(),

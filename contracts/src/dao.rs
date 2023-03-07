@@ -7,7 +7,7 @@ use near_sdk::{
 };
 
 use crate::{
-    consts::{INIT_EPOCH_DELAY_FOR_ELECTION, INIT_MINIMUM_STAKE},
+    consts::{INIT_EPOCH_DELAY_FOR_ELECTION, INIT_MINIMUM_STAKE, INIT_COMMITTEE_SIZE},
     MainchainContract,
     MainchainContractExt,
 };
@@ -16,6 +16,7 @@ use crate::{
 pub struct Config {
     pub minimum_stake:            u128,
     pub epoch_delay_for_election: u64,
+    pub committee_size:           u64,
 }
 
 impl Default for Config {
@@ -23,6 +24,7 @@ impl Default for Config {
         Self {
             minimum_stake:            INIT_MINIMUM_STAKE,
             epoch_delay_for_election: INIT_EPOCH_DELAY_FOR_ELECTION,
+            committee_size:           INIT_COMMITTEE_SIZE,
         }
     }
 }

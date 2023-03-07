@@ -24,15 +24,19 @@ use near_sdk::{
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
-    node_registry::Node,
+    node_registry::{Node},
+    consts::INIT_RANDOM_SEED,
+    epoch::EpochHeight,
 };
 
 /// Collection keys
 #[derive(BorshStorageKey, BorshSerialize)]
 enum MainchainStorageKeys {
     FungibleToken,
-    Metadata,
-    Nodes,
+    FungibleTokenMetadata,
+    ActiveNodes,
+    PendingNodes,
+    InactiveNodes,
     DataRequestAccumulator,
     BatchIdsByHeight,
     BatchById,
@@ -43,44 +47,65 @@ enum MainchainStorageKeys {
 #[near_bindgen]
 #[derive(PanicOnDefault, BorshDeserialize, BorshSerialize)]
 pub struct MainchainContract {
+    // Fungible token used for staking
     token:                     FungibleToken,
+    // Fungible token metadata
     metadata:                  LazyOption<FungibleTokenMetadata>,
+    // DAO account with admin privileges
     dao:                       AccountId,
+    // Mainchain configuration, changeable by the DAO
     config:                    dao::Config,
-    seda_token:                AccountId,
-    nodes:                     UnorderedMap<AccountId, Node>,
+
+    // TODO: do all of these need to be UnorderedMaps?
+    // Nodes that are eligible to participate in the current epoch
+    active_nodes:              UnorderedMap<AccountId, Node>,
+    // Nodes that are not eligible to participate in the current epoch
+    inactive_nodes:            UnorderedMap<AccountId, Node>,
+    // Sub-set of inactive nodes that are waiting to be activated after reaching the minimum stake
+    pending_nodes:             UnorderedMap<AccountId, EpochHeight>,
+    // Sub-set of active nodes that are part of the committee of the current epoch
+    committee:                Vec<AccountId>,
+
     data_request_accumulator:  Vector<String>,
     num_batches:               BatchHeight,
     batch_ids_by_height:       LookupMap<BatchHeight, BatchId>,
     batch_by_id:               LookupMap<BatchId, Batch>,
     last_total_balance:        Balance,
     nodes_by_bn254_public_key: LookupMap<Vec<u8>, AccountId>,
+    random_seed:               u128,
+    bootstrapping_phase:       bool,
+    last_processed_epoch:      EpochHeight,
 }
 
 /// Contract public methods
 #[near_bindgen]
 impl MainchainContract {
     #[init]
-    pub fn new(dao: AccountId, seda_token: AccountId, initial_supply: U128, metadata: FungibleTokenMetadata) -> Self {
+    pub fn new(dao: AccountId, initial_supply: U128, metadata: FungibleTokenMetadata) -> Self {
         assert!(!env::state_exists(), "Already initialized");
         assert!(
-            env::is_valid_account_id(seda_token.as_bytes()),
-            "The SEDA token account ID is invalid"
+            env::is_valid_account_id(dao.as_bytes()),
+            "The DAO account ID is invalid"
         );
         metadata.assert_valid();
         let mut this = Self {
             token: FungibleToken::new(MainchainStorageKeys::FungibleToken),
-            metadata: LazyOption::new(MainchainStorageKeys::Metadata, Some(&metadata)),
+            metadata: LazyOption::new(MainchainStorageKeys::FungibleTokenMetadata, Some(&metadata)),
             dao: dao.clone(),
             config: dao::Config::default(),
-            seda_token,
-            nodes: UnorderedMap::new(MainchainStorageKeys::Nodes),
+            active_nodes: UnorderedMap::new(MainchainStorageKeys::ActiveNodes),
+            inactive_nodes: UnorderedMap::new(MainchainStorageKeys::InactiveNodes),
+            pending_nodes: UnorderedMap::new(MainchainStorageKeys::PendingNodes),
+            committee: Vec::new(),
             data_request_accumulator: Vector::<String>::new(MainchainStorageKeys::DataRequestAccumulator),
             num_batches: 0,
             batch_ids_by_height: LookupMap::new(MainchainStorageKeys::BatchIdsByHeight),
             batch_by_id: LookupMap::new(MainchainStorageKeys::BatchById),
             last_total_balance: 0,
             nodes_by_bn254_public_key: LookupMap::new(MainchainStorageKeys::NodesByBn254PublicKey),
+            random_seed: INIT_RANDOM_SEED,
+            bootstrapping_phase: true,
+            last_processed_epoch: 0,
         };
         this.token.internal_register_account(&dao);
         this.token.internal_deposit(&dao, initial_supply.into());

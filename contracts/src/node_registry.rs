@@ -14,22 +14,17 @@ use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt};
 /// Node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone, Default)]
 pub struct Node {
-    /// The IP address and port of the node
     pub multi_addr:          String,
     pub balance:             Balance,
-    pub epoch_when_eligible: u64,
     pub bn254_public_key:    Vec<u8>,
 }
 
 /// Human-readable node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
 pub struct HumanReadableNode {
-    /// The NEAR account id of the node
     pub account_id:          AccountId,
-    /// The IP address and port of the node
     pub multi_addr:          String,
     pub balance:             Balance,
-    pub epoch_when_eligible: U64,
     pub bn254_public_key:    Vec<u8>,
 }
 
@@ -41,32 +36,46 @@ pub enum UpdateNode {
 
 /// Contract private methods
 impl MainchainContract {
-    pub fn internal_get_node(&self, account_id: &AccountId) -> Node {
-        self.nodes.get(account_id).unwrap_or_default()
+    pub fn internal_get_node(&self, account_id: &AccountId) -> Option<Node> {
+        let active_node = self.active_nodes.get(&account_id);
+        if active_node.is_some() {
+            return Some(active_node.unwrap());
+        }
+        let inactive_node = self.inactive_nodes.get(&account_id);
+        if inactive_node.is_some() {
+            return Some(inactive_node.unwrap());
+        }
+        None
     }
 
     pub fn get_expect_node(&self, node_id: AccountId) -> Node {
-        self.nodes.get(&node_id).expect("Node does not exist")
+        self.internal_get_node(&node_id).expect("Node does not exist")
     }
 
-    pub(crate) fn is_eligible_for_current_epoch(&self, node: &Node) -> bool {
-        node.epoch_when_eligible > 0 && node.epoch_when_eligible <= self.get_current_epoch()
-    }
-
-    pub(crate) fn has_minimum_stake(&self, node: &Node) -> bool {
-        node.balance >= self.config.minimum_stake
-    }
-
-    pub(crate) fn assert_eligible_for_current_epoch(&self, account_id: &AccountId) {
-        let node = self.internal_get_node(account_id);
-        assert!(
-            self.is_eligible_for_current_epoch(&node),
-            "Account is not eligible for this epoch"
-        );
-        assert!(
-            self.has_minimum_stake(&node),
-            "Account balance is less than minimum stake"
-        );
+    pub fn handle_node_balance_update(&mut self, account_id: &AccountId, node: &Node) {
+        // if minimum stake is reached, make sure node is active or set epoch when eligible for committee selection
+        if node.balance >= self.config.minimum_stake {
+            // minimum stake is reached, if not already an active node, set the epoch when eligible for committee selection
+            if self.active_nodes.get(&account_id).is_some() {
+                // node is already active
+                self.active_nodes.insert(&account_id, &node);
+            } else {
+                // node is not active, set epoch when eligible for committee selection
+                let epoch_when_eligible = self.get_current_epoch() + self.config.epoch_delay_for_election;
+                self.inactive_nodes.insert(&account_id, &node);
+                self.pending_nodes.insert(&account_id, &epoch_when_eligible);
+            }
+        } else {
+            // minimum stake is not reached, check if node is active
+            if self.active_nodes.get(&account_id).is_some() {
+                // node is active, remove from active nodes and add to inactive nodes
+                self.active_nodes.remove(&account_id);
+                self.inactive_nodes.insert(&account_id, &node);
+            } else {
+                // node is not active, update inactive nodes
+                self.inactive_nodes.insert(&account_id, &node);
+            }
+        }
     }
 
     pub fn internal_deposit(&mut self, amount: Balance) {
@@ -78,14 +87,9 @@ impl MainchainContract {
             self.token.accounts.insert(&account_id, &new_user_balance);
             let mut node = self.get_expect_node(account_id.clone());
             node.balance += amount;
+            self.handle_node_balance_update(&account_id, &node);
 
-            // set epoch when the node is eligible if minimum stake is reached
-            if node.balance >= self.config.minimum_stake {
-                node.epoch_when_eligible = env::epoch_height() + self.config.epoch_delay_for_election;
-            }
-
-            // update the node entry and total balance of the contract
-            self.nodes.insert(&account_id, &node);
+            // update the total balance of the contract
             self.last_total_balance += amount;
 
             env::log_str(format!("@{} deposited {}. New balance is {}", account_id, amount, node.balance).as_str());
@@ -97,18 +101,15 @@ impl MainchainContract {
         manage_storage_deposit!(self, "require", {
             assert!(amount > 0, "Withdrawal amount should be positive");
             let account_id = env::predecessor_account_id();
-            let mut node = self.internal_get_node(&account_id);
+            let mut node = self.get_expect_node(account_id.clone());
             env::log_str(format!("{} balance is {}", account_id, node.balance).as_str());
             assert!(node.balance >= amount, "Not enough balance to withdraw");
 
             // subtract from contract balance and add to user balance
-            node.balance -= amount;
-            if node.balance < self.config.minimum_stake {
-                node.epoch_when_eligible = 0;
-            }
-            self.nodes.insert(&account_id, &node);
             let new_user_balance = self.token.accounts.get(&account_id).unwrap() + amount;
             self.token.accounts.insert(&account_id, &new_user_balance);
+            node.balance -= amount;
+            self.handle_node_balance_update(&account_id, &node);
 
             // update global balance
             self.last_total_balance -= amount;
@@ -149,13 +150,12 @@ impl MainchainContract {
         let node = Node {
             multi_addr,
             balance: 0,
-            epoch_when_eligible: 0,
             bn254_public_key: bn254_public_key.clone(),
         };
 
         manage_storage_deposit!(self, "require", {
-            // insert in nodes
-            self.nodes.insert(&account_id, &node);
+            // insert in inactive nodes
+            self.inactive_nodes.insert(&account_id, &node);
 
             // insert in nodes_by_bn254_public_key
             self.nodes_by_bn254_public_key.insert(&bn254_public_key, &account_id);
@@ -175,7 +175,11 @@ impl MainchainContract {
         }
 
         manage_storage_deposit!(self, {
-            self.nodes.insert(&account_id, &node);
+            if self.active_nodes.get(&account_id).is_some() {
+                self.active_nodes.insert(&account_id, &node);
+            } else {
+                self.inactive_nodes.insert(&account_id, &node);
+            }
         });
     }
 
@@ -193,7 +197,7 @@ impl MainchainContract {
     /// Withdraws the entire balance from the predecessor account.
     pub fn withdraw_all(&mut self) {
         let account_id = env::predecessor_account_id();
-        let account = self.internal_get_node(&account_id);
+        let account = self.get_expect_node(account_id.clone());
         self.internal_withdraw(account.balance);
     }
 
@@ -202,23 +206,21 @@ impl MainchainContract {
     /*************** */
 
     pub fn is_node_active(&self, account_id: AccountId) -> bool {
-        let node = self.internal_get_node(&account_id);
-        self.is_eligible_for_current_epoch(&node) && self.has_minimum_stake(&node)
+        self.active_nodes.get(&account_id).is_some()
     }
 
     /// Returns the balance of the given account.
     pub fn get_node_balance(&self, account_id: AccountId) -> U128 {
-        U128(self.internal_get_node(&account_id).balance)
+        U128(self.internal_get_node(&account_id).unwrap().balance)
     }
 
     pub fn get_node(&self, node_id: AccountId) -> Option<HumanReadableNode> {
-        let node = self.nodes.get(&node_id);
+        let node = self.internal_get_node(&node_id);
         if let Some(node) = node {
             Some(HumanReadableNode {
                 account_id:          node_id,
                 multi_addr:          node.multi_addr,
                 balance:             node.balance,
-                epoch_when_eligible: node.epoch_when_eligible.into(),
                 bn254_public_key:    node.bn254_public_key,
             })
         } else {
@@ -228,16 +230,15 @@ impl MainchainContract {
 
     pub fn get_nodes(&self, limit: U64, offset: U64) -> Vec<HumanReadableNode> {
         let mut nodes = Vec::new();
-        let mut index = self.nodes.len() - u64::from(offset);
+        let mut index = self.active_nodes.len() - u64::from(offset);
         let limit = u64::from(limit);
         while index > 0 && nodes.len() < limit.try_into().unwrap() {
-            if let Some(node_id) = self.nodes.keys().nth(index as usize - 1) {
-                let node = self.nodes.get(&node_id).unwrap();
+            if let Some(node_id) = self.active_nodes.keys().nth(index as usize - 1) {
+                let node = self.active_nodes.get(&node_id).unwrap();
                 let human_readable_node = HumanReadableNode {
                     account_id:          node_id,
                     multi_addr:          node.multi_addr,
                     balance:             node.balance,
-                    epoch_when_eligible: node.epoch_when_eligible.into(),
                     bn254_public_key:    node.bn254_public_key,
                 };
                 nodes.push(human_readable_node);

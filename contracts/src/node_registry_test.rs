@@ -43,7 +43,7 @@ fn register_and_get_node() {
 }
 
 #[test]
-#[should_panic(expected = "Insufficient storage, need 4050000000000000000000")]
+#[should_panic(expected = "Insufficient storage, need 3970000000000000000000")]
 fn register_not_enough_storage() {
     let mut contract = new_contract();
     let (bob_public_key, bob_private_key) = generate_bn254_key();
@@ -125,21 +125,18 @@ fn get_nodes() {
         account_id:          "bob_near".to_string().try_into().unwrap(),
         balance:             0,
         multi_addr:          "0.0.0.0:8080".to_string(),
-        epoch_when_eligible: U64(0),
         bn254_public_key:    bob_public_key.to_compressed().unwrap(),
     };
     let node2 = HumanReadableNode {
         account_id:          "alice_near".to_string().try_into().unwrap(),
         balance:             0,
         multi_addr:          "1.1.1.1:8080".to_string(),
-        epoch_when_eligible: U64(0),
         bn254_public_key:    alice_public_key.to_compressed().unwrap(),
     };
     let node3 = HumanReadableNode {
         account_id:          "carol_near".to_string().try_into().unwrap(),
         balance:             0,
         multi_addr:          "2.2.2.2:8080".to_string(),
-        epoch_when_eligible: U64(0),
         bn254_public_key:    carol_public_key.to_compressed().unwrap(),
     };
 
@@ -208,7 +205,7 @@ fn deposit_withdraw() {
     );
 
     // alice deposits into pool
-    testing_env!(get_context("alice_near".to_string()));
+    testing_env!(get_context_with_deposit("alice_near".to_string()));
     contract.deposit(deposit_amount);
 
     // check alice's balance is now zero
@@ -227,7 +224,7 @@ fn deposit_withdraw() {
     let node_balance = contract.get_node_balance("alice_near".to_string().try_into().unwrap());
     assert_eq!(node_balance, deposit_amount);
 
-    // time travel to an epoch where alice is active
+    // time travel to an epoch where alice is eligible to be included in a committee
     testing_env!(get_context_at_block(1000000));
     assert_eq!(
         contract.is_node_active("alice_near".to_string().try_into().unwrap()),

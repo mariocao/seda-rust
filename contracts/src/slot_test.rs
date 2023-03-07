@@ -1,7 +1,7 @@
 use near_sdk::testing_env;
 
 use super::test_utils::{get_context_at_block, new_contract};
-use crate::{epoch::SLOTS_PER_EPOCH, slot::NEAR_BLOCKS_PER_SEDA_SLOT};
+use crate::{consts::{SLOTS_PER_EPOCH, NEAR_BLOCKS_PER_SEDA_SLOT}};
 
 #[test]
 fn get_current_slot() {
