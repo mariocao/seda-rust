@@ -65,8 +65,15 @@ For more command documentation please see the documentation [here](CLI.md).
 
 ## Testing
 
+Unfortunately not all of our contract tests work on Windows. For the best testing experience please use a unix based machine.
+
+### From scratch
+- You must first rust `make seda-debugger` so that the debugger tool is built for testing.
+- Next you must build the test wasm binaries by running `make wasm-test`.
 - `make test` runs
-  `cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin`
-  and assumes the wasm binaries have already been built.
-- `make test-build` builds the wasm binaries and then runs the same command as
+  `cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin`.
+
+### Test and Build
+
+- `make test-build` builds seda-debugger, and the wasm binaries before running the same command as
   `make test`.

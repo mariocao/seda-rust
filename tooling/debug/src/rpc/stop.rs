@@ -10,7 +10,7 @@ impl Stop {
     #[tokio::main]
     pub async fn handle(self, addr: &str) -> Result<()> {
         let client = WsClientBuilder::default().build(format!("ws://{}", addr)).await?;
-        assert!(client.request::<(), _>("stop_server", rpc_params!()).await.is_err());
+        client.request::<(), _>("stop_server", rpc_params!()).await?;
         Ok(())
     }
 }

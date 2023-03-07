@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use jsonrpsee::{core::Error, proc_macros::rpc};
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tokio::sync::mpsc::Sender;
 
 use crate::Result;
 
@@ -37,17 +37,26 @@ pub trait MockNearRpc {
     async fn stop_server(&self) -> Result<(), Error>;
 }
 
-pub struct MockNearRpc;
+pub struct MockNearRpc {
+    shutdown_channel: Sender<bool>,
+}
+
+impl MockNearRpc {
+    pub fn new(shutdown_channel: Sender<bool>) -> Self {
+        Self { shutdown_channel }
+    }
+}
 
 #[async_trait]
 impl MockNearRpcServer for MockNearRpc {
     async fn compute_merkle_root(&self, _: Vec<String>) -> Result<Batch, Error> {
-        debug!("compute merkle root");
+        println!("Calling compute_merkle_root");
         Ok(Batch::dummy())
     }
 
     async fn stop_server(&self) -> Result<(), Error> {
-        debug!("stopping debug RPC server");
-        self.stop_server().await
+        println!("Shutting down Seda Test RPC");
+        self.shutdown_channel.send(true).await.expect("failed to send");
+        Ok(())
     }
 }

@@ -5,18 +5,17 @@ MKFILE_DIR := $(dir $(MKFILE_PATH))
 
 ifeq ($(OS),Windows_NT)
 	SEDA_BIN := seda.exe
+	SEDA_DELEGATE_BIN := seda-delegate.exe
+	SEDA_DEBUG_BIN := seda_debug.exe
 else
 	SEDA_BIN := seda
-endif
-
-ifeq ($(OS),Windows_NT)
-	SEDA_DELEGATE_BIN := seda-delegate.exe
-else
 	SEDA_DELEGATE_BIN := seda-delegate
+	SEDA_DEBUG_BIN := seda_debug
 endif
 
 SEDA_BIN_PATH := $(MKFILE_DIR)target/debug/$(SEDA_BIN)
 SEDA_DELEGATE_BIN_PATH := $(MKFILE_DIR)target/debug/$(SEDA_DELEGATE_BIN)
+SEDA_DEBUG_BIN_PATH := $(MKFILE_DIR)target/debug/$(SEDA_DEBUG_BIN)
 
 WASM_MODULES := $(notdir $(filter-out $(MKFILE_DIR)wasm/test,$(wildcard $(MKFILE_DIR)wasm/*)))
 WASM_TEST_MODULES := $(notdir $(wildcard $(MKFILE_DIR)wasm/test/*))
@@ -69,16 +68,16 @@ run-build-wasm: wasm
 run-build-delegate: build
 	$(SEDA_DELEGATE_BIN_PATH) $(RUN_ARGS)
 
-
-# Runs cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin.
+# Runs cargo test excluding certain workspaces.
+# Note the seda-debugger most be built for this command to work.
 test:
-	# $($(MAKE) start-test-rpc)
-	cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin --exclude seda-delegate-cli
-	# $(MAKE) stop-test-rpc
+	$($(MAKE) start-test-rpc)
+	cargo test --workspace --exclude cli --exclude consensus --exclude demo-cli --exclude promise-wasm-bin --exclude seda-cli --exclude seda-debugger
+	$(MAKE) stop-test-rpc
 
 # Builds the wasm binaries and then runs the same command as make test.
-test-build: wasm-test build-contracts
-	cargo test --workspace --exclude demo-cli --exclude seda-cli --exclude promise-wasm-bin --exclude seda-delegate-cli
+test-build: seda-debugger wasm-test
+	cargo test --workspace --exclude cli --exclude consensus --exclude demo-cli --exclude promise-wasm-bin --exclude seda-cli --exclude seda-debugger
 
 # Builds the wasm binaries.
 wasm:
@@ -92,10 +91,26 @@ wasm-test:
 build-contracts:
 	cargo build -p seda-mainchain --target wasm32-unknown-unknown --release
 
+# Make the seda debug-tools
+seda-debugger:
+	cargo build -p seda-debugger
+
+# If the first argument is "run"...
+ifneq (,$(findstring run-seda-debug,$(firstword $(MAKECMDGOALS))))
+  # use the rest as arguments for "run"
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # ...and turn them into do-nothing targets
+  $(eval $(RUN_ARGS):;@:)
+endif
+
+# Just runs the prebuilt binary with the given args.
+run-seda-debug:
+	$(SEDA_DEBUG_BIN_PATH) $(RUN_ARGS)
+
 # Runs the Test RPC Server
 start-test-rpc:
-	$(SEDA_BIN_PATH) debug-mode test-rpc start
+	$(SEDA_DEBUG_BIN_PATH) test-rpc --addr 127.0.0.1:4657 start
 
 # Stops the Test RPC Server
 stop-test-rpc:
-	$(SEDA_BIN_PATH) debug-mode test-rpc stop
+	$(SEDA_DEBUG_BIN_PATH) test-rpc --addr 127.0.0.1:4657 stop

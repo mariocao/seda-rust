@@ -26,10 +26,6 @@ pub struct CliOptions {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     #[cfg(debug_assertions)]
-    #[command(subcommand)]
-    /// For debugging and testing the seda node and tools
-    DebugMode(DebugMode),
-    #[cfg(debug_assertions)]
     // seda document
     /// Debug command for helping to generate our CLI.md file.
     Document,
@@ -62,8 +58,6 @@ pub enum Command {
 impl Command {
     pub fn handle(self, config: AppConfig) -> Result<()> {
         match self {
-            #[cfg(debug_assertions)]
-            Self::DebugMode(debug) => debug.handle(config),
             #[cfg(debug_assertions)]
             Self::Document => {
                 // We have to write to the file for OS support.

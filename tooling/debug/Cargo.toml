@@ -1,0 +1,24 @@
+[package]
+name = "seda-debugger"
+version = "0.1.0"
+edition = "2021"
+rust-version.workspace = true
+
+[[bin]]
+name = "seda_debug"
+path = "src/main.rs"
+
+[dependencies]
+# Not putting this in the workspace since we don't
+# want it used in the rest of the application.
+anyhow = "1.0"
+async-trait = { workspace = true }
+clap = { workspace = true, features = ["default", "derive"] }
+jsonrpsee = { workspace = true, features = ["client", "macros", "server"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "signal"] }
+tracing = { workspace = true }
+
+[dev-dependencies]
+jsonrpsee = { workspace = true }

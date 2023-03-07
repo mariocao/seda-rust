@@ -3,7 +3,7 @@ mod stop;
 mod test_rpc;
 use clap::Subcommand;
 
-use crate::Result;
+use super::Result;
 
 #[derive(Debug, Subcommand)]
 pub enum Rpc {

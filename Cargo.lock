@@ -4675,6 +4675,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "seda-debugger"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clap",
+ "jsonrpsee",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "seda-delegate-cli"
 version = "0.1.0"
 dependencies = [

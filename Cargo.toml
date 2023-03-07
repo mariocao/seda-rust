@@ -13,6 +13,7 @@ members = [
 	"p2p",
 	"runtime/core",
 	"runtime/macros",
+	"tooling/debug",
 	"wasm/cli",
 	"wasm/consensus",
 	"wasm/test/demo-cli",
