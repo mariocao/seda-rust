@@ -85,13 +85,6 @@ impl ChainAdapterTrait for NearChain {
         let signer_secret_key: near_crypto::SecretKey = signer_sk_str.parse()?;
         let signer = near_crypto::InMemorySigner::from_secret_key(signer_account_id, signer_secret_key);
 
-        dbg!(methods::to_json(&methods::query::RpcQueryRequest {
-            block_reference: BlockReference::latest(),
-            request:         near_primitives::views::QueryRequest::ViewAccessKey {
-                account_id: signer.account_id.clone(),
-                public_key: signer.public_key.clone(),
-            },
-        }));
         let access_key_query_response = client
             .call(methods::query::RpcQueryRequest {
                 block_reference: BlockReference::latest(),
@@ -101,7 +94,6 @@ impl ChainAdapterTrait for NearChain {
                 },
             })
             .await?;
-        dbg!(&access_key_query_response);
 
         let current_nonce = match access_key_query_response.kind {
             QueryResponseKind::AccessKey(access_key) => access_key.nonce,
@@ -147,18 +139,11 @@ impl ChainAdapterTrait for NearChain {
         let request = methods::broadcast_tx_async::RpcBroadcastTxAsyncRequest {
             signed_transaction: signed_tx.clone(),
         };
-        dbg!(methods::to_json(&request));
 
         let sent_at = time::Instant::now();
         let tx_hash = client.call(request).await?;
 
         loop {
-            dbg!(methods::to_json(&methods::tx::RpcTransactionStatusRequest {
-                transaction_info: TransactionInfo::TransactionId {
-                    hash:       tx_hash,
-                    account_id: signed_tx.transaction.signer_id.clone(),
-                },
-            }));
             let response = client
                 .call(methods::tx::RpcTransactionStatusRequest {
                     transaction_info: TransactionInfo::TransactionId {
@@ -183,7 +168,6 @@ impl ChainAdapterTrait for NearChain {
                     _ => return Err(ChainAdapterError::CallChangeMethod(err.to_string())),
                 },
                 Ok(response) => {
-                    dbg!(&response);
                     if let FinalExecutionStatus::SuccessValue(value) = response.status {
                         return Ok(value);
                     } else {
@@ -203,10 +187,8 @@ impl ChainAdapterTrait for NearChain {
                 args:        FunctionArgs::from(args),
             },
         };
-        dbg!(methods::to_json(&request));
 
         let response = client.call(request).await?;
-        dbg!(&response);
 
         if let QueryResponseKind::CallResult(result) = response.kind {
             Ok(result.result)

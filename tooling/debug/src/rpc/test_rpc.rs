@@ -1,11 +1,24 @@
+use std::str::FromStr;
+
 use async_trait::async_trait;
 use jsonrpsee::{core::Error, proc_macros::rpc};
+use near_crypto::{PublicKey, Signature};
 use near_jsonrpc_client::methods::query::RpcQueryResponse;
 use near_jsonrpc_primitives::types::query::QueryResponseKind;
 use near_primitives::{
     account::{AccessKey, AccessKeyPermission},
+    borsh::BorshDeserialize,
     hash::CryptoHash,
-    views::{CallResult, FinalExecutionOutcomeView, SignedTransactionView},
+    merkle::{Direction, MerklePathItem},
+    transaction::SignedTransaction,
+    views::{
+        CallResult,
+        ExecutionMetadataView,
+        ExecutionOutcomeView,
+        ExecutionOutcomeWithIdView,
+        FinalExecutionOutcomeView,
+        SignedTransactionView,
+    },
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -39,7 +52,7 @@ impl Batch {
 #[rpc(server)]
 pub trait MockNearRpc {
     #[method(name = "broadcast_tx_async")]
-    async fn broadcast_tx_async(&self, args: Vec<String>) -> Result<CryptoHash, Error>;
+    async fn broadcast_tx_async(&self, args: String) -> Result<CryptoHash, Error>;
 
     #[method(name = "compute_merkle_root")]
     async fn compute_merkle_root(&self, args: Vec<String>) -> Result<Batch, Error>;
@@ -48,7 +61,7 @@ pub trait MockNearRpc {
     async fn query(
         &self,
         account_id: String,
-        args_base64: String,
+        args_base64: Option<String>,
         finality: String,
         method_name: Option<String>,
         request_type: String,
@@ -58,7 +71,7 @@ pub trait MockNearRpc {
     async fn stop_server(&self) -> Result<(), Error>;
 
     #[method(name = "tx")]
-    async fn tx(&self, args: Vec<String>) -> Result<FinalExecutionOutcomeView, Error>;
+    async fn tx(&self, hash: String, account_id: String) -> Result<FinalExecutionOutcomeView, Error>;
 }
 
 pub struct MockNearRpc {
@@ -73,8 +86,12 @@ impl MockNearRpc {
 
 #[async_trait]
 impl MockNearRpcServer for MockNearRpc {
-    async fn broadcast_tx_async(&self, args: Vec<String>) -> Result<CryptoHash, Error> {
-        Ok(CryptoHash::new())
+    async fn broadcast_tx_async(&self, params: String) -> Result<CryptoHash, Error> {
+        println!("Calling broadcast_tx_async");
+        let non_base_64 = near_primitives::serialize::from_base64(&params).unwrap();
+
+        let tx: SignedTransaction = SignedTransaction::try_from_slice(&non_base_64).expect("Foo");
+        Ok(tx.get_hash())
     }
 
     async fn compute_merkle_root(&self, _: Vec<String>) -> Result<Batch, Error> {
@@ -85,7 +102,7 @@ impl MockNearRpcServer for MockNearRpc {
     async fn query(
         &self,
         _account_id: String,
-        _args_base64: String,
+        _args_base64: Option<String>,
         _finality: String,
         method_name: Option<String>,
         request_type: String,
@@ -145,19 +162,45 @@ impl MockNearRpcServer for MockNearRpc {
         Ok(())
     }
 
-    async fn tx(&self, args: Vec<String>) -> Result<FinalExecutionOutcomeView, Error> {
+    async fn tx(&self, _hash: String, _account_id: String) -> Result<FinalExecutionOutcomeView, Error> {
+        println!("calling tx");
+        // TODO this would normally look up the tx but for now we have dummy data
+        // let tx_info = TransactionInfo::TransactionId {
+        //     hash:       CryptoHash::from_str(&hash).unwrap(),
+        //     account_id: account_id.parse().unwrap(),
+        // };
+
         Ok(FinalExecutionOutcomeView {
-            status:              near_primitives::views::FinalExecutionStatus::SuccessValue(Vec::new()),
+            status:              near_primitives::views::FinalExecutionStatus::SuccessValue(vec![8]),
             transaction:         SignedTransactionView {
-                signer_id:   todo!(),
-                public_key:  todo!(),
-                nonce:       todo!(),
-                receiver_id: todo!(),
-                actions:     Vec::new(),
-                signature:   todo!(),
+                signer_id:   "seda-debug.near".parse().unwrap(),
+                public_key:  PublicKey::from_str("ed25519:Eyyt8zB1NfpQcYGSXLRg83Xx7xk6Z2ohPfVhouuyYY1Y").unwrap(),
+                nonce:       100288680000344,
+                receiver_id: "mc.seda-debug.near".parse().unwrap(),
+                actions:     vec![],
+                signature:   Signature::default(),
                 hash:        CryptoHash::new(),
             },
-            transaction_outcome: todo!(),
+            transaction_outcome: ExecutionOutcomeWithIdView {
+                proof:      vec![MerklePathItem {
+                    hash:      CryptoHash::new(),
+                    direction: Direction::Right,
+                }],
+                block_hash: CryptoHash::new(),
+                id:         CryptoHash::new(),
+                outcome:    ExecutionOutcomeView {
+                    logs:         Vec::new(),
+                    receipt_ids:  vec![CryptoHash::new()],
+                    gas_burnt:    2428030560766,
+                    tokens_burnt: 242803056076600000000,
+                    executor_id:  "seda-debug.near".parse().unwrap(),
+                    status:       near_primitives::views::ExecutionStatusView::SuccessReceiptId(CryptoHash::new()),
+                    metadata:     ExecutionMetadataView {
+                        version:     1,
+                        gas_profile: None,
+                    },
+                },
+            },
             receipts_outcome:    Vec::new(),
         })
     }
