@@ -7,8 +7,10 @@ use super::test_utils::{
     get_context_for_ft_transfer,
     get_context_for_post_signed_batch,
     get_context_with_deposit,
+    get_context_with_deposit_at_block,
     new_contract,
 };
+use crate::consts::SLOTS_PER_EPOCH;
 
 #[test]
 fn post_signed_batch() {
@@ -52,6 +54,18 @@ fn post_signed_batch() {
     contract.deposit(deposit_amount);
     testing_env!(get_context_with_deposit("bob_near".to_string()));
     contract.deposit(deposit_amount);
+
+    // time travel and activate nodes
+    testing_env!(get_context_with_deposit_at_block("bob_near".to_string(), 1000000));
+    contract.process_epoch();
+
+    // assert we have committees for this epoch and the next 2
+    assert_eq!(contract.get_committees().len(), 3);
+
+    // assert each committee has SLOTS_PER_EPOCH members
+    for committee in contract.get_committees() {
+        assert_eq!(committee.len() as u64, SLOTS_PER_EPOCH);
+    }
 
     // get the merkle root (for all nodes to sign)
     let merkle_root = contract.compute_merkle_root();

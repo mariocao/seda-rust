@@ -7,7 +7,7 @@ use near_sdk::{
 };
 
 use crate::{
-    consts::{INIT_COMMITTEE_SIZE, INIT_EPOCH_DELAY_FOR_ELECTION, INIT_MINIMUM_STAKE},
+    consts::{DEFAULT_COMMITTEE_SIZE, INIT_EPOCH_DELAY_FOR_ELECTION, INIT_MINIMUM_STAKE},
     MainchainContract,
     MainchainContractExt,
 };
@@ -24,7 +24,7 @@ impl Default for Config {
         Self {
             minimum_stake:            INIT_MINIMUM_STAKE,
             epoch_delay_for_election: INIT_EPOCH_DELAY_FOR_ELECTION,
-            committee_size:           INIT_COMMITTEE_SIZE,
+            committee_size:           DEFAULT_COMMITTEE_SIZE,
         }
     }
 }

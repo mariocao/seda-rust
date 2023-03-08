@@ -1,12 +1,14 @@
 use bn254::{PrivateKey, PublicKey, Signature, ECDSA};
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
-use near_sdk::{json_types::U128, test_utils::VMContextBuilder, VMContext};
+use near_sdk::{json_types::U128, test_utils::VMContextBuilder, Balance, VMContext};
 use rand::distributions::{Alphanumeric, DistString};
 
 use crate::{
     consts::{DATA_IMAGE_SVG_ICON, INITIAL_SUPPLY},
     MainchainContract,
 };
+
+const TEST_DEPOSIT_AMOUNT: Balance = 9_000_000_000_000_000_000_000; // enough deposit to cover storage for all functions that require it
 
 // TODO: only compile this for tests
 
@@ -23,6 +25,7 @@ pub fn new_contract() -> MainchainContract {
             reference_hash: None,
             decimals:       24,
         },
+        2,
     )
 }
 
@@ -40,7 +43,7 @@ pub fn get_context_for_post_signed_batch(signer_account_id: String) -> VMContext
     VMContextBuilder::new()
         .signer_account_id(signer_account_id.parse().unwrap())
         .is_view(false)
-        .attached_deposit(4_110_000_000_000_000_000_000)
+        .attached_deposit(TEST_DEPOSIT_AMOUNT)
         .block_index(100000000)
         .build()
 }
@@ -48,7 +51,7 @@ pub fn get_context_with_deposit(signer_account_id: String) -> VMContext {
     VMContextBuilder::new()
         .signer_account_id(signer_account_id.parse().unwrap())
         .is_view(false)
-        .attached_deposit(4_110_000_000_000_000_000_000) // required for post_data_request()
+        .attached_deposit(TEST_DEPOSIT_AMOUNT) // required for post_data_request()
         .build()
 }
 pub fn get_context_for_ft_transfer(signer_account_id: String) -> VMContext {
@@ -61,6 +64,14 @@ pub fn get_context_for_ft_transfer(signer_account_id: String) -> VMContext {
 }
 pub fn get_context_at_block(block_index: u64) -> VMContext {
     VMContextBuilder::new().block_index(block_index).is_view(true).build()
+}
+pub fn get_context_with_deposit_at_block(signer_account_id: String, block_index: u64) -> VMContext {
+    VMContextBuilder::new()
+        .signer_account_id(signer_account_id.parse().unwrap())
+        .is_view(false)
+        .attached_deposit(TEST_DEPOSIT_AMOUNT) // required for post_data_request()
+        .block_index(block_index)
+        .build()
 }
 
 pub fn generate_bn254_key() -> (PublicKey, PrivateKey) {

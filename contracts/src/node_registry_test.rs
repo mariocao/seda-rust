@@ -12,6 +12,7 @@ use super::test_utils::{
     get_context_for_ft_transfer,
     get_context_view,
     get_context_with_deposit,
+    get_context_with_deposit_at_block,
     new_contract,
 };
 use crate::node_registry::{HumanReadableNode, UpdateNode};
@@ -89,12 +90,23 @@ fn set_node_multi_addr() {
 #[test]
 fn get_nodes() {
     let mut contract = new_contract();
+    let deposit_amount = U128(100_000_000_000_000_000_000_000);
     let (bob_public_key, bob_private_key) = generate_bn254_key();
     let bob_signature = bn254_sign(&bob_private_key, "bob_near".to_string().as_bytes());
     let (alice_public_key, alice_private_key) = generate_bn254_key();
     let alice_signature = bn254_sign(&alice_private_key, "alice_near".to_string().as_bytes());
     let (carol_public_key, carol_private_key) = generate_bn254_key();
     let carol_signature = bn254_sign(&carol_private_key, "carol_near".to_string().as_bytes());
+
+    // DAO transfers tokens to bob, alice, and carol
+    testing_env!(get_context_with_deposit("dao_near".to_string(),));
+    contract.storage_deposit(Some("alice_near".to_string().try_into().unwrap()), None);
+    contract.storage_deposit(Some("bob_near".to_string().try_into().unwrap()), None);
+    contract.storage_deposit(Some("carol_near".to_string().try_into().unwrap()), None);
+    testing_env!(get_context_for_ft_transfer("dao_near".to_string()));
+    contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
+    contract.ft_transfer("bob_near".to_string().try_into().unwrap(), deposit_amount, None);
+    contract.ft_transfer("carol_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // register three nodes
     testing_env!(get_context_with_deposit("bob_near".to_string()));
@@ -119,22 +131,34 @@ fn get_nodes() {
     );
     assert_eq!(get_logs(), vec!["carol_near registered node",]);
 
+    // all nodes deposit the minimum stake
+    testing_env!(get_context_with_deposit("bob_near".to_string()));
+    contract.deposit(deposit_amount);
+    testing_env!(get_context_with_deposit("alice_near".to_string()));
+    contract.deposit(deposit_amount);
+    testing_env!(get_context_with_deposit("carol_near".to_string()));
+    contract.deposit(deposit_amount);
+
+    // time travel and activate nodes
+    testing_env!(get_context_with_deposit_at_block("bob_near".to_string(), 1000000));
+    contract.process_epoch();
+
     // define expected nodes
     let node1 = HumanReadableNode {
         account_id:       "bob_near".to_string().try_into().unwrap(),
-        balance:          0,
+        balance:          deposit_amount.0,
         multi_addr:       "0.0.0.0:8080".to_string(),
         bn254_public_key: bob_public_key.to_compressed().unwrap(),
     };
     let node2 = HumanReadableNode {
         account_id:       "alice_near".to_string().try_into().unwrap(),
-        balance:          0,
+        balance:          deposit_amount.0,
         multi_addr:       "1.1.1.1:8080".to_string(),
         bn254_public_key: alice_public_key.to_compressed().unwrap(),
     };
     let node3 = HumanReadableNode {
         account_id:       "carol_near".to_string().try_into().unwrap(),
-        balance:          0,
+        balance:          deposit_amount.0,
         multi_addr:       "2.2.2.2:8080".to_string(),
         bn254_public_key: carol_public_key.to_compressed().unwrap(),
     };
