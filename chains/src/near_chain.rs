@@ -81,7 +81,6 @@ impl ChainAdapterTrait for NearChain {
     ) -> Result<Vec<u8>> {
         let client = JsonRpcClient::connect(server_url);
         let signer_account_id: AccountId = signer_acc_str.parse()?;
-
         let signer_secret_key: near_crypto::SecretKey = signer_sk_str.parse()?;
         let signer = near_crypto::InMemorySigner::from_secret_key(signer_account_id, signer_secret_key);
 

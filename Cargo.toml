@@ -48,23 +48,23 @@ base64 = "0.13"
 bn254 = { git = "https://github.com/sedaprotocol/bn254", branch = "main" }
 borsh = { version = "0.9", default-features = false }
 clap = { version = "4.1", default-features = false }
-clap_complete = { version = "4.1", default-features = false }
 clap-markdown = { version = "0.1", default-features = false }
+clap_complete = { version = "4.1", default-features = false }
 concat-kdf = "0.1"
 dotenv = "0.15"
 ed25519-dalek = "1.0"
 futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.2"}
 hex = "0.4"
-jsonrpsee-types = "0.16"
 jsonrpsee = { version = "0.16", default-features = false }
+jsonrpsee-types = "0.16"
 lazy_static = "1.4"
 libp2p = { version = "0.50", default-features = false }
 near-bigint = "1.0"
+near-contract-standards = "4.0"
 near-crypto = "0.15"
 near-jsonrpc-client = { version = "0.4", default-features = false }
 near-jsonrpc-primitives = "0.15"
-near-contract-standards = "4.0"
 near-primitives = "0.15"
 near-sdk = { version = "4.0", default-features = false }
 near-sys = "0.2"
@@ -76,6 +76,7 @@ rusqlite = { version = "0.28", features = ["bundled"] }
 schemars = "0.8"
 seda-chains = { path = "./chains" }
 seda-config = { path = "./config" }
+seda-crypto = { path = "./crypto" }
 seda-logger = { path = "./logger" }
 seda-node = { path = "./node" }
 seda-p2p = { path = "./p2p" }

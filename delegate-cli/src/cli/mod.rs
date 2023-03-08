@@ -22,6 +22,8 @@ pub struct CliOptions {
 pub enum Command {
     /// Top-up a target account by a given amount in NEAR
     TopUp(commands::top_up::TopUp),
+    /// Register a node to a delegation contract
+    Register(commands::register::Register),
 }
 
 impl Command {
@@ -30,6 +32,9 @@ impl Command {
         match self {
             Self::TopUp(top_up) => {
                 top_up.handle(config).await;
+            }
+            Self::Register(register) => {
+                register.handle(config).await;
             }
         }
     }

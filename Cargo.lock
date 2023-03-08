@@ -4711,13 +4711,18 @@ dependencies = [
 name = "seda-delegate-cli"
 version = "0.1.0"
 dependencies = [
+ "bn254",
+ "bs58",
  "clap",
  "clap-markdown",
  "clap_complete",
  "dotenv",
+ "hex",
  "seda-chains",
  "seda-config",
+ "seda-crypto",
  "seda-runtime-sdk",
+ "serde_json",
  "tokio",
 ]
 
