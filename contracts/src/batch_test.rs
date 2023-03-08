@@ -4,7 +4,6 @@ use near_sdk::{json_types::U128, testing_env};
 use super::test_utils::{
     bn254_sign,
     generate_bn254_key,
-    get_context,
     get_context_for_ft_transfer,
     get_context_for_post_signed_batch,
     get_context_with_deposit,
@@ -12,7 +11,7 @@ use super::test_utils::{
 };
 
 #[test]
-fn post_data_request() {
+fn post_signed_batch() {
     let mut contract = new_contract();
     let deposit_amount = U128(100_000_000_000_000_000_000_000);
 
@@ -49,9 +48,9 @@ fn post_data_request() {
     );
 
     // alice and bob deposit into contract
-    testing_env!(get_context("alice_near".to_string()));
+    testing_env!(get_context_with_deposit("alice_near".to_string()));
     contract.deposit(deposit_amount);
-    testing_env!(get_context("bob_near".to_string()));
+    testing_env!(get_context_with_deposit("bob_near".to_string()));
     contract.deposit(deposit_amount);
 
     // get the merkle root (for all nodes to sign)

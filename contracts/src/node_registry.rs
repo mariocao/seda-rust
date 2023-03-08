@@ -14,18 +14,18 @@ use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt};
 /// Node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone, Default)]
 pub struct Node {
-    pub multi_addr:          String,
-    pub balance:             Balance,
-    pub bn254_public_key:    Vec<u8>,
+    pub multi_addr:       String,
+    pub balance:          Balance,
+    pub bn254_public_key: Vec<u8>,
 }
 
 /// Human-readable node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
 pub struct HumanReadableNode {
-    pub account_id:          AccountId,
-    pub multi_addr:          String,
-    pub balance:             Balance,
-    pub bn254_public_key:    Vec<u8>,
+    pub account_id:       AccountId,
+    pub multi_addr:       String,
+    pub balance:          Balance,
+    pub bn254_public_key: Vec<u8>,
 }
 
 /// Update node commands
@@ -37,13 +37,13 @@ pub enum UpdateNode {
 /// Contract private methods
 impl MainchainContract {
     pub fn internal_get_node(&self, account_id: &AccountId) -> Option<Node> {
-        let active_node = self.active_nodes.get(&account_id);
-        if active_node.is_some() {
-            return Some(active_node.unwrap());
+        let active_node = self.active_nodes.get(account_id);
+        if let Some(node) = active_node {
+            return Some(node);
         }
-        let inactive_node = self.inactive_nodes.get(&account_id);
-        if inactive_node.is_some() {
-            return Some(inactive_node.unwrap());
+        let inactive_node = self.inactive_nodes.get(account_id);
+        if let Some(node) = inactive_node {
+            return Some(node);
         }
         None
     }
@@ -53,27 +53,29 @@ impl MainchainContract {
     }
 
     pub fn handle_node_balance_update(&mut self, account_id: &AccountId, node: &Node) {
-        // if minimum stake is reached, make sure node is active or set epoch when eligible for committee selection
+        // if minimum stake is reached, make sure node is active or set epoch when
+        // eligible for committee selection
         if node.balance >= self.config.minimum_stake {
-            // minimum stake is reached, if not already an active node, set the epoch when eligible for committee selection
-            if self.active_nodes.get(&account_id).is_some() {
+            // minimum stake is reached, if not already an active node, set the epoch when
+            // eligible for committee selection
+            if self.active_nodes.get(account_id).is_some() {
                 // node is already active
-                self.active_nodes.insert(&account_id, &node);
+                self.active_nodes.insert(account_id, node);
             } else {
                 // node is not active, set epoch when eligible for committee selection
                 let epoch_when_eligible = self.get_current_epoch() + self.config.epoch_delay_for_election;
-                self.inactive_nodes.insert(&account_id, &node);
-                self.pending_nodes.insert(&account_id, &epoch_when_eligible);
+                self.inactive_nodes.insert(account_id, node);
+                self.pending_nodes.insert(account_id, &epoch_when_eligible);
             }
         } else {
             // minimum stake is not reached, check if node is active
-            if self.active_nodes.get(&account_id).is_some() {
+            if self.active_nodes.get(account_id).is_some() {
                 // node is active, remove from active nodes and add to inactive nodes
-                self.active_nodes.remove(&account_id);
-                self.inactive_nodes.insert(&account_id, &node);
+                self.active_nodes.remove(account_id);
+                self.inactive_nodes.insert(account_id, node);
             } else {
                 // node is not active, update inactive nodes
-                self.inactive_nodes.insert(&account_id, &node);
+                self.inactive_nodes.insert(account_id, node);
             }
         }
     }
@@ -197,7 +199,7 @@ impl MainchainContract {
     /// Withdraws the entire balance from the predecessor account.
     pub fn withdraw_all(&mut self) {
         let account_id = env::predecessor_account_id();
-        let account = self.get_expect_node(account_id.clone());
+        let account = self.get_expect_node(account_id);
         self.internal_withdraw(account.balance);
     }
 
@@ -218,10 +220,10 @@ impl MainchainContract {
         let node = self.internal_get_node(&node_id);
         if let Some(node) = node {
             Some(HumanReadableNode {
-                account_id:          node_id,
-                multi_addr:          node.multi_addr,
-                balance:             node.balance,
-                bn254_public_key:    node.bn254_public_key,
+                account_id:       node_id,
+                multi_addr:       node.multi_addr,
+                balance:          node.balance,
+                bn254_public_key: node.bn254_public_key,
             })
         } else {
             None
@@ -236,10 +238,10 @@ impl MainchainContract {
             if let Some(node_id) = self.active_nodes.keys().nth(index as usize - 1) {
                 let node = self.active_nodes.get(&node_id).unwrap();
                 let human_readable_node = HumanReadableNode {
-                    account_id:          node_id,
-                    multi_addr:          node.multi_addr,
-                    balance:             node.balance,
-                    bn254_public_key:    node.bn254_public_key,
+                    account_id:       node_id,
+                    multi_addr:       node.multi_addr,
+                    balance:          node.balance,
+                    bn254_public_key: node.bn254_public_key,
                 };
                 nodes.push(human_readable_node);
             }

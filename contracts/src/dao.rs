@@ -7,7 +7,7 @@ use near_sdk::{
 };
 
 use crate::{
-    consts::{INIT_EPOCH_DELAY_FOR_ELECTION, INIT_MINIMUM_STAKE, INIT_COMMITTEE_SIZE},
+    consts::{INIT_COMMITTEE_SIZE, INIT_EPOCH_DELAY_FOR_ELECTION, INIT_MINIMUM_STAKE},
     MainchainContract,
     MainchainContractExt,
 };

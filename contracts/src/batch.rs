@@ -56,18 +56,12 @@ impl MainchainContract {
         // eligible for this batch while also verifying individual eligibility
 
         // 1. initialize with the first signer
-        assert!(
-            self.active_nodes.get(&signers[0]).is_some(),
-            "Node is not active"
-        );
+        assert!(self.active_nodes.get(&signers[0]).is_some(), "Node is not active");
         let mut aggregate_public_key_check =
             PublicKey::from_compressed(self.active_nodes.get(&signers[0]).unwrap().bn254_public_key).unwrap();
         // 2. add the rest of the signers' public keys
         for signer in signers.iter().skip(1) {
-            assert!(
-                self.active_nodes.get(&signer).is_some(),
-                "Node is not active"
-            );
+            assert!(self.active_nodes.get(signer).is_some(), "Node is not active");
             let signer_public_key =
                 PublicKey::from_compressed(self.active_nodes.get(signer).unwrap().bn254_public_key).unwrap();
             aggregate_public_key_check = aggregate_public_key_check + signer_public_key;

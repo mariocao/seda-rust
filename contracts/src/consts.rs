@@ -7,7 +7,7 @@ pub const DATA_IMAGE_SVG_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://w
 pub const INITIAL_SUPPLY: u128 = 100_000_000_000_000_000_000_000_000; // 1000 SEDA
 pub const INIT_MINIMUM_STAKE: u128 = 100_000_000_000_000_000_000_000; // 100 SEDA
 pub const INIT_EPOCH_DELAY_FOR_ELECTION: u64 = 2;
-pub const INIT_RANDOM_SEED: u128 = 5304;
 pub const INIT_COMMITTEE_SIZE: u64 = 10;
 pub const SLOTS_PER_EPOCH: u64 = 32;
 pub const NEAR_BLOCKS_PER_SEDA_SLOT: u64 = 10; // at 1.2s/block, 12s/slot
+pub const EPOCH_COMMITTEES_LOOKAHEAD: u64 = 2;

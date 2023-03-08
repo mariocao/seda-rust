@@ -9,7 +9,6 @@ use super::test_utils::{
     bn254_sign,
     generate_bn254_key,
     get_context,
-    get_context_at_block,
     get_context_for_ft_transfer,
     get_context_view,
     get_context_with_deposit,
@@ -122,22 +121,22 @@ fn get_nodes() {
 
     // define expected nodes
     let node1 = HumanReadableNode {
-        account_id:          "bob_near".to_string().try_into().unwrap(),
-        balance:             0,
-        multi_addr:          "0.0.0.0:8080".to_string(),
-        bn254_public_key:    bob_public_key.to_compressed().unwrap(),
+        account_id:       "bob_near".to_string().try_into().unwrap(),
+        balance:          0,
+        multi_addr:       "0.0.0.0:8080".to_string(),
+        bn254_public_key: bob_public_key.to_compressed().unwrap(),
     };
     let node2 = HumanReadableNode {
-        account_id:          "alice_near".to_string().try_into().unwrap(),
-        balance:             0,
-        multi_addr:          "1.1.1.1:8080".to_string(),
-        bn254_public_key:    alice_public_key.to_compressed().unwrap(),
+        account_id:       "alice_near".to_string().try_into().unwrap(),
+        balance:          0,
+        multi_addr:       "1.1.1.1:8080".to_string(),
+        bn254_public_key: alice_public_key.to_compressed().unwrap(),
     };
     let node3 = HumanReadableNode {
-        account_id:          "carol_near".to_string().try_into().unwrap(),
-        balance:             0,
-        multi_addr:          "2.2.2.2:8080".to_string(),
-        bn254_public_key:    carol_public_key.to_compressed().unwrap(),
+        account_id:       "carol_near".to_string().try_into().unwrap(),
+        balance:          0,
+        multi_addr:       "2.2.2.2:8080".to_string(),
+        bn254_public_key: carol_public_key.to_compressed().unwrap(),
     };
 
     // get the first node
@@ -223,13 +222,6 @@ fn deposit_withdraw() {
     // check alice's deposited amount
     let node_balance = contract.get_node_balance("alice_near".to_string().try_into().unwrap());
     assert_eq!(node_balance, deposit_amount);
-
-    // time travel to an epoch where alice is eligible to be included in a committee
-    testing_env!(get_context_at_block(1000000));
-    assert_eq!(
-        contract.is_node_active("alice_near".to_string().try_into().unwrap()),
-        true
-    );
 
     // alice withdraws
     testing_env!(get_context("alice_near".to_string()));

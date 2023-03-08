@@ -1,7 +1,6 @@
 use near_sdk::{env, near_bindgen};
 
-use crate::{MainchainContract, MainchainContractExt};
-use crate::consts::NEAR_BLOCKS_PER_SEDA_SLOT;
+use crate::{consts::NEAR_BLOCKS_PER_SEDA_SLOT, MainchainContract, MainchainContractExt};
 
 /// Contract public methods
 #[near_bindgen]

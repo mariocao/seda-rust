@@ -9,6 +9,7 @@ pub mod node_registry;
 pub mod slot;
 pub mod storage;
 pub mod verify;
+use merkle::CryptoHash;
 use near_contract_standards::fungible_token::{metadata::FungibleTokenMetadata, FungibleToken};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
@@ -24,9 +25,8 @@ use near_sdk::{
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
-    node_registry::{Node},
-    consts::INIT_RANDOM_SEED,
     epoch::EpochHeight,
+    node_registry::Node,
 };
 
 /// Collection keys
@@ -48,23 +48,24 @@ enum MainchainStorageKeys {
 #[derive(PanicOnDefault, BorshDeserialize, BorshSerialize)]
 pub struct MainchainContract {
     // Fungible token used for staking
-    token:                     FungibleToken,
+    token:    FungibleToken,
     // Fungible token metadata
-    metadata:                  LazyOption<FungibleTokenMetadata>,
+    metadata: LazyOption<FungibleTokenMetadata>,
     // DAO account with admin privileges
-    dao:                       AccountId,
+    dao:      AccountId,
     // Mainchain configuration, changeable by the DAO
-    config:                    dao::Config,
+    config:   dao::Config,
 
     // TODO: do all of these need to be UnorderedMaps?
     // Nodes that are eligible to participate in the current epoch
-    active_nodes:              UnorderedMap<AccountId, Node>,
+    active_nodes:   UnorderedMap<AccountId, Node>,
     // Nodes that are not eligible to participate in the current epoch
-    inactive_nodes:            UnorderedMap<AccountId, Node>,
-    // Sub-set of inactive nodes that are waiting to be activated after reaching the minimum stake
-    pending_nodes:             UnorderedMap<AccountId, EpochHeight>,
+    inactive_nodes: UnorderedMap<AccountId, Node>,
+    // Sub-set of inactive nodes that are waiting to be activated
+    pending_nodes:  UnorderedMap<AccountId, EpochHeight>,
     // Sub-set of active nodes that are part of the committee of the current epoch
-    committee:                Vec<AccountId>,
+    // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][SLOTS_PER_EPOCH]
+    committees:     Vec<Vec<AccountId>>,
 
     data_request_accumulator:  Vector<String>,
     num_batches:               BatchHeight,
@@ -72,7 +73,7 @@ pub struct MainchainContract {
     batch_by_id:               LookupMap<BatchId, Batch>,
     last_total_balance:        Balance,
     nodes_by_bn254_public_key: LookupMap<Vec<u8>, AccountId>,
-    random_seed:               u128,
+    random_seed:               CryptoHash,
     bootstrapping_phase:       bool,
     last_processed_epoch:      EpochHeight,
 }
@@ -89,23 +90,23 @@ impl MainchainContract {
         );
         metadata.assert_valid();
         let mut this = Self {
-            token: FungibleToken::new(MainchainStorageKeys::FungibleToken),
-            metadata: LazyOption::new(MainchainStorageKeys::FungibleTokenMetadata, Some(&metadata)),
-            dao: dao.clone(),
-            config: dao::Config::default(),
-            active_nodes: UnorderedMap::new(MainchainStorageKeys::ActiveNodes),
-            inactive_nodes: UnorderedMap::new(MainchainStorageKeys::InactiveNodes),
-            pending_nodes: UnorderedMap::new(MainchainStorageKeys::PendingNodes),
-            committee: Vec::new(),
-            data_request_accumulator: Vector::<String>::new(MainchainStorageKeys::DataRequestAccumulator),
-            num_batches: 0,
-            batch_ids_by_height: LookupMap::new(MainchainStorageKeys::BatchIdsByHeight),
-            batch_by_id: LookupMap::new(MainchainStorageKeys::BatchById),
-            last_total_balance: 0,
+            token:                     FungibleToken::new(MainchainStorageKeys::FungibleToken),
+            metadata:                  LazyOption::new(MainchainStorageKeys::FungibleTokenMetadata, Some(&metadata)),
+            dao:                       dao.clone(),
+            config:                    dao::Config::default(),
+            active_nodes:              UnorderedMap::new(MainchainStorageKeys::ActiveNodes),
+            inactive_nodes:            UnorderedMap::new(MainchainStorageKeys::InactiveNodes),
+            pending_nodes:             UnorderedMap::new(MainchainStorageKeys::PendingNodes),
+            committees:                Vec::new(),
+            data_request_accumulator:  Vector::<String>::new(MainchainStorageKeys::DataRequestAccumulator),
+            num_batches:               0,
+            batch_ids_by_height:       LookupMap::new(MainchainStorageKeys::BatchIdsByHeight),
+            batch_by_id:               LookupMap::new(MainchainStorageKeys::BatchById),
+            last_total_balance:        0,
             nodes_by_bn254_public_key: LookupMap::new(MainchainStorageKeys::NodesByBn254PublicKey),
-            random_seed: INIT_RANDOM_SEED,
-            bootstrapping_phase: true,
-            last_processed_epoch: 0,
+            random_seed:               CryptoHash::default(),
+            bootstrapping_phase:       true,
+            last_processed_epoch:      0,
         };
         this.token.internal_register_account(&dao);
         this.token.internal_deposit(&dao, initial_supply.into());
