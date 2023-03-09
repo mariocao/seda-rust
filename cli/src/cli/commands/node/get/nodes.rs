@@ -25,7 +25,13 @@ impl Nodes {
                 "offset": self.offset.to_string(),
         })
         .to_string();
-        view::<Vec<super::result::NodeResult>>(Chain::Near, &contract_account_id, "get_nodes", args, &chains_config)
-            .await
+        view::<Vec<super::result::NodeResult>>(
+            Chain::Near,
+            &contract_account_id,
+            "get_nodes",
+            Some(args),
+            &chains_config,
+        )
+        .await
     }
 }

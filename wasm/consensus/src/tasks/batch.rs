@@ -1,7 +1,7 @@
 use clap::Args;
 use seda_runtime_sdk::{
     log,
-    wasm::{bn254_sign, call_self, chain_view, p2p_broadcast_message, Promise, CONFIG},
+    wasm::{bn254_sign, call_self, chain_view, p2p_broadcast_message, Bn254PrivateKey, Promise, CONFIG},
     FromBytes,
     Level,
     PromiseStatus,
@@ -30,6 +30,7 @@ fn batch_step_1() {
     let result = Promise::result(0);
     match result {
         PromiseStatus::Fulfilled(Some(bytes)) => {
+            log!(Level::Debug, "{bytes:?}");
             let result = bn254_sign(&bytes, todo!());
             p2p_broadcast_message(result.to_compressed().expect("TODO"))
                 .start()

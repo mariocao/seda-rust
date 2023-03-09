@@ -13,7 +13,7 @@ pub struct View {
     /// The method name to view.
     method_name: String,
     /// The args to pass to the view method.
-    args:        String,
+    args:        Option<String>,
 }
 
 impl View {

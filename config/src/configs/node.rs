@@ -150,6 +150,8 @@ pub struct NodeConfigInner {
     pub deposit:                 u128,
     pub gas:                     u64,
     pub seda_chain_secret_key:   String,
+    // TODO: Should be a secret key type?
+    // Or maybe even be our full key pair.
     pub seda_secret_key:         String,
     pub seda_sk_file_path:       PathBuf,
     pub signer_account_id:       String,

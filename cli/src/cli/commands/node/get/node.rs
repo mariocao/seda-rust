@@ -22,7 +22,13 @@ impl Node {
             "node_id": self.node_id.to_string(),
         })
         .to_string();
-        view::<Option<super::result::NodeResult>>(Chain::Near, &contract_account_id, "get_node", args, &chains_config)
-            .await
+        view::<Option<super::result::NodeResult>>(
+            Chain::Near,
+            &contract_account_id,
+            "get_node",
+            Some(args),
+            &chains_config,
+        )
+        .await
     }
 }

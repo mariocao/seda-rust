@@ -20,6 +20,7 @@ use near_primitives::{
         SignedTransactionView,
     },
 };
+use rand::{rngs::OsRng, Rng};
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
@@ -55,6 +56,10 @@ impl MockNearRpc {
     pub fn new(shutdown_channel: Sender<bool>) -> Self {
         Self { shutdown_channel }
     }
+
+    fn random_crypto_hash(&self) -> CryptoHash {
+        CryptoHash::hash_bytes(&OsRng.gen::<[u8; 32]>())
+    }
 }
 
 #[async_trait]
@@ -68,6 +73,8 @@ impl MockNearRpcServer for MockNearRpc {
         Ok(tx.get_hash())
     }
 
+    // TODO: would be nice to set up logging so we can confirm things from node side
+    // as well
     async fn query(
         &self,
         _account_id: String,
@@ -91,7 +98,7 @@ impl MockNearRpcServer for MockNearRpc {
                         logs:   Default::default(),
                     }),
                     block_height: 119467302,
-                    block_hash:   CryptoHash::new(),
+                    block_hash:   self.random_crypto_hash(),
                 }),
                 "get_nodes" => Ok(RpcQueryResponse {
                     kind:         QueryResponseKind::CallResult(CallResult {
@@ -106,17 +113,17 @@ impl MockNearRpcServer for MockNearRpc {
                         logs:   Default::default(),
                     }),
                     block_height: 119467302,
-                    block_hash:   CryptoHash::new(),
+                    block_hash:   self.random_crypto_hash(),
                 }),
                 "compute_merkle_root" => Ok(RpcQueryResponse {
                     kind:         QueryResponseKind::CallResult(CallResult {
                         // TODO: this needs to be a valid random hash :)
                         // This can be done in the batch sign pr.
-                        result: serde_json::to_vec_pretty(&json!(vec![0u8; 32])).unwrap(),
+                        result: serde_json::to_vec_pretty(&json!(self.random_crypto_hash().as_bytes())).unwrap(),
                         logs:   Default::default(),
                     }),
                     block_height: 119467302,
-                    block_hash:   CryptoHash::new(),
+                    block_hash:   self.random_crypto_hash(),
                 }),
                 _ => unimplemented!(),
             },
@@ -129,7 +136,7 @@ impl MockNearRpcServer for MockNearRpc {
                     .into(),
                 ),
                 block_height: 119467302,
-                block_hash:   CryptoHash::new(),
+                block_hash:   self.random_crypto_hash(),
             }),
             _ => unimplemented!(),
         }
@@ -161,22 +168,24 @@ impl MockNearRpcServer for MockNearRpc {
                 receiver_id: "mc.seda-debug.near".parse().unwrap(),
                 actions:     vec![],
                 signature:   Signature::default(),
-                hash:        CryptoHash::new(),
+                hash:        self.random_crypto_hash(),
             },
             transaction_outcome: ExecutionOutcomeWithIdView {
                 proof:      vec![MerklePathItem {
-                    hash:      CryptoHash::new(),
+                    hash:      self.random_crypto_hash(),
                     direction: Direction::Right,
                 }],
-                block_hash: CryptoHash::new(),
-                id:         CryptoHash::new(),
+                block_hash: self.random_crypto_hash(),
+                id:         self.random_crypto_hash(),
                 outcome:    ExecutionOutcomeView {
                     logs:         Vec::new(),
-                    receipt_ids:  vec![CryptoHash::new()],
+                    receipt_ids:  vec![self.random_crypto_hash()],
                     gas_burnt:    2428030560766,
                     tokens_burnt: 242803056076600000000,
                     executor_id:  "seda-debug.near".parse().unwrap(),
-                    status:       near_primitives::views::ExecutionStatusView::SuccessReceiptId(CryptoHash::new()),
+                    status:       near_primitives::views::ExecutionStatusView::SuccessReceiptId(
+                        self.random_crypto_hash(),
+                    ),
                     metadata:     ExecutionMetadataView {
                         version:     1,
                         gas_profile: None,

@@ -57,11 +57,19 @@ pub(crate) async fn view<T: DeserializeOwned + Serialize>(
     chain: Chain,
     contract_id: &str,
     method_name: &str,
-    args: String,
+    // TODO: Consider changing to AsRef<[u8]> for cleaner/ease of use
+    args: Option<String>,
     chains_config: &ChainConfigs,
 ) -> crate::Result<()> {
     let client = Client::new(&chain, chains_config)?;
-    let result = chain::view(chain, client, contract_id, method_name, args.into_bytes()).await?;
+    let result = chain::view(
+        chain,
+        client,
+        contract_id,
+        method_name,
+        args.unwrap_or_default().into_bytes(),
+    )
+    .await?;
     let value = serde_json::from_slice::<T>(&result)?;
     serde_json::to_writer_pretty(std::io::stdout(), &value)?;
     Ok(())
