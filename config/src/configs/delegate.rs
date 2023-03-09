@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "delegate-cli")]
 use crate::{env_overwrite, ConfigError};
 #[cfg(feature = "delegate-cli")]
 use crate::{merge_config_cli, Config, Result};

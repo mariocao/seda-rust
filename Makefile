@@ -71,7 +71,7 @@ run-build-delegate: build
 # Runs cargo test excluding certain workspaces.
 # Note the seda-debugger most be built for this command to work.
 test:
-	$($(MAKE) start-test-rpc)
+	$(MAKE) start-test-rpc &
 	cargo test --workspace --exclude cli --exclude consensus --exclude demo-cli --exclude promise-wasm-bin --exclude seda-cli --exclude seda-debugger
 	$(MAKE) stop-test-rpc
 
@@ -94,14 +94,6 @@ build-contracts:
 # Make the seda debug-tools
 seda-debugger:
 	cargo build -p seda-debugger
-
-# If the first argument is "run"...
-ifneq (,$(findstring run-seda-debug,$(firstword $(MAKECMDGOALS))))
-  # use the rest as arguments for "run"
-  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  # ...and turn them into do-nothing targets
-  $(eval $(RUN_ARGS):;@:)
-endif
 
 # Just runs the prebuilt binary with the given args.
 run-seda-debug:

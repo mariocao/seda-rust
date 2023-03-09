@@ -14,7 +14,7 @@ path = "src/main.rs"
 anyhow = "1.0"
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["default", "derive"] }
-jsonrpsee = { workspace = true, features = ["client", "macros", "server"] }
+jsonrpsee = { workspace = true, features = ["http-client", "macros", "server"] }
 near-crypto = { workspace = true }
 near-jsonrpc-client = { workspace = true }
 near-jsonrpc-primitives = { workspace = true }
