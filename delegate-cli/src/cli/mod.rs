@@ -24,6 +24,10 @@ pub enum Command {
     TopUp(commands::top_up::TopUp),
     /// Register a node to a delegation contract
     Register(commands::register::Register),
+    /// Allows you to stake to a given delegator
+    Stake(commands::stake::Stake),
+    /// A all in one command to get started as a node operator
+    Setup(commands::setup::Setup),
 }
 
 impl Command {
@@ -35,6 +39,12 @@ impl Command {
             }
             Self::Register(register) => {
                 register.handle(config).await;
+            }
+            Self::Stake(stake) => {
+                stake.handle(config).await;
+            }
+            Self::Setup(setup) => {
+                setup.handle(config).await;
             }
         }
     }

@@ -28,6 +28,9 @@ pub struct PartialDelegateConfig {
     /// An option to override the RPC URL
     #[arg(long)]
     pub rpc_url:              Option<String>,
+    /// An option to override the node gas config value.
+    #[arg(short, long)]
+    pub gas:                  Option<u64>,
 }
 
 #[cfg(feature = "delegate-cli")]
@@ -49,6 +52,7 @@ impl PartialDelegateConfig {
 
         let delegate_contract_id = merge_config_cli!(self, cli_options, delegate_contract_id, Ok(String::new()))?;
         let rpc_url = merge_config_cli!(self, cli_options, rpc_url, Ok(DelegateConfigInner::RPC_URL.to_string()))?;
+        let gas = merge_config_cli!(self, cli_options, gas, Ok(DelegateConfigInner::GAS))?;
 
         Ok(Arc::new(DelegateConfigInner {
             validator_secret_key,
@@ -56,6 +60,7 @@ impl PartialDelegateConfig {
             signer_account_id,
             delegate_contract_id,
             rpc_url,
+            gas,
         }))
     }
 }
@@ -69,6 +74,7 @@ impl Config for PartialDelegateConfig {
             account_secret_key:   None,
             signer_account_id:    None,
             rpc_url:              None,
+            gas:                  Some(DelegateConfigInner::GAS),
         }
     }
 
@@ -86,6 +92,7 @@ pub struct DelegateConfigInner {
     pub signer_account_id:    String,
     pub delegate_contract_id: String,
     pub rpc_url:              String,
+    pub gas:                  u64,
 }
 
 impl DelegateConfigInner {
@@ -97,6 +104,7 @@ impl DelegateConfigInner {
             validator_secret_key: String::new(),
             account_secret_key:   String::new(),
             signer_account_id:    String::new(),
+            gas:                  Self::GAS,
         })
     }
 
@@ -107,6 +115,7 @@ impl DelegateConfigInner {
 }
 
 impl DelegateConfigInner {
+    pub const GAS: u64 = 300_000_000_000_000;
     pub const RPC_URL: &str = "https://rpc.testnet.near.org";
 }
 
