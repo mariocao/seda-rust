@@ -43,7 +43,7 @@ impl MainchainContract {
 /// Contract public methods
 #[near_bindgen]
 impl MainchainContract {
-    pub fn get_committees(&self) -> Vec<Vec<AccountId>> {
+    pub fn get_committees(&self) -> Vec<Vec<PublicKey>> {
         self.committees.clone()
     }
 }

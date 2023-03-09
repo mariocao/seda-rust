@@ -1,6 +1,6 @@
 use bn254::{PrivateKey, PublicKey, Signature, ECDSA};
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
-use near_sdk::{json_types::U128, test_utils::VMContextBuilder, Balance, VMContext};
+use near_sdk::{json_types::U128, test_utils::VMContextBuilder, Balance, VMContext, AccountId};
 use rand::distributions::{Alphanumeric, DistString};
 
 use crate::{
@@ -9,8 +9,6 @@ use crate::{
 };
 
 const TEST_DEPOSIT_AMOUNT: Balance = 9_000_000_000_000_000_000_000_000; // enough deposit to cover storage for all functions that require it
-
-// TODO: only compile this for tests
 
 pub fn new_contract() -> MainchainContract {
     MainchainContract::new(
@@ -27,6 +25,34 @@ pub fn new_contract() -> MainchainContract {
         },
         2,
     )
+}
+
+pub struct TestAccount {
+    pub account_id: AccountId,
+    pub ed25519_public_key: near_sdk::PublicKey,
+    pub bn254_private_key: PrivateKey,
+    pub bn254_public_key: PublicKey,
+}
+
+pub fn bob() -> TestAccount {
+    // let random_hex_string = hex::encode(Alphanumeric.sample_string(&mut rand::thread_rng(), 22));
+    // let ed25519_public_key_string = "ed25519:".to_string() + &random_hex_string;
+    // println!("ed25519_public_key_string: {}", ed25519_public_key_string);
+    // let ed25519_public_key: near_sdk::PublicKey = ed25519_public_key_string.parse().unwrap();
+    let ed25519_public_key: near_sdk::PublicKey = "ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp".parse()
+    .unwrap();
+
+    let random_hex_string_2 = hex::encode(Alphanumeric.sample_string(&mut rand::thread_rng(), 32));
+    let bn254_private_key_bytes = hex::decode(random_hex_string_2).unwrap();
+    let bn254_private_key = PrivateKey::try_from(bn254_private_key_bytes.as_ref()).unwrap();
+    let bn254_public_key = PublicKey::from_private_key(&bn254_private_key);
+    
+    return TestAccount {
+        account_id: "bob_near".to_string().try_into().unwrap(),
+        ed25519_public_key: ed25519_public_key,
+        bn254_private_key: bn254_private_key,
+        bn254_public_key: bn254_public_key,
+    }
 }
 
 pub fn get_context_view() -> VMContext {
@@ -47,9 +73,10 @@ pub fn get_context_for_post_signed_batch(signer_account_id: String) -> VMContext
         .block_index(100000000)
         .build()
 }
-pub fn get_context_with_deposit(signer_account_id: String) -> VMContext {
+pub fn get_context_with_deposit(test_account: TestAccount) -> VMContext {
     VMContextBuilder::new()
-        .signer_account_id(signer_account_id.parse().unwrap())
+        .signer_account_id(test_account.account_id)
+        .signer_account_pk(test_account.ed25519_public_key)
         .is_view(false)
         .attached_deposit(TEST_DEPOSIT_AMOUNT) // required for post_data_request()
         .build()

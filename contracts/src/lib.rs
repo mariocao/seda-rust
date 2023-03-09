@@ -21,7 +21,7 @@ use near_sdk::{
     AccountId,
     Balance,
     BorshStorageKey,
-    PanicOnDefault,
+    PanicOnDefault, PublicKey,
 };
 
 use crate::{
@@ -59,20 +59,20 @@ pub struct MainchainContract {
 
     // TODO: do all of these need to be UnorderedMaps?
     // Nodes that are eligible to participate in the current epoch
-    active_nodes:              UnorderedMap<AccountId, Node>,
+    active_nodes:              UnorderedMap<PublicKey, Node>,
     // Nodes that are not eligible to participate in the current epoch
-    inactive_nodes:            UnorderedMap<AccountId, Node>,
+    inactive_nodes:            UnorderedMap<PublicKey, Node>,
     // Sub-set of inactive nodes that are waiting to be activated
-    pending_nodes:             UnorderedMap<AccountId, EpochHeight>,
+    pending_nodes:             UnorderedMap<PublicKey, EpochHeight>,
     // Sub-set of active nodes that are part of the committee of the current epoch
     // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][SLOTS_PER_EPOCH]
-    committees:                Vec<Vec<AccountId>>,
+    committees:                Vec<Vec<PublicKey>>,
     data_request_accumulator:  Vector<String>,
     num_batches:               BatchHeight,
     batch_ids_by_height:       LookupMap<BatchHeight, BatchId>,
     batch_by_id:               LookupMap<BatchId, Batch>,
     last_total_balance:        Balance,
-    nodes_by_bn254_public_key: LookupMap<Vec<u8>, AccountId>,
+    nodes_by_bn254_public_key: LookupMap<Vec<u8>, PublicKey>,
     random_seed:               CryptoHash,
     bootstrapping_phase:       bool,
     last_processed_epoch:      EpochHeight,
