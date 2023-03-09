@@ -4807,7 +4807,6 @@ dependencies = [
  "async-trait",
  "bn254",
  "futures",
- "jsonrpsee",
  "lazy_static",
  "parking_lot 0.12.1",
  "reqwest",
@@ -5786,6 +5785,7 @@ dependencies = [
  "form_urlencoded",
  "idna 0.3.0",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

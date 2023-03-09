@@ -1,9 +1,8 @@
 use std::{io::Read, sync::Arc};
 
-use jsonrpsee::{core::client::ClientT, rpc_params, ws_client::WsClientBuilder};
 use parking_lot::{Mutex, RwLock};
 use seda_config::{ChainConfigs, NodeConfig};
-use seda_runtime_sdk::{p2p::P2PCommand, CallSelfAction, FromBytes, Promise, PromiseAction, PromiseStatus, RpcAction};
+use seda_runtime_sdk::{p2p::P2PCommand, CallSelfAction, FromBytes, Promise, PromiseAction, PromiseStatus};
 use tokio::sync::mpsc::Sender;
 use tracing::info;
 use wasmer::{Instance, Module, Store};
@@ -244,11 +243,6 @@ impl<HA: HostAdapter> RunnableRuntime for Runtime<HA> {
                             )
                             .await
                             .into();
-                    }
-                    PromiseAction::Rpc(RpcAction { url, method, args }) => {
-                        let client = WsClientBuilder::default().build(&url).await.expect("TODO");
-                        let str_resp: String = client.request(method, rpc_params!(args)).await.expect("TODO");
-                        promise_queue_mut.queue[index].status = PromiseStatus::Fulfilled(Some(str_resp.into_bytes()));
                     }
                     PromiseAction::TriggerEvent(trigger_event_action) => {
                         promise_queue_mut.queue[index].status = self

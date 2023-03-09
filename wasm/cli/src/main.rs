@@ -1,17 +1,6 @@
 use clap::{Parser, Subcommand};
 use seda_runtime_sdk::{
-    wasm::{
-        bn254_sign,
-        call_self,
-        chain_call,
-        chain_view,
-        db_set,
-        http_fetch,
-        log,
-        p2p_broadcast_message,
-        rpc_call,
-        Promise,
-    },
+    wasm::{call_self, chain_call, chain_view, db_set, http_fetch, log, p2p_broadcast_message, Promise},
     Chain,
     FromBytes,
     PromiseStatus,
@@ -29,7 +18,6 @@ struct Options {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    Batch,
     P2p {
         message: String,
     },
@@ -58,12 +46,6 @@ fn main() {
 
     if let Some(command) = options.command {
         match command {
-            Commands::Batch => {
-                rpc_call("ws://127.0.0.1:12345", "", vec![])
-                    .unwrap()
-                    .start()
-                    .then(call_self("", vec![]));
-            }
             Commands::HttpFetch { url } => {
                 http_fetch(&url).start().then(call_self("http_fetch_result", vec![]));
             }
@@ -132,30 +114,4 @@ fn chain_call_test_success() {
     };
     println!("Value: {value_to_store}");
     db_set("chain_call_result", &value_to_store).start();
-}
-
-#[no_mangle]
-fn sign_batch_request() {
-    let result = Promise::result(0);
-    match result {
-        PromiseStatus::Fulfilled(Some(bytes)) => {
-            let result = bn254_sign(&bytes, todo!());
-            p2p_broadcast_message(result.to_compressed().expect("TODO"))
-                .start()
-                .then(call_self("post_broadcast_batch", vec![]));
-        }
-        _ => todo!(),
-    };
-}
-
-#[no_mangle]
-fn post_broadcast_batch() {
-    let result = Promise::result(0);
-    match result {
-        PromiseStatus::Fulfilled(Some(bytes)) => {
-            let str = String::from_bytes_vec(bytes).expect("TODO");
-            log!(seda_runtime_sdk::Level::Debug, "Success: {str}");
-        }
-        _ => todo!(),
-    };
 }

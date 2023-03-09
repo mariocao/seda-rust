@@ -8,7 +8,6 @@ rust-version.workspace = true
 bn254 = { workspace = true }
 async-trait = { workspace = true }
 futures = { workspace = true, features = ["executor"] }
-jsonrpsee = { workspace = true }
 parking_lot = { workspace = true }
 seda-chains = { workspace = true }
 seda-config = { workspace = true }

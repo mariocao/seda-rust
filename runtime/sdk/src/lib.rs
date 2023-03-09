@@ -27,6 +27,5 @@ pub use promises::{
     Promise,
     PromiseAction,
     PromiseStatus,
-    RpcAction,
     TriggerEventAction,
 };

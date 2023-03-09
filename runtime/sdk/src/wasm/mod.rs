@@ -12,7 +12,6 @@ mod memory;
 mod p2p;
 mod promise;
 mod raw;
-mod rpc;
 
 pub use call::*;
 #[cfg(feature = "full")]
@@ -27,6 +26,5 @@ pub use memory::*;
 #[cfg(feature = "full")]
 pub use p2p::*;
 pub use promise::*;
-pub use rpc::*;
 
 pub use self::bn254::*;
