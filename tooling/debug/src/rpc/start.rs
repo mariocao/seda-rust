@@ -19,9 +19,9 @@ impl Start {
         let handle = server.start(rpc.into_rpc())?;
         let spawn_handle = handle.clone();
         tokio::spawn(async move {
-            tokio::signal::ctrl_c().await.expect("failed to listen for event");
+            tokio::signal::ctrl_c().await.expect("Failed to listen ctrl-c signal.");
             println!("Shutting down Seda Test RPC");
-            spawn_handle.stop().expect("TODO");
+            spawn_handle.stop().expect("Failed to stop Seda Test RPC server");
         });
 
         while let Some(shutdown) = rx.recv().await {

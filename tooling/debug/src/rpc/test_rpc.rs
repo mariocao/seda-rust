@@ -20,42 +20,15 @@ use near_primitives::{
         SignedTransactionView,
     },
 };
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
 use crate::Result;
 
-// TODO move to common shared module between contracts and rest of seda
-#[derive(Debug, Deserialize, Serialize, Default)]
-pub struct Batch {
-    pub block_hash:   String,
-    pub block_height: usize,
-    pub logs:         Vec<String>,
-    pub result:       Vec<u8>,
-}
-
-impl Batch {
-    pub fn dummy() -> Self {
-        Self {
-            block_hash: "CJCJu5syUJAvd4hpZTvkKXCLL7AorQKqbzG1VVPHmjPx".to_string(),
-            block_height: 118965159,
-            result: vec![
-                156, 191, 146, 9, 129, 121, 82, 79, 233, 74, 115, 19, 126, 55, 218, 230, 227, 226, 234, 223, 176, 245,
-                34, 101, 245, 155, 196, 69, 19, 245, 153, 244,
-            ],
-            ..Default::default()
-        }
-    }
-}
-
 #[rpc(server)]
 pub trait MockNearRpc {
     #[method(name = "broadcast_tx_async")]
     async fn broadcast_tx_async(&self, args: String) -> Result<CryptoHash, Error>;
-
-    #[method(name = "compute_merkle_root")]
-    async fn compute_merkle_root(&self, args: Vec<String>) -> Result<Batch, Error>;
 
     #[method(name = "query")]
     async fn query(
@@ -90,13 +63,9 @@ impl MockNearRpcServer for MockNearRpc {
         println!("Calling broadcast_tx_async");
         let non_base_64 = near_primitives::serialize::from_base64(&params).unwrap();
 
-        let tx: SignedTransaction = SignedTransaction::try_from_slice(&non_base_64).expect("Foo");
+        let tx: SignedTransaction =
+            SignedTransaction::try_from_slice(&non_base_64).map_err(|e| Error::Custom(e.to_string()))?;
         Ok(tx.get_hash())
-    }
-
-    async fn compute_merkle_root(&self, _: Vec<String>) -> Result<Batch, Error> {
-        println!("Calling compute_merkle_root");
-        Ok(Batch::dummy())
     }
 
     async fn query(
@@ -139,6 +108,16 @@ impl MockNearRpcServer for MockNearRpc {
                     block_height: 119467302,
                     block_hash:   CryptoHash::new(),
                 }),
+                "compute_merkle_root" => Ok(RpcQueryResponse {
+                    kind:         QueryResponseKind::CallResult(CallResult {
+                        // TODO: this needs to be a valid random hash :)
+                        // This can be done in the batch sign pr.
+                        result: serde_json::to_vec_pretty(&json!(vec![0u8; 32])).unwrap(),
+                        logs:   Default::default(),
+                    }),
+                    block_height: 119467302,
+                    block_hash:   CryptoHash::new(),
+                }),
                 _ => unimplemented!(),
             },
             "view_access_key" => Ok(RpcQueryResponse {
@@ -158,7 +137,10 @@ impl MockNearRpcServer for MockNearRpc {
 
     async fn stop_server(&self) -> Result<(), Error> {
         println!("Shutting down Seda Test RPC");
-        self.shutdown_channel.send(true).await.expect("failed to send");
+        self.shutdown_channel
+            .send(true)
+            .await
+            .map_err(|e| Error::Custom(e.to_string()))?;
         Ok(())
     }
 
