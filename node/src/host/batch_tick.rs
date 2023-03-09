@@ -22,7 +22,7 @@ impl<HA: HostAdapter> Handler<BatchTickManager> for Host<HA> {
     fn handle(&mut self, msg: BatchTickManager, ctx: &mut Self::Context) -> Self::Result {
         let event = Event::new("BatchChainTick", EventData::BatchChainTick);
         if let Some(app) = self.app_actor_addr.as_ref() {
-            app.do_send(AddEventToQueue::new(event));
+            app.do_send::<AddEventToQueue>(event.into());
         }
 
         ctx.notify_later(msg, Duration::from_millis(BatchTickManager::BATCH_TICK_INTERVAL));

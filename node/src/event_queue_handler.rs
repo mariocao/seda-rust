@@ -11,8 +11,8 @@ pub struct AddEventToQueue {
     pub event: Event,
 }
 
-impl AddEventToQueue {
-    pub fn new(event: Event) -> Self {
+impl From<Event> for AddEventToQueue {
+    fn from(event: Event) -> Self {
         AddEventToQueue { event }
     }
 }
