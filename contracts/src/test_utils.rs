@@ -76,9 +76,8 @@ pub fn get_context_with_deposit_at_block(signer_account_id: String, block_index:
 
 pub fn generate_bn254_key() -> (PublicKey, PrivateKey) {
     let random_hex_string = hex::encode(Alphanumeric.sample_string(&mut rand::thread_rng(), 32));
-    let private_key_bytes = hex::decode(random_hex_string).unwrap();
 
-    let private_key = PrivateKey::try_from(private_key_bytes.as_ref()).unwrap();
+    let private_key = PrivateKey::try_from(random_hex_string).unwrap();
     let public_key = PublicKey::from_private_key(&private_key);
 
     (public_key, private_key)

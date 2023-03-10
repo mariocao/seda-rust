@@ -5,7 +5,6 @@ use concat_kdf::derive_key;
 use ed25519_dalek::{PublicKey as Ed25519PublicKey, SecretKey as Ed25519PrivateKey, SECRET_KEY_LENGTH};
 mod errors;
 pub use errors::*;
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq)]
@@ -35,11 +34,14 @@ impl KeyPair {
         })
     }
 
-    pub fn save_to_path<P: AsRef<Path>>(&self, path: P) {
-        todo!()
+    pub fn save_to_path<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let pk: Bn254PrivateKey = self.private_key.clone();
+        let hex = String::try_from(pk)?;
+
+        std::fs::write(path, hex)?;
+        Ok(())
     }
 
-    // TODO consider just instantiating OsRng here for convenience
     pub fn generate() -> Self {
         let private_key = Bn254PrivateKey::random(&mut rand::rngs::OsRng);
         let public_key = Bn254PublicKey::from_private_key(&private_key);
@@ -51,6 +53,27 @@ impl KeyPair {
 
     pub fn kind(&self) -> KeyType {
         KeyType::Bn254
+    }
+}
+
+impl TryFrom<&str> for KeyPair {
+    type Error = CryptoError;
+
+    fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
+        let private_key = Bn254PrivateKey::try_from(value)?;
+        let public_key = Bn254PublicKey::from_private_key(&private_key);
+        Ok(Self {
+            private_key,
+            public_key,
+        })
+    }
+}
+
+impl TryFrom<String> for KeyPair {
+    type Error = CryptoError;
+
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        Self::try_from(value.as_str())
     }
 }
 

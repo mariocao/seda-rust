@@ -26,12 +26,12 @@ impl Batch {
 
 #[no_mangle]
 fn batch_step_1() {
-    log!(Level::Debug, "Batch Step 1");
+    log!(Level::Debug, "Batch Step 1, {:?}", &*CONFIG);
     let result = Promise::result(0);
     match result {
         PromiseStatus::Fulfilled(Some(bytes)) => {
             log!(Level::Debug, "{bytes:?}");
-            let result = bn254_sign(&bytes, todo!());
+            let result = bn254_sign(&bytes, &CONFIG.seda_key_pair.private_key);
             p2p_broadcast_message(result.to_compressed().expect("TODO"))
                 .start()
                 .then(call_self("batch_step_2", vec![]));

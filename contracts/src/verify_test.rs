@@ -10,8 +10,7 @@ fn test_verify_signed_msg() {
     let mut contract = new_contract();
 
     // Public key
-    let private_key = hex::decode("2009da7287c158b126123c113d1c85241b6e3294dd75c643588630a8bc0f934c").unwrap();
-    let private_key = PrivateKey::try_from(private_key.as_ref()).unwrap();
+    let private_key = PrivateKey::try_from("2009da7287c158b126123c113d1c85241b6e3294dd75c643588630a8bc0f934c").unwrap();
     let public_key = PublicKey::from_private_key(&private_key).to_compressed().unwrap();
 
     // Signature
@@ -37,8 +36,8 @@ fn test_verify_aggregate_signatures() {
     let msg = hex::decode("73616d706c65").unwrap();
 
     // Signature 1
-    let private_key_1_bytes = hex::decode("1ab1126ff2e37c6e6eddea943ccb3a48f83b380b856424ee552e113595525565").unwrap();
-    let private_key_1 = PrivateKey::try_from(private_key_1_bytes.as_ref()).unwrap();
+    let private_key_1 =
+        PrivateKey::try_from("1ab1126ff2e37c6e6eddea943ccb3a48f83b380b856424ee552e113595525565").unwrap();
     let sign_1 = ECDSA::sign(&msg, &private_key_1).unwrap();
     let sign_1_bytes = sign_1.to_compressed().unwrap();
 
@@ -46,8 +45,8 @@ fn test_verify_aggregate_signatures() {
     let public_key_1_bytes = public_key_1.to_compressed().unwrap();
 
     // Signature 2
-    let secret_key_2_bytes = hex::decode("2009da7287c158b126123c113d1c85241b6e3294dd75c643588630a8bc0f934c").unwrap();
-    let private_key_2 = PrivateKey::try_from(secret_key_2_bytes.as_ref()).unwrap();
+    let private_key_2 =
+        PrivateKey::try_from("2009da7287c158b126123c113d1c85241b6e3294dd75c643588630a8bc0f934c").unwrap();
     let sign_2 = ECDSA::sign(&msg, &private_key_2).unwrap();
     let sign_2_bytes = sign_2.to_compressed().unwrap();
 

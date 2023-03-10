@@ -65,15 +65,15 @@ impl PartialNodeConfig {
         let seda_key_pair = match (seda_sk_file_path, seda_secret_key) {
             (None, None) => {
                 let kp = KeyPair::generate();
-                kp.save_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH);
+                kp.save_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
                 kp
             }
             (Some(path), None) => {
                 let kp = KeyPair::generate();
-                kp.save_to_path(path);
+                kp.save_to_path(path)?;
                 kp
             }
-            (Some(_), Some(sk_str)) | (None, Some(sk_str)) => todo!(),
+            (Some(_), Some(sk_str)) | (None, Some(sk_str)) => KeyPair::try_from(sk_str)?,
         };
 
         let signer_account_id = merge_config_cli!(

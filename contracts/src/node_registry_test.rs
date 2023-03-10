@@ -241,10 +241,7 @@ fn deposit_withdraw() {
     );
 
     // check alice is not active
-    assert_eq!(
-        contract.is_node_active("alice_near".to_string().try_into().unwrap()),
-        false
-    );
+    assert!(!contract.is_node_active("alice_near".to_string().try_into().unwrap()));
 
     // check alice's deposited amount
     let node_balance = contract.get_node_balance("alice_near".to_string().try_into().unwrap());

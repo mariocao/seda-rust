@@ -154,7 +154,7 @@ fn bn254_sign_test() {
     // Private Key
     let private_key_hex = args.get(2).unwrap();
     let private_key_bytes = decode_hex(private_key_hex).unwrap();
-    let private_key = Bn254PrivateKey::try_from(private_key_bytes.as_ref()).unwrap();
+    let private_key = Bn254PrivateKey::try_from(private_key_bytes.as_slice()).unwrap();
 
     let result = bn254_sign(&message, &private_key);
     let result_hex = encode_hex(&result.to_compressed().unwrap());

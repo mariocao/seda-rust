@@ -380,7 +380,7 @@ pub fn bn254_sign_import_obj(store: &Store, vm_context: VmContext) -> Function {
         let private_key: Vec<u8> = private_key.into_iter().map(|wc| wc.get()).collect();
 
         // `bn254` sign
-        let private_key_obj = bn254::PrivateKey::try_from(private_key.as_ref())?;
+        let private_key_obj = bn254::PrivateKey::try_from(private_key.as_slice())?;
         let signature = bn254::ECDSA::sign(&message, &private_key_obj)?;
         let result = signature.to_compressed()?;
 

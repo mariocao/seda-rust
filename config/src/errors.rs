@@ -1,3 +1,4 @@
+use seda_crypto::CryptoError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -20,6 +21,8 @@ pub enum ConfigError {
     FailedToGetCurrentDir(String),
     #[error("Unwanted config field `{0}`, due security concerns")]
     UnwantedConfig(String),
+    #[error(transparent)]
+    CryptoError(#[from] CryptoError),
 }
 
 impl From<String> for ConfigError {
