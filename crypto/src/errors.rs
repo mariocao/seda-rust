@@ -9,3 +9,5 @@ pub enum CryptoError {
     #[error("Couldn't convert phrase to mnemonic type: {0}")]
     PhraseConversion(String),
 }
+
+pub type Result<T, E = CryptoError> = core::result::Result<T, E>;

@@ -12,6 +12,7 @@ delegate-cli = []
 [dependencies]
 clap = { workspace = true, features = ["derive", "std"], optional = true }
 lazy_static = { workspace = true }
+seda-crypto = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

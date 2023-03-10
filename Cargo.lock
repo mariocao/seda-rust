@@ -529,11 +529,12 @@ dependencies = [
 [[package]]
 name = "bn254"
 version = "0.0.1"
-source = "git+https://github.com/sedaprotocol/bn254?branch=main#cc70b67b984461234b41dc046e9dc27c5ad9a42a"
+source = "git+https://github.com/sedaprotocol/bn254?branch=feat/derives#1f22b02e57bbf81d5d95c61570daecc5e24d7c84"
 dependencies = [
  "borsh",
  "byteorder",
  "rand 0.8.5",
+ "serde",
  "sha2 0.10.6",
  "thiserror",
  "zeropool-bn",
@@ -4669,6 +4670,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "lazy_static",
+ "seda-crypto",
  "serde",
  "serde_json",
  "thiserror",
@@ -4684,10 +4686,10 @@ dependencies = [
  "concat-kdf",
  "ed25519-dalek",
  "hex",
- "rand 0.7.3",
+ "rand 0.8.5",
+ "serde",
  "sha2 0.10.6",
  "thiserror",
- "tokio",
 ]
 
 [[package]]
@@ -4770,7 +4772,6 @@ dependencies = [
  "hex",
  "jsonrpsee",
  "parking_lot 0.12.1",
- "rand 0.7.3",
  "reqwest",
  "rusqlite",
  "seda-chains",
