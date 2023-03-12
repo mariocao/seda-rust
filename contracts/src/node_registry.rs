@@ -243,6 +243,7 @@ impl MainchainContract {
     }
 
     /// Updates one of the node's fields
+    #[payable]
     pub fn update_node(&mut self, command: UpdateNode) {
         let account_id = env::signer_account_id();
         let mut node = self.get_expect_node(account_id.clone());
@@ -271,6 +272,7 @@ impl MainchainContract {
     }
 
     /// Withdraws the balance for given account.
+    #[payable]
     pub fn withdraw(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
         let amount: Balance = amount.into();
         self.internal_withdraw(amount, ed25519_public_key);

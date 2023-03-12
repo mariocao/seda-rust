@@ -17,6 +17,7 @@ impl MainchainContract {
         env::block_height() / (NEAR_BLOCKS_PER_SEDA_SLOT * SLOTS_PER_EPOCH)
     }
 
+    #[payable]
     pub fn process_epoch(&mut self) {
         manage_storage_deposit!(self, "require", {
             // check if epoch has already been processed
