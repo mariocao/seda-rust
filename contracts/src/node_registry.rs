@@ -5,26 +5,35 @@ use near_sdk::{
     log,
     near_bindgen,
     serde::{Deserialize, Serialize},
-    Balance, PublicKey,
+    AccountId,
+    Balance,
 };
 
 use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt};
 
+#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
+pub struct StakingInfo {
+    pub node_ed25519_public_key: Vec<u8>,
+    pub amount:                  Balance,
+}
+
 /// Node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone, Default)]
 pub struct Node {
-    pub multi_addr:       String,
-    pub balance:          Balance,
-    pub bn254_public_key: Vec<u8>,
+    pub multi_addr:         String,
+    pub balance:            Balance,
+    pub ed25519_public_key: Vec<u8>,
+    pub bn254_public_key:   Vec<u8>,
 }
 
 /// Human-readable node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
 pub struct HumanReadableNode {
-    pub public_key:       PublicKey,
-    pub multi_addr:       String,
-    pub balance:          Balance,
-    pub bn254_public_key: Vec<u8>,
+    pub account_id:         AccountId,
+    pub multi_addr:         String,
+    pub balance:            Balance,
+    pub ed25519_public_key: Vec<u8>,
+    pub bn254_public_key:   Vec<u8>,
 }
 
 /// Update node commands
@@ -35,61 +44,93 @@ pub enum UpdateNode {
 
 /// Contract private methods
 impl MainchainContract {
-    pub fn internal_get_node(&self, public_key: &PublicKey) -> Option<Node> {
-        let active_node = self.active_nodes.get(public_key);
+    pub fn internal_get_node(&self, account_id: &AccountId) -> Option<Node> {
+        let active_node = self.active_nodes.get(account_id);
         if let Some(node) = active_node {
             return Some(node);
         }
-        let inactive_node = self.inactive_nodes.get(public_key);
+        let inactive_node = self.inactive_nodes.get(account_id);
         if let Some(node) = inactive_node {
             return Some(node);
         }
         None
     }
 
-    pub fn get_expect_node(&self, public_key: PublicKey) -> Node {
-        self.internal_get_node(&public_key).expect("Node does not exist")
+    pub fn get_expect_node(&self, account_id: AccountId) -> Node {
+        self.internal_get_node(&account_id).expect("Node does not exist")
     }
 
-    pub fn handle_node_balance_update(&mut self, public_key: &PublicKey, node: &Node) {
+    pub fn get_expect_node_by_ed25519_public_key(&self, ed25519_public_key: Vec<u8>) -> Node {
+        let account_id = self
+            .nodes_by_ed25519_public_key
+            .get(&ed25519_public_key)
+            .expect("Node does not exist");
+        self.internal_get_node(&account_id).expect("Node does not exist")
+    }
+
+    pub fn handle_node_balance_update(&mut self, account_id: &AccountId, node: &Node) {
         // if minimum stake is reached, make sure node is active or set epoch when
         // eligible for committee selection
         if node.balance >= self.config.minimum_stake {
             // minimum stake is reached, if not already an active node, set the epoch when
             // eligible for committee selection
-            if self.active_nodes.get(public_key).is_some() {
+            if self.active_nodes.get(account_id).is_some() {
                 // node is already active
-                self.active_nodes.insert(public_key, node);
+                self.active_nodes.insert(account_id, node);
             } else {
                 // node is not active, set epoch when eligible for committee selection
                 let epoch_when_eligible = self.get_current_epoch() + self.config.epoch_delay_for_election;
-                self.inactive_nodes.insert(public_key, node);
-                self.pending_nodes.insert(public_key, &epoch_when_eligible);
+                self.inactive_nodes.insert(account_id, node);
+                self.pending_nodes.insert(account_id, &epoch_when_eligible);
             }
         } else {
             // minimum stake is not reached, check if node is active
-            if self.active_nodes.get(public_key).is_some() {
+            if self.active_nodes.get(account_id).is_some() {
                 // node is active, remove from active nodes and add to inactive nodes
-                self.active_nodes.remove(public_key);
-                self.inactive_nodes.insert(public_key, node);
+                self.active_nodes.remove(account_id);
+                self.inactive_nodes.insert(account_id, node);
             } else {
                 // node is not active, update inactive nodes
-                self.inactive_nodes.insert(public_key, node);
+                self.inactive_nodes.insert(account_id, node);
             }
         }
     }
 
-    pub fn internal_deposit(&mut self, amount: Balance) {
+    pub fn internal_deposit(&mut self, amount: Balance, ed25519_public_key: Vec<u8>) {
         manage_storage_deposit!(self, "require", {
             let account_id = env::signer_account_id();
-            let public_key = env::signer_account_pk();
+            log!("Deposit {} from {}", amount, account_id);
 
             // subtract from user balance and add to contract balance
             let new_user_balance = self.token.accounts.get(&account_id).unwrap() - amount;
             self.token.accounts.insert(&account_id, &new_user_balance);
-            let mut node = self.get_expect_node(public_key.clone());
+            let mut node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
             node.balance += amount;
-            self.handle_node_balance_update(&public_key, &node);
+            self.handle_node_balance_update(&account_id, &node);
+
+            // update staking info for depositor
+            let staker = self.stakers.get(&account_id);
+            if staker.is_none() {
+                let staking_info = vec![StakingInfo {
+                    node_ed25519_public_key: ed25519_public_key,
+                    amount,
+                }];
+                self.stakers.insert(&account_id, &staking_info);
+            } else {
+                // find the staking info for this node or create a new one
+                let mut staking_info = staker.unwrap();
+                if let Some(staking_info) = staking_info
+                    .iter_mut()
+                    .find(|x| x.node_ed25519_public_key == ed25519_public_key)
+                {
+                    staking_info.amount += amount;
+                } else {
+                    staking_info.push(StakingInfo {
+                        node_ed25519_public_key: ed25519_public_key,
+                        amount,
+                    });
+                }
+            }
 
             // update the total balance of the contract
             self.last_total_balance += amount;
@@ -98,29 +139,52 @@ impl MainchainContract {
         });
     }
 
-    pub fn internal_withdraw(&mut self, amount: Balance) {
+    pub fn internal_withdraw(&mut self, amount: Balance, ed25519_public_key: Vec<u8>) {
         // TODO: epoch delay for withdrawal
         manage_storage_deposit!(self, "require", {
             assert!(amount > 0, "Withdrawal amount should be positive");
-            let public_key = env::signer_account_pk();
-            let mut node = self.get_expect_node(public_key.clone());
-            env::log_str(format!("{:?} balance is {}", public_key, node.balance).as_str());
+            let account_id = env::signer_account_id();
+            let mut node = self.get_expect_node(account_id.clone());
+            env::log_str(format!("{:?} balance is {}", account_id, node.balance).as_str());
             assert!(node.balance >= amount, "Not enough balance to withdraw");
+
+            // find the staking info for this node
+            let staker = self.stakers.get(&account_id);
+            assert!(staker.is_some(), "No staking info found for this account");
+            let mut staker_vec = staker.clone().unwrap();
+            // find the staking info for this node
+            let staking_info = staker_vec
+                .iter_mut()
+                .find(|x| x.node_ed25519_public_key == ed25519_public_key)
+                .expect("No staking info found for this node");
+            log!("Staking info: {:?}", staking_info);
+            assert!(staking_info.amount >= amount, "Not enough balance to withdraw");
 
             // subtract from contract balance and add to user balance
             let account_id = env::signer_account_id();
             let new_user_balance = self.token.accounts.get(&account_id).unwrap() + amount;
             self.token.accounts.insert(&account_id, &new_user_balance);
             node.balance -= amount;
-            self.handle_node_balance_update(&public_key, &node);
+            self.handle_node_balance_update(&account_id, &node);
+
+            // TODO: this is a f**king mess, we need to use a map from NEAR collection types
+            // remove old staking_info from staker_vec
+            let mut staker_vec = staker.unwrap();
+            staker_vec.retain(|x| x.node_ed25519_public_key != ed25519_public_key);
+            // update staking info
+            staking_info.amount -= amount;
+            // add back to staker_vec
+            staker_vec.push(staking_info.clone());
+            // update stakers
+            self.stakers.insert(&account_id, &staker_vec);
 
             // update global balance
             self.last_total_balance -= amount;
 
             env::log_str(
                 format!(
-                    "@{:?} withdrawing {}. New balance is {}",
-                    public_key, amount, node.balance
+                    "@{} withdrawing {}. New balance is {}",
+                    account_id, amount, node.balance
                 )
                 .as_str(),
             );
@@ -135,12 +199,16 @@ impl MainchainContract {
     #[payable]
     pub fn register_node(&mut self, multi_addr: String, bn254_public_key: Vec<u8>, signature: Vec<u8>) {
         let account_id = env::signer_account_id();
-        let public_key = env::signer_account_pk();
+        let ed25519_public_key = env::signer_account_pk().into_bytes().to_vec();
 
-        // assert unique bn254_public_key
+        // assert unique bn254_public_key and ed25519_public_key
         assert!(
             !self.nodes_by_bn254_public_key.contains_key(&bn254_public_key.clone()),
             "bn254_public_key already exists"
+        );
+        assert!(
+            !self.nodes_by_ed25519_public_key.contains_key(&ed25519_public_key),
+            "ed25519_public_key already exists"
         );
 
         // verify the signature
@@ -150,81 +218,87 @@ impl MainchainContract {
         );
 
         // create a new node
-        log!("{:?} registered node", public_key);
+        log!("{} registered node", account_id);
         let node = Node {
             multi_addr,
             balance: 0,
+            ed25519_public_key,
             bn254_public_key: bn254_public_key.clone(),
         };
 
         manage_storage_deposit!(self, "require", {
             // insert in inactive nodes
-            self.inactive_nodes.insert(&public_key, &node);
+            self.inactive_nodes.insert(&account_id, &node);
 
-            // insert in nodes_by_bn254_public_key
-            self.nodes_by_bn254_public_key.insert(&bn254_public_key, &public_key);
+            // insert in nodes_by_bn254_public_key and nodes_by_ed25519_public_key
+            self.nodes_by_bn254_public_key.insert(&bn254_public_key, &account_id);
+            self.nodes_by_ed25519_public_key
+                .insert(&node.ed25519_public_key, &account_id);
         });
     }
 
     /// Updates one of the node's fields
     pub fn update_node(&mut self, command: UpdateNode) {
-        let public_key = env::signer_account_pk();
-        let mut node = self.get_expect_node(public_key.clone());
+        let account_id = env::signer_account_id();
+        let mut node = self.get_expect_node(account_id.clone());
 
         match command {
             UpdateNode::SetSocketAddress(new_multi_addr) => {
-                log!("{:?} updated node multi_addr to {}", public_key, new_multi_addr);
+                log!("{} updated node multi_addr to {}", account_id, new_multi_addr);
                 node.multi_addr = new_multi_addr;
             }
         }
 
         manage_storage_deposit!(self, {
-            if self.active_nodes.get(&public_key).is_some() {
-                self.active_nodes.insert(&public_key, &node);
+            if self.active_nodes.get(&account_id).is_some() {
+                self.active_nodes.insert(&account_id, &node);
             } else {
-                self.inactive_nodes.insert(&public_key, &node);
+                self.inactive_nodes.insert(&account_id, &node);
             }
         });
     }
 
-    pub fn deposit(&mut self, amount: U128) {
+    /// Deposits the given amount to the given account.
+    #[payable]
+    pub fn deposit(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
         let amount: Balance = amount.into();
-        self.internal_deposit(amount);
+        self.internal_deposit(amount, ed25519_public_key);
     }
 
     /// Withdraws the balance for given account.
-    pub fn withdraw(&mut self, amount: U128) {
+    pub fn withdraw(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
         let amount: Balance = amount.into();
-        self.internal_withdraw(amount);
+        self.internal_withdraw(amount, ed25519_public_key);
     }
 
-    /// Withdraws the entire balance from the predecessor account.
-    pub fn withdraw_all(&mut self) {
-        let public_key = env::signer_account_pk();
-        let account = self.get_expect_node(public_key);
-        self.internal_withdraw(account.balance);
+    /// Withdraws the entire balance for given account.
+    pub fn withdraw_all(&mut self, ed25519_public_key: Vec<u8>) {
+        let account_id = env::signer_account_id();
+        let account = self.get_expect_node(account_id);
+        self.internal_withdraw(account.balance, ed25519_public_key);
     }
 
     /*************** */
     /* View methods */
     /*************** */
 
-    pub fn is_node_active(&self, public_key: PublicKey) -> bool {
-        self.active_nodes.get(&public_key).is_some()
+    pub fn is_node_active(&self, account_id: AccountId) -> bool {
+        self.active_nodes.get(&account_id).is_some()
     }
 
     /// Returns the balance of the given account.
-    pub fn get_node_balance(&self, public_key: PublicKey) -> U128 {
-        U128(self.internal_get_node(&public_key).unwrap().balance)
+    pub fn get_node_balance(&self, account_id: AccountId) -> U128 {
+        U128(self.internal_get_node(&account_id).unwrap().balance)
     }
 
-    pub fn get_node(&self, public_key: PublicKey) -> Option<HumanReadableNode> {
-        let node = self.internal_get_node(&public_key);
+    pub fn get_node(&self, account_id: AccountId) -> Option<HumanReadableNode> {
+        let node = self.internal_get_node(&account_id);
         if let Some(node) = node {
             Some(HumanReadableNode {
-                public_key:       public_key,
-                multi_addr:       node.multi_addr,
-                balance:          node.balance,
+                account_id,
+                multi_addr: node.multi_addr,
+                balance: node.balance,
+                ed25519_public_key: node.ed25519_public_key,
                 bn254_public_key: node.bn254_public_key,
             })
         } else {
@@ -240,15 +314,44 @@ impl MainchainContract {
             if let Some(node_id) = self.active_nodes.keys().nth(index as usize - 1) {
                 let node = self.active_nodes.get(&node_id).unwrap();
                 let human_readable_node = HumanReadableNode {
-                    public_key:       node_id,
-                    multi_addr:       node.multi_addr,
-                    balance:          node.balance,
-                    bn254_public_key: node.bn254_public_key,
+                    account_id:         node_id,
+                    multi_addr:         node.multi_addr,
+                    balance:            node.balance,
+                    ed25519_public_key: node.ed25519_public_key,
+                    bn254_public_key:   node.bn254_public_key,
                 };
                 nodes.push(human_readable_node);
             }
             index -= 1;
         }
         nodes
+    }
+
+    pub fn get_staker(&self, account_id: AccountId) -> Option<Vec<StakingInfo>> {
+        self.stakers.get(&account_id)
+    }
+
+    pub fn get_node_by_ed25519_public_key(&self, ed25519_public_key: Vec<u8>) -> HumanReadableNode {
+        let account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+        let node = self.internal_get_node(&account_id).unwrap();
+        HumanReadableNode {
+            account_id,
+            multi_addr: node.multi_addr,
+            balance: node.balance,
+            ed25519_public_key: node.ed25519_public_key,
+            bn254_public_key: node.bn254_public_key,
+        }
+    }
+
+    pub fn get_node_by_bn254_public_key(&self, bn254_public_key: Vec<u8>) -> HumanReadableNode {
+        let account_id = self.nodes_by_bn254_public_key.get(&bn254_public_key).unwrap();
+        let node = self.internal_get_node(&account_id).unwrap();
+        HumanReadableNode {
+            account_id,
+            multi_addr: node.multi_addr,
+            balance: node.balance,
+            ed25519_public_key: node.ed25519_public_key,
+            bn254_public_key: node.bn254_public_key,
+        }
     }
 }

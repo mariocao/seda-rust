@@ -1,12 +1,12 @@
 use bn254::{PrivateKey, PublicKey, ECDSA};
 use near_sdk::testing_env;
 
-use super::test_utils::{get_context, new_contract};
+use super::test_utils::{bob, get_context, new_contract};
 
 /// Test `ECDSA::verify` function with own signed message
 #[test]
 fn test_verify_signed_msg() {
-    testing_env!(get_context("bob_near".to_string()));
+    testing_env!(get_context(bob()));
     let mut contract = new_contract();
 
     // Public key
@@ -29,7 +29,7 @@ fn test_verify_signed_msg() {
 /// Test aggregate signature verification
 #[test]
 fn test_verify_aggregate_signatures() {
-    testing_env!(get_context("bob_near".to_string()));
+    testing_env!(get_context(bob()));
     let mut contract = new_contract();
 
     // Message

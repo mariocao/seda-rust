@@ -44,13 +44,13 @@ impl MainchainContract {
         &mut self,
         aggregate_signature: Vec<u8>,
         aggregate_public_key: Vec<u8>,
-        signers: Vec<near_sdk::PublicKey>,
+        signers: Vec<AccountId>,
     ) {
         // require a committee member call this function
         // TODO: require the slot leader to call this function instead of any committee
         // member
         assert!(
-            self.committees[0].contains(&env::signer_account_pk()),
+            self.committees[0].contains(&env::signer_account_id()),
             "Caller must be a committee member"
         );
 

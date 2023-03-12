@@ -21,8 +21,9 @@ use near_sdk::{
     AccountId,
     Balance,
     BorshStorageKey,
-    PanicOnDefault, PublicKey,
+    PanicOnDefault,
 };
+use node_registry::StakingInfo;
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
@@ -42,6 +43,8 @@ enum MainchainStorageKeys {
     BatchIdsByHeight,
     BatchById,
     NodesByBn254PublicKey,
+    NodesByEd25519PublicKey,
+    Stakers,
 }
 
 /// Contract global state
@@ -59,23 +62,26 @@ pub struct MainchainContract {
 
     // TODO: do all of these need to be UnorderedMaps?
     // Nodes that are eligible to participate in the current epoch
-    active_nodes:              UnorderedMap<PublicKey, Node>,
+    active_nodes:                UnorderedMap<AccountId, Node>,
     // Nodes that are not eligible to participate in the current epoch
-    inactive_nodes:            UnorderedMap<PublicKey, Node>,
+    inactive_nodes:              UnorderedMap<AccountId, Node>,
     // Sub-set of inactive nodes that are waiting to be activated
-    pending_nodes:             UnorderedMap<PublicKey, EpochHeight>,
+    pending_nodes:               UnorderedMap<AccountId, EpochHeight>,
     // Sub-set of active nodes that are part of the committee of the current epoch
     // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][SLOTS_PER_EPOCH]
-    committees:                Vec<Vec<PublicKey>>,
-    data_request_accumulator:  Vector<String>,
-    num_batches:               BatchHeight,
-    batch_ids_by_height:       LookupMap<BatchHeight, BatchId>,
-    batch_by_id:               LookupMap<BatchId, Batch>,
-    last_total_balance:        Balance,
-    nodes_by_bn254_public_key: LookupMap<Vec<u8>, PublicKey>,
-    random_seed:               CryptoHash,
-    bootstrapping_phase:       bool,
-    last_processed_epoch:      EpochHeight,
+    committees:                  Vec<Vec<AccountId>>,
+    data_request_accumulator:    Vector<String>,
+    num_batches:                 BatchHeight,
+    batch_ids_by_height:         LookupMap<BatchHeight, BatchId>,
+    batch_by_id:                 LookupMap<BatchId, Batch>,
+    last_total_balance:          Balance,
+    nodes_by_bn254_public_key:   LookupMap<Vec<u8>, AccountId>,
+    nodes_by_ed25519_public_key: LookupMap<Vec<u8>, AccountId>,
+    stakers:                     LookupMap<AccountId, Vec<StakingInfo>>, /* TODO: we should probably use a nested
+                                                                          * NEAR collection type here */
+    random_seed:                 CryptoHash,
+    bootstrapping_phase:         bool,
+    last_processed_epoch:        EpochHeight,
 }
 
 /// Contract public methods
@@ -108,6 +114,8 @@ impl MainchainContract {
             batch_by_id: LookupMap::new(MainchainStorageKeys::BatchById),
             last_total_balance: 0,
             nodes_by_bn254_public_key: LookupMap::new(MainchainStorageKeys::NodesByBn254PublicKey),
+            nodes_by_ed25519_public_key: LookupMap::new(MainchainStorageKeys::NodesByEd25519PublicKey),
+            stakers: LookupMap::new(MainchainStorageKeys::Stakers),
             random_seed: CryptoHash::default(),
             bootstrapping_phase: true,
             last_processed_epoch: 0,
