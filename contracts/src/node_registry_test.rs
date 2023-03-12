@@ -258,7 +258,7 @@ fn deposit_withdraw() {
 }
 
 #[test]
-#[should_panic(expected = "No staking info found for this account")]
+#[should_panic(expected = "No deposit info found for this account")]
 fn withdraw_wrong_account() {
     let mut contract = new_contract();
     let deposit_amount = U128(100_000_000_000_000_000_000_000);

@@ -11,8 +11,9 @@ use near_sdk::{
 
 use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt};
 
+/// Deposit info for one account to a node
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
-pub struct StakingInfo {
+pub struct DepositInfo {
     pub node_ed25519_public_key: Vec<u8>,
     pub amount:                  Balance,
 }
@@ -108,28 +109,28 @@ impl MainchainContract {
             let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
             self.handle_node_balance_update(&node_account_id, &node);
 
-            // update staking info for depositor
-            let staker = self.stakers.get(&depositor_account_id);
-            if staker.is_none() {
-                let staking_info = vec![StakingInfo {
+            // update info for depositor
+            let depositor = self.depositors.get(&depositor_account_id);
+            if depositor.is_none() {
+                let deposit_info = vec![DepositInfo {
                     node_ed25519_public_key: ed25519_public_key,
                     amount,
                 }];
-                self.stakers.insert(&depositor_account_id, &staking_info);
+                self.depositors.insert(&depositor_account_id, &deposit_info);
             } else {
-                // find the staking info for this node or create a new one
-                let mut staking_info = staker.unwrap();
-                if let Some(staking_info) = staking_info
+                // find the deposit info for this node or create a new one
+                let mut deposit_info = depositor.unwrap();
+                if let Some(deposit_info) = deposit_info
                     .iter_mut()
                     .find(|x| x.node_ed25519_public_key == ed25519_public_key)
                 {
-                    staking_info.amount += amount;
+                    deposit_info.amount += amount;
                 } else {
-                    staking_info.push(StakingInfo {
+                    deposit_info.push(DepositInfo {
                         node_ed25519_public_key: ed25519_public_key,
                         amount,
                     });
-                    self.stakers.insert(&depositor_account_id, &staking_info);
+                    self.depositors.insert(&depositor_account_id, &deposit_info);
                 }
             }
 
@@ -138,7 +139,7 @@ impl MainchainContract {
 
             env::log_str(
                 format!(
-                    "@{} deposited {} into {}'s pool. New balance is {}",
+                    "@{} deposited {} into {}'s node. New balance is {}",
                     depositor_account_id, amount, node_account_id, node.balance
                 )
                 .as_str(),
@@ -153,46 +154,42 @@ impl MainchainContract {
             let mut node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
             assert!(node.balance >= amount, "Not enough balance to withdraw");
 
-            // find the staking info for this node
-            let account_id = env::signer_account_id();
-            let staker = self.stakers.get(&account_id);
-            assert!(staker.is_some(), "No staking info found for this account");
-            log!("Staker in withdraw: {:?}", staker);
-            let mut staker_vec = staker.clone().unwrap();
-            // find the staking info for this node
-            let staking_info = staker_vec
+            // find depositor info for this node
+            let depositor_account_id = env::signer_account_id();
+            let depositor = self.depositors.get(&depositor_account_id);
+            assert!(depositor.is_some(), "No deposit info found for this account");
+            let mut depositor_vec = depositor.clone().unwrap();
+            let deposit_info = depositor_vec
                 .iter_mut()
                 .find(|x| x.node_ed25519_public_key == ed25519_public_key)
-                .expect("No staking info found for this node");
-            log!("Staking info: {:?}", staking_info);
-            assert!(staking_info.amount >= amount, "Not enough balance to withdraw");
+                .expect("No deposit info found for this node");
+            assert!(deposit_info.amount >= amount, "Not enough balance to withdraw");
 
             // subtract from contract balance and add to user balance
-            let account_id = env::signer_account_id();
-            let new_user_balance = self.token.accounts.get(&account_id).unwrap() + amount;
-            self.token.accounts.insert(&account_id, &new_user_balance);
+            let new_user_balance = self.token.accounts.get(&depositor_account_id).unwrap() + amount;
+            self.token.accounts.insert(&depositor_account_id, &new_user_balance);
             node.balance -= amount;
             let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
             self.handle_node_balance_update(&node_account_id, &node);
 
             // TODO: this is a f**king mess, we need to use a map from NEAR collection types
-            // remove old staking_info from staker_vec
-            let mut staker_vec = staker.unwrap();
-            staker_vec.retain(|x| x.node_ed25519_public_key != ed25519_public_key);
-            // update staking info
-            staking_info.amount -= amount;
-            // add back to staker_vec
-            staker_vec.push(staking_info.clone());
-            // update stakers
-            self.stakers.insert(&account_id, &staker_vec);
+            // remove old deposit info from depositor_vec
+            let mut depositor_vec = depositor.unwrap();
+            depositor_vec.retain(|x| x.node_ed25519_public_key != ed25519_public_key);
+            // update deposit info
+            deposit_info.amount -= amount;
+            // add back to depositor_vec
+            depositor_vec.push(deposit_info.clone());
+            // update depositors
+            self.depositors.insert(&depositor_account_id, &depositor_vec);
 
             // update global balance
             self.last_total_balance -= amount;
 
             env::log_str(
                 format!(
-                    "@{} withdrawing {}. New balance is {}",
-                    account_id, amount, node.balance
+                    "@{} withdrawing {} from {}'s node. New balance is {}",
+                    depositor_account_id, node_account_id, amount, node.balance
                 )
                 .as_str(),
             );
@@ -328,8 +325,8 @@ impl MainchainContract {
         nodes
     }
 
-    pub fn get_deposits(&self, account_id: AccountId) -> Option<Vec<StakingInfo>> {
-        self.stakers.get(&account_id)
+    pub fn get_deposits(&self, account_id: AccountId) -> Option<Vec<DepositInfo>> {
+        self.depositors.get(&account_id)
     }
 
     pub fn get_node_by_ed25519_public_key(&self, ed25519_public_key: Vec<u8>) -> HumanReadableNode {

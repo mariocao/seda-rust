@@ -23,7 +23,7 @@ use near_sdk::{
     BorshStorageKey,
     PanicOnDefault,
 };
-use node_registry::StakingInfo;
+use node_registry::DepositInfo;
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
@@ -44,7 +44,7 @@ enum MainchainStorageKeys {
     BatchById,
     NodesByBn254PublicKey,
     NodesByEd25519PublicKey,
-    Stakers,
+    Depositors,
 }
 
 /// Contract global state
@@ -77,7 +77,7 @@ pub struct MainchainContract {
     last_total_balance:          Balance,
     nodes_by_bn254_public_key:   LookupMap<Vec<u8>, AccountId>,
     nodes_by_ed25519_public_key: LookupMap<Vec<u8>, AccountId>,
-    stakers:                     LookupMap<AccountId, Vec<StakingInfo>>, /* TODO: we should probably use a nested
+    depositors:                  LookupMap<AccountId, Vec<DepositInfo>>, /* TODO: we should probably use a nested
                                                                           * NEAR collection type here */
     random_seed:                 CryptoHash,
     bootstrapping_phase:         bool,
@@ -115,7 +115,7 @@ impl MainchainContract {
             last_total_balance: 0,
             nodes_by_bn254_public_key: LookupMap::new(MainchainStorageKeys::NodesByBn254PublicKey),
             nodes_by_ed25519_public_key: LookupMap::new(MainchainStorageKeys::NodesByEd25519PublicKey),
-            stakers: LookupMap::new(MainchainStorageKeys::Stakers),
+            depositors: LookupMap::new(MainchainStorageKeys::Depositors),
             random_seed: CryptoHash::default(),
             bootstrapping_phase: true,
             last_processed_epoch: 0,
