@@ -133,9 +133,10 @@ pub fn get_context_for_ft_transfer(test_account: TestAccount) -> VMContext {
 pub fn get_context_at_block(block_index: u64) -> VMContext {
     VMContextBuilder::new().block_index(block_index).is_view(true).build()
 }
-pub fn get_context_with_deposit_at_block(signer_account_id: String, block_index: u64) -> VMContext {
+pub fn get_context_with_deposit_at_block(test_account: TestAccount, block_index: u64) -> VMContext {
     VMContextBuilder::new()
-        .signer_account_id(signer_account_id.parse().unwrap())
+        .signer_account_id(test_account.account_id.clone())
+        .signer_account_pk(test_account.ed25519_public_key)
         .is_view(false)
         .attached_deposit(TEST_DEPOSIT_AMOUNT) // required for post_data_request()
         .block_index(block_index)

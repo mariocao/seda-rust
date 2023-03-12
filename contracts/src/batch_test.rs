@@ -56,7 +56,7 @@ fn post_signed_batch() {
     contract.deposit(deposit_amount, bob().ed25519_public_key.into_bytes());
 
     // time travel and activate nodes
-    testing_env!(get_context_with_deposit_at_block("bob_near".to_string(), 1000000));
+    testing_env!(get_context_with_deposit_at_block(bob(), 1000000));
     contract.process_epoch();
 
     // assert we have committees for this epoch and the next 2

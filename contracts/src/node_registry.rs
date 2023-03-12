@@ -98,24 +98,24 @@ impl MainchainContract {
 
     pub fn internal_deposit(&mut self, amount: Balance, ed25519_public_key: Vec<u8>) {
         manage_storage_deposit!(self, "require", {
-            let account_id = env::signer_account_id();
-            log!("Deposit {} from {}", amount, account_id);
+            let depositor_account_id = env::signer_account_id();
 
             // subtract from user balance and add to contract balance
-            let new_user_balance = self.token.accounts.get(&account_id).unwrap() - amount;
-            self.token.accounts.insert(&account_id, &new_user_balance);
+            let new_user_balance = self.token.accounts.get(&depositor_account_id).unwrap() - amount;
+            self.token.accounts.insert(&depositor_account_id, &new_user_balance);
             let mut node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
             node.balance += amount;
-            self.handle_node_balance_update(&account_id, &node);
+            let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+            self.handle_node_balance_update(&node_account_id, &node);
 
             // update staking info for depositor
-            let staker = self.stakers.get(&account_id);
+            let staker = self.stakers.get(&depositor_account_id);
             if staker.is_none() {
                 let staking_info = vec![StakingInfo {
                     node_ed25519_public_key: ed25519_public_key,
                     amount,
                 }];
-                self.stakers.insert(&account_id, &staking_info);
+                self.stakers.insert(&depositor_account_id, &staking_info);
             } else {
                 // find the staking info for this node or create a new one
                 let mut staking_info = staker.unwrap();
@@ -129,13 +129,20 @@ impl MainchainContract {
                         node_ed25519_public_key: ed25519_public_key,
                         amount,
                     });
+                    self.stakers.insert(&depositor_account_id, &staking_info);
                 }
             }
 
             // update the total balance of the contract
             self.last_total_balance += amount;
 
-            env::log_str(format!("@{} deposited {}. New balance is {}", account_id, amount, node.balance).as_str());
+            env::log_str(
+                format!(
+                    "@{} deposited {} into {}'s pool. New balance is {}",
+                    depositor_account_id, amount, node_account_id, node.balance
+                )
+                .as_str(),
+            );
         });
     }
 
@@ -143,14 +150,14 @@ impl MainchainContract {
         // TODO: epoch delay for withdrawal
         manage_storage_deposit!(self, "require", {
             assert!(amount > 0, "Withdrawal amount should be positive");
-            let account_id = env::signer_account_id();
-            let mut node = self.get_expect_node(account_id.clone());
-            env::log_str(format!("{:?} balance is {}", account_id, node.balance).as_str());
+            let mut node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
             assert!(node.balance >= amount, "Not enough balance to withdraw");
 
             // find the staking info for this node
+            let account_id = env::signer_account_id();
             let staker = self.stakers.get(&account_id);
             assert!(staker.is_some(), "No staking info found for this account");
+            log!("Staker in withdraw: {:?}", staker);
             let mut staker_vec = staker.clone().unwrap();
             // find the staking info for this node
             let staking_info = staker_vec
@@ -165,7 +172,8 @@ impl MainchainContract {
             let new_user_balance = self.token.accounts.get(&account_id).unwrap() + amount;
             self.token.accounts.insert(&account_id, &new_user_balance);
             node.balance -= amount;
-            self.handle_node_balance_update(&account_id, &node);
+            let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+            self.handle_node_balance_update(&node_account_id, &node);
 
             // TODO: this is a f**king mess, we need to use a map from NEAR collection types
             // remove old staking_info from staker_vec
@@ -271,13 +279,6 @@ impl MainchainContract {
         self.internal_withdraw(amount, ed25519_public_key);
     }
 
-    /// Withdraws the entire balance for given account.
-    pub fn withdraw_all(&mut self, ed25519_public_key: Vec<u8>) {
-        let account_id = env::signer_account_id();
-        let account = self.get_expect_node(account_id);
-        self.internal_withdraw(account.balance, ed25519_public_key);
-    }
-
     /*************** */
     /* View methods */
     /*************** */
@@ -327,7 +328,7 @@ impl MainchainContract {
         nodes
     }
 
-    pub fn get_staker(&self, account_id: AccountId) -> Option<Vec<StakingInfo>> {
+    pub fn get_deposits(&self, account_id: AccountId) -> Option<Vec<StakingInfo>> {
         self.stakers.get(&account_id)
     }
 
