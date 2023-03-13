@@ -382,7 +382,7 @@ fn deposit_withdraw_two_nodes_one_depositor() {
     contract.deposit(U128(deposit_amount.0 / 2), bob().ed25519_public_key.as_bytes().to_vec());
 
     // assert alice has deposits in 2 pools
-    let alice_deposits = contract.get_deposits(alice().account_id).unwrap();
+    let alice_deposits = contract.get_deposits(alice().account_id);
     assert_eq!(alice_deposits.len(), 2);
 
     // check alice's balance is now zero

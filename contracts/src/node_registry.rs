@@ -1,5 +1,6 @@
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
+    collections::UnorderedMap,
     env,
     json_types::{U128, U64},
     log,
@@ -13,11 +14,10 @@ use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt};
 
 /// Deposit info for one account to a node
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
-pub struct DepositInfo {
+pub struct HumanReadableDepositInfo {
     pub node_ed25519_public_key: Vec<u8>,
     pub amount:                  Balance,
 }
-
 /// Node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone, Default)]
 pub struct Node {
@@ -110,29 +110,18 @@ impl MainchainContract {
             self.handle_node_balance_update(&node_account_id, &node);
 
             // update info for depositor
-            let depositor = self.depositors.get(&depositor_account_id);
-            if depositor.is_none() {
-                let deposit_info = vec![DepositInfo {
-                    node_ed25519_public_key: ed25519_public_key,
-                    amount,
-                }];
-                self.depositors.insert(&depositor_account_id, &deposit_info);
-            } else {
-                // find the deposit info for this node or create a new one
-                let mut deposit_info = depositor.unwrap();
-                if let Some(deposit_info) = deposit_info
-                    .iter_mut()
-                    .find(|x| x.node_ed25519_public_key == ed25519_public_key)
-                {
-                    deposit_info.amount += amount;
-                } else {
-                    deposit_info.push(DepositInfo {
-                        node_ed25519_public_key: ed25519_public_key,
-                        amount,
-                    });
-                    self.depositors.insert(&depositor_account_id, &deposit_info);
-                }
-            }
+            let mut depositor = self.depositors.get(&depositor_account_id).unwrap_or_else(|| {
+                // Constructing a unique prefix for a nested UnorderedMap from a concatenation
+                // of a prefix and a hash of the depositor account id.
+                let prefix: Vec<u8> = [
+                    b"d".as_slice(),
+                    &near_sdk::env::sha256_array(depositor_account_id.as_bytes()),
+                ]
+                .concat();
+                UnorderedMap::new(prefix)
+            });
+            depositor.insert(&ed25519_public_key, &amount);
+            self.depositors.insert(&depositor_account_id, &depositor);
 
             // update the total balance of the contract
             self.last_total_balance += amount;
@@ -156,14 +145,14 @@ impl MainchainContract {
 
             // find depositor info for this node
             let depositor_account_id = env::signer_account_id();
-            let depositor = self.depositors.get(&depositor_account_id);
-            assert!(depositor.is_some(), "No deposit info found for this account");
-            let mut depositor_vec = depositor.clone().unwrap();
-            let deposit_info = depositor_vec
-                .iter_mut()
-                .find(|x| x.node_ed25519_public_key == ed25519_public_key)
+            let mut depositor = self
+                .depositors
+                .get(&depositor_account_id)
+                .expect("No deposit info found for this account");
+            let deposited = depositor
+                .get(&ed25519_public_key)
                 .expect("No deposit info found for this node");
-            assert!(deposit_info.amount >= amount, "Not enough balance to withdraw");
+            assert!(deposited >= amount, "Not enough balance to withdraw");
 
             // subtract from contract balance and add to user balance
             let new_user_balance = self.token.accounts.get(&depositor_account_id).unwrap() + amount;
@@ -171,17 +160,8 @@ impl MainchainContract {
             node.balance -= amount;
             let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
             self.handle_node_balance_update(&node_account_id, &node);
-
-            // TODO: this is a f**king mess, we need to use a map from NEAR collection types
-            // remove old deposit info from depositor_vec
-            let mut depositor_vec = depositor.unwrap();
-            depositor_vec.retain(|x| x.node_ed25519_public_key != ed25519_public_key);
-            // update deposit info
-            deposit_info.amount -= amount;
-            // add back to depositor_vec
-            depositor_vec.push(deposit_info.clone());
-            // update depositors
-            self.depositors.insert(&depositor_account_id, &depositor_vec);
+            depositor.insert(&ed25519_public_key, &(deposited - amount));
+            self.depositors.insert(&depositor_account_id, &depositor);
 
             // update global balance
             self.last_total_balance -= amount;
@@ -327,8 +307,16 @@ impl MainchainContract {
         nodes
     }
 
-    pub fn get_deposits(&self, account_id: AccountId) -> Option<Vec<DepositInfo>> {
-        self.depositors.get(&account_id)
+    pub fn get_deposits(&self, account_id: AccountId) -> Vec<HumanReadableDepositInfo> {
+        let depositor = self.depositors.get(&account_id).unwrap();
+        let mut deposits = Vec::new();
+        for deposit in depositor.iter() {
+            deposits.push(HumanReadableDepositInfo {
+                amount:                  deposit.1,
+                node_ed25519_public_key: deposit.0,
+            });
+        }
+        deposits
     }
 
     pub fn get_node_by_ed25519_public_key(&self, ed25519_public_key: Vec<u8>) -> HumanReadableNode {

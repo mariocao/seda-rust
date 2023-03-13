@@ -23,7 +23,6 @@ use near_sdk::{
     BorshStorageKey,
     PanicOnDefault,
 };
-use node_registry::DepositInfo;
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
@@ -77,8 +76,7 @@ pub struct MainchainContract {
     last_total_balance:          Balance,
     nodes_by_bn254_public_key:   LookupMap<Vec<u8>, AccountId>,
     nodes_by_ed25519_public_key: LookupMap<Vec<u8>, AccountId>,
-    depositors:                  LookupMap<AccountId, Vec<DepositInfo>>, /* TODO: we should probably use a nested
-                                                                          * NEAR collection type here */
+    depositors:                  LookupMap<AccountId, UnorderedMap<Vec<u8>, Balance>>,
     random_seed:                 CryptoHash,
     bootstrapping_phase:         bool,
     last_processed_epoch:        EpochHeight,
