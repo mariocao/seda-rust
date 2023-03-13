@@ -837,6 +837,7 @@ name = "consensus"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "hex",
  "seda-runtime-sdk",
  "serde_json",
 ]

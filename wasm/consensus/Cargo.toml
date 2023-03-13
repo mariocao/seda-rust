@@ -11,5 +11,6 @@ clap = { workspace = true, features = [
 	"std",
 	"string",
 ] }
+hex = { workspace = true }
 seda-runtime-sdk = { workspace = true, features = ["full", "wasm"] }
 serde_json = { workspace = true }

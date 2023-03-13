@@ -49,8 +49,8 @@ fn batch_step_1() {
         PromiseStatus::Fulfilled(Some(bytes)) => {
             log!(Level::Debug, "{bytes:?}");
             let result = bn254_sign(&bytes, &pk);
-            // TODO I believe this needs to be hex encoded and decoded
-            p2p_broadcast_message(result.to_compressed().expect("TODO"))
+            let hex = hex::encode(result.to_compressed().expect("TODO"));
+            p2p_broadcast_message(hex.into_bytes())
                 .start()
                 .then(call_self("batch_step_2", vec![]));
         }
