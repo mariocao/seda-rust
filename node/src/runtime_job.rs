@@ -7,6 +7,7 @@ use seda_runtime::{HostAdapter, InMemory, Result, RunnableRuntime, Runtime, VmCo
 use seda_runtime_sdk::{
     events::{Event, EventData},
     p2p::P2PCommand,
+    FromBytes,
 };
 use tokio::sync::mpsc::Sender;
 use tracing::info;
@@ -69,7 +70,7 @@ impl<HA: HostAdapter> Handler<RuntimeJob> for RuntimeWorker<HA> {
             EventData::ChainTick => vec![],
             EventData::CliCall(args) => args,
             // TODO: Make args accept byes only
-            EventData::P2PMessage(message) => vec!["p2p".to_string(), String::from_utf8(message.data).unwrap()],
+            EventData::P2PMessage(message) => vec!["p2p".to_string(), String::from_bytes_vec(message.data).unwrap()],
         };
 
         let vm_config = VmConfig {

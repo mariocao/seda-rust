@@ -33,3 +33,4 @@ seda_log.*
 # Randomly generated mnemonic
 seda_secret_key
 seda_test_sk
+seda_sk
