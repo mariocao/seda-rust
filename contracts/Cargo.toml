@@ -10,12 +10,12 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 bn254 = { workspace = true }
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.2", features = ["custom"], default-features = false}
+rand = {workspace = true, features = ["std"], default-features = false }
 hex = { workspace = true }
 near-contract-standards = { workspace = true }
 near-sdk = { workspace = true, features = ["legacy", "unit-testing"] }
 near-sys = "0.2.0"
-rand = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 sha2 = { workspace = true, features = ["std"] }

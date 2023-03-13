@@ -123,6 +123,7 @@ impl MainchainContract {
 #[path = ""]
 mod tests {
     mod batch_test;
+    mod committee_selection_test;
     mod dao_test;
     mod data_request_test;
     mod fungible_token_test;

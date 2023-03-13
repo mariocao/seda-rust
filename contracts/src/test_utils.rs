@@ -8,7 +8,7 @@ use crate::{
     MainchainContract,
 };
 
-const TEST_DEPOSIT_AMOUNT: Balance = 9_000_000_000_000_000_000_000; // enough deposit to cover storage for all functions that require it
+const TEST_DEPOSIT_AMOUNT: Balance = 9_000_000_000_000_000_000_000_000; // enough deposit to cover storage for all functions that require it
 
 // TODO: only compile this for tests
 

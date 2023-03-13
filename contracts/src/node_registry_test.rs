@@ -90,7 +90,7 @@ fn set_node_multi_addr() {
 #[test]
 fn get_nodes() {
     let mut contract = new_contract();
-    let deposit_amount = U128(100_000_000_000_000_000_000_000);
+    let deposit_amount = U128(100_000_000_000_000_000_000_000_000);
     let (bob_public_key, bob_private_key) = generate_bn254_key();
     let bob_signature = bn254_sign(&bob_private_key, "bob_near".to_string().as_bytes());
     let (alice_public_key, alice_private_key) = generate_bn254_key();
@@ -209,7 +209,7 @@ fn duplicated_key() {
 #[test]
 fn deposit_withdraw() {
     let mut contract = new_contract();
-    let deposit_amount = U128(100_000_000_000_000_000_000_000);
+    let deposit_amount = U128(100_000_000_000_000_000_000_000_000);
 
     // DAO transfers tokens to alice
     testing_env!(get_context_with_deposit("dao_near".to_string(),));

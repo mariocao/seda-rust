@@ -10,12 +10,11 @@ use super::test_utils::{
     get_context_with_deposit_at_block,
     new_contract,
 };
-use crate::consts::SLOTS_PER_EPOCH;
 
 #[test]
 fn post_signed_batch() {
     let mut contract = new_contract();
-    let deposit_amount = U128(100_000_000_000_000_000_000_000);
+    let deposit_amount = U128(100_000_000_000_000_000_000_000_000);
 
     // post some data requests to the accumulator
     testing_env!(get_context_with_deposit("bob_near".to_string()));
@@ -62,9 +61,9 @@ fn post_signed_batch() {
     // assert we have committees for this epoch and the next 2
     assert_eq!(contract.get_committees().len(), 3);
 
-    // assert each committee has SLOTS_PER_EPOCH members
+    // assert each committee has config.committee_size members
     for committee in contract.get_committees() {
-        assert_eq!(committee.len() as u64, SLOTS_PER_EPOCH);
+        assert_eq!(committee.len() as u64, contract.config.committee_size);
     }
 
     // get the merkle root (for all nodes to sign)
