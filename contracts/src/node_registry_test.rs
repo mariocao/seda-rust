@@ -417,3 +417,22 @@ fn deposit_withdraw_two_nodes_one_depositor() {
     let node_balance = contract.get_node_balance("bob_near".to_string().try_into().unwrap());
     assert_eq!(node_balance, U128(0));
 }
+
+#[test]
+#[should_panic(
+    expected = "Node [0, 16, 116, 94, 20, 231, 206, 129, 110, 161, 68, 52, 61, 13, 115, 32, 105, 1, 254, 31, 107, 86, 214, 80, 168, 253, 13, 234, 69, 203, 224, 201, 242] does not exist"
+)]
+fn deposit_nonexistent_node() {
+    let mut contract = new_contract();
+    let deposit_amount = U128(100_000_000_000_000_000_000_000);
+
+    // DAO transfers tokens to alice
+    testing_env!(get_context_with_deposit(dao()));
+    contract.storage_deposit(Some("alice_near".to_string().try_into().unwrap()), None);
+    testing_env!(get_context_for_ft_transfer(dao()));
+    contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
+
+    // alice deposits into pool
+    testing_env!(get_context_with_deposit(alice()));
+    contract.deposit(deposit_amount, alice().ed25519_public_key.as_bytes().to_vec());
+}

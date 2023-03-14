@@ -58,15 +58,17 @@ impl MainchainContract {
     }
 
     pub fn get_expect_node(&self, account_id: AccountId) -> Node {
-        self.internal_get_node(&account_id).expect("Node does not exist")
+        self.internal_get_node(&account_id)
+            .unwrap_or_else(|| panic!("{}", format!("Node {account_id} does not exist")))
     }
 
     pub fn get_expect_node_by_ed25519_public_key(&self, ed25519_public_key: Vec<u8>) -> Node {
         let account_id = self
             .nodes_by_ed25519_public_key
             .get(&ed25519_public_key)
-            .expect("Node does not exist");
-        self.internal_get_node(&account_id).expect("Node does not exist")
+            .unwrap_or_else(|| panic!("Node {:?} does not exist", ed25519_public_key));
+        self.internal_get_node(&account_id)
+            .unwrap_or_else(|| panic!("{}", format!("Node {account_id} does not exist")))
     }
 
     pub fn handle_node_balance_update(&mut self, account_id: &AccountId, node: &Node) {
