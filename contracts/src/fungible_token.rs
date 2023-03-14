@@ -3,6 +3,19 @@ use near_sdk::{json_types::U128, log, near_bindgen, AccountId, Balance, PromiseO
 
 use crate::{MainchainContract, MainchainContractExt};
 
+/// Private contract
+impl MainchainContract {
+    pub fn mint(&mut self, account_id: &AccountId, amount: Balance) {
+        let new_user_balance = self.token.accounts.get(account_id).unwrap() + amount;
+        self.token.accounts.insert(account_id, &new_user_balance);
+    }
+
+    pub fn burn(&mut self, account_id: &AccountId, amount: Balance) {
+        let new_user_balance = self.token.accounts.get(account_id).unwrap() - amount;
+        self.token.accounts.insert(account_id, &new_user_balance);
+    }
+}
+
 /// Public contract methods
 #[near_bindgen]
 impl MainchainContract {

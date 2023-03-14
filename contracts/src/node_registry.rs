@@ -104,8 +104,7 @@ impl MainchainContract {
             let depositor_account_id = env::signer_account_id();
 
             // subtract from user balance and add to contract balance
-            let new_user_balance = self.token.accounts.get(&depositor_account_id).unwrap() - amount;
-            self.token.accounts.insert(&depositor_account_id, &new_user_balance);
+            self.burn(&depositor_account_id, amount);
             let mut node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
             node.balance += amount;
             let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
@@ -152,8 +151,7 @@ impl MainchainContract {
             assert!(deposited >= amount, "Not enough balance to withdraw");
 
             // subtract from contract balance and add to user balance
-            let new_user_balance = self.token.accounts.get(&depositor_account_id).unwrap() + amount;
-            self.token.accounts.insert(&depositor_account_id, &new_user_balance);
+            self.mint(&depositor_account_id, amount);
             node.balance -= amount;
             let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
             self.handle_node_balance_update(&node_account_id, &node);
