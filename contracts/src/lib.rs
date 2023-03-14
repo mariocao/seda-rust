@@ -44,6 +44,7 @@ enum MainchainStorageKeys {
     NodesByBn254PublicKey,
     NodesByEd25519PublicKey,
     Depositors,
+    Depositor { account_hash: [u8; 32] },
 }
 
 /// Contract global state

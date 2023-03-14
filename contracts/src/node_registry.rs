@@ -10,7 +10,7 @@ use near_sdk::{
     Balance,
 };
 
-use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt};
+use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt, MainchainStorageKeys};
 
 /// Deposit info for one account to a node
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
@@ -111,14 +111,9 @@ impl MainchainContract {
 
             // update info for depositor
             let mut depositor = self.depositors.get(&depositor_account_id).unwrap_or_else(|| {
-                // Constructing a unique prefix for a nested UnorderedMap from a concatenation
-                // of a prefix and a hash of the depositor account id.
-                let prefix: Vec<u8> = [
-                    b"d".as_slice(),
-                    &near_sdk::env::sha256_array(depositor_account_id.as_bytes()),
-                ]
-                .concat();
-                UnorderedMap::new(prefix)
+                UnorderedMap::new(MainchainStorageKeys::Depositor {
+                    account_hash: env::sha256_array(depositor_account_id.as_bytes()),
+                })
             });
             depositor.insert(&ed25519_public_key, &amount);
             self.depositors.insert(&depositor_account_id, &depositor);
