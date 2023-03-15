@@ -22,6 +22,7 @@ impl Register {
         let node_config = &config.node.to_config(self.node_config)?;
         let args = RegisterNodeArgs {
             multi_addr:       self.socket_address,
+            // TODO: fix these once we merge in the KeyPair on node config changes.
             bn254_public_key: vec![0; 32],
             signature:        vec![0; 32],
         }
