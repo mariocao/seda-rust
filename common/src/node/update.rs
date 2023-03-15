@@ -6,7 +6,7 @@ use super::*;
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "cli", derive(clap::Subcommand))]
 pub enum UpdateNode {
-    SetSocketAddress { address: String },
+    SetSocketAddress { new_multi_addr: String },
 }
 
 impl ToString for UpdateNode {

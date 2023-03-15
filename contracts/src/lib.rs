@@ -23,12 +23,13 @@ use near_sdk::{
     BorshStorageKey,
     PanicOnDefault,
 };
+
 use node_registry::WithdrawRequest;
+use seda_common::Node;
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
     epoch::EpochHeight,
-    node_registry::Node,
 };
 
 /// Collection keys

@@ -1,54 +1,15 @@
 use near_sdk::{
-    borsh::{self, BorshDeserialize, BorshSerialize},
     collections::{LookupMap, UnorderedMap},
     env,
     json_types::{U128, U64},
     log,
     near_bindgen,
-    serde::{Deserialize, Serialize},
     AccountId,
     Balance,
 };
+use seda_common::{HumanReadableNode, Node, UpdateNode};
 
 use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt, MainchainStorageKeys};
-
-/// Deposit info for one account to a node
-#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
-pub struct HumanReadableDepositInfo {
-    pub node_ed25519_public_key: Vec<u8>,
-    pub amount:                  Balance,
-}
-
-/// Withdraw request info for one account to a node
-#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
-pub struct WithdrawRequest {
-    pub amount: Balance,
-    pub epoch:  u64, // epoch when funds will be available for withdrawal
-}
-/// Node information
-#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone, Default)]
-pub struct Node {
-    pub multi_addr:         String,
-    pub balance:            Balance,
-    pub ed25519_public_key: Vec<u8>,
-    pub bn254_public_key:   Vec<u8>,
-}
-
-/// Human-readable node information
-#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
-pub struct HumanReadableNode {
-    pub account_id:         AccountId,
-    pub multi_addr:         String,
-    pub balance:            Balance,
-    pub ed25519_public_key: Vec<u8>,
-    pub bn254_public_key:   Vec<u8>,
-}
-
-/// Update node commands
-#[derive(Deserialize, Serialize)]
-pub enum UpdateNode {
-    SetSocketAddress(String),
-}
 
 /// Contract private methods
 impl MainchainContract {
@@ -271,7 +232,7 @@ impl MainchainContract {
         let mut node = self.get_expect_node(account_id.clone());
 
         match command {
-            UpdateNode::SetSocketAddress(new_multi_addr) => {
+            UpdateNode::SetSocketAddress { new_multi_addr } => {
                 log!("{} updated node multi_addr to {}", account_id, new_multi_addr);
                 node.multi_addr = new_multi_addr;
             }
