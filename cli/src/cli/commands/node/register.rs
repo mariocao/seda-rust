@@ -1,7 +1,7 @@
 use clap::Args;
+use seda_common::RegisterNodeArgs;
 use seda_config::{AppConfig, PartialChainConfigs, PartialNodeConfig};
 use seda_runtime_sdk::Chain;
-use serde_json::json;
 
 use crate::{cli::commands::call, Result};
 
@@ -20,9 +20,11 @@ impl Register {
         let chains_config = config.chains.to_config(chains_config)?;
 
         let node_config = &config.node.to_config(self.node_config)?;
-        let args = json!({
-                "socket_address": self.socket_address,
-        })
+        let args = RegisterNodeArgs {
+            multi_addr:       self.socket_address,
+            bn254_public_key: vec![0; 32],
+            signature:        vec![0; 32],
+        }
         .to_string();
         call::<String>(
             Chain::Near,

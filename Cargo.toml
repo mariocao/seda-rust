@@ -4,15 +4,17 @@ default-members = ["cli", "delegate-cli"]
 members = [
 	"chains",
 	"cli",
-	"delegate-cli",
+	"common",
+	"contracts",
 	"config",
 	"crypto",
-	"contracts",
+	"delegate-cli",
 	"logger",
 	"node",
 	"p2p",
 	"runtime/core",
 	"runtime/macros",
+	"runtime/sdk",
 	"tooling/debug",
 	"wasm/cli",
 	"wasm/consensus",
@@ -76,6 +78,7 @@ reqwest = "0.11"
 rusqlite = { version = "0.28", features = ["bundled"] }
 schemars = "0.8"
 seda-chains = { path = "./chains" }
+seda-common = { path = "./common" }
 seda-config = { path = "./config" }
 seda-crypto = { path = "./crypto" }
 seda-logger = { path = "./logger" }

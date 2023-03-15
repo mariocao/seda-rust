@@ -4681,6 +4681,7 @@ dependencies = [
  "near-jsonrpc-primitives",
  "near-primitives 0.15.0",
  "seda-chains",
+ "seda-common",
  "seda-config",
  "seda-logger",
  "seda-node",
@@ -4690,6 +4691,18 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "seda-common"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "clap",
+ "near-sdk",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 use clap::Args;
+use seda_common::{GetNodesArgs, HumanReadableNode};
 use seda_config::{AppConfig, PartialChainConfigs};
 use seda_runtime_sdk::Chain;
-use serde_json::json;
 
 use crate::{cli::commands::view, Result};
 
@@ -20,18 +20,7 @@ impl Nodes {
         let chains_config = config.chains.to_config(chains_config)?;
 
         let contract_account_id = config.node.to_contract_account_id(self.contract_id)?;
-        let args = json!({
-                "limit": self.limit.to_string(),
-                "offset": self.offset.to_string(),
-        })
-        .to_string();
-        view::<Vec<super::result::NodeResult>>(
-            Chain::Near,
-            &contract_account_id,
-            "get_nodes",
-            Some(args),
-            &chains_config,
-        )
-        .await
+        let args = GetNodesArgs::from((self.limit, self.offset)).to_string();
+        view::<Vec<HumanReadableNode>>(Chain::Near, &contract_account_id, "get_nodes", args, &chains_config).await
     }
 }
