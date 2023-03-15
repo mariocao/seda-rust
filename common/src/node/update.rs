@@ -1,7 +1,5 @@
 use super::*;
 
-// TODO how to handle this better? Contract wants a tuple style enum, but CLI
-// needs a struct style enum. Talk with @jameson
 /// Update node commands
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[cfg_attr(feature = "cli", derive(clap::Subcommand))]
