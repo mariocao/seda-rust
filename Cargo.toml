@@ -54,17 +54,20 @@ concat-kdf = "0.1"
 dotenv = "0.15"
 ed25519-dalek = "1.0"
 futures = { version = "0.3", default-features = false }
+getrandom = { version = "0.2"}
 hex = "0.4"
 jsonrpsee-types = "0.16"
 jsonrpsee = { version = "0.16", default-features = false }
 lazy_static = "1.4"
 libp2p = { version = "0.50", default-features = false }
+near-bigint = "1.0"
 near-crypto = "0.15"
 near-jsonrpc-client = { version = "0.4", default-features = false }
 near-jsonrpc-primitives = "0.15"
 near-contract-standards = "4.0"
 near-primitives = "0.15"
 near-sdk = { version = "4.0", default-features = false }
+near-sys = "0.2"
 near-units = "0.2"
 parking_lot = "0.12"
 rand = "0.8"

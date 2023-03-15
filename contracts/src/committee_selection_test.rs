@@ -3,7 +3,10 @@ use near_contract_standards::{fungible_token::core::FungibleTokenCore, storage_m
 use near_sdk::{json_types::U128, testing_env};
 
 use super::test_utils::{get_context_view, get_context_with_deposit, new_contract};
-use crate::tests::test_utils::{get_context_for_ft_transfer, get_context_with_deposit_at_block};
+use crate::{
+    consts::INIT_MINIMUM_STAKE,
+    tests::test_utils::{get_context_for_ft_transfer, get_context_with_deposit_at_block},
+};
 
 fn get_x_key_and_signature(x: &str) -> (Vec<u8>, Vec<u8>) {
     let rng = &mut rand::thread_rng();
@@ -18,7 +21,7 @@ fn get_x_key_and_signature(x: &str) -> (Vec<u8>, Vec<u8>) {
 #[test]
 fn test_committee_selection() {
     let mut contract = new_contract();
-    let deposit_amount = U128(100_000_000_000_000_000_000_000_000);
+    let deposit_amount = U128(INIT_MINIMUM_STAKE);
 
     for x in 1..200 {
         let acc = format!("{x:}_near");
@@ -33,7 +36,6 @@ fn test_committee_selection() {
         contract.register_node("0.0.0.0:8080".to_string(), pk, sig);
         testing_env!(get_context_with_deposit(acc.clone()));
         contract.deposit(deposit_amount);
-        // time travel and activate nodes
 
         // check owner and multi_addr
         testing_env!(get_context_view());
@@ -44,6 +46,7 @@ fn test_committee_selection() {
     }
     let acc = format!("1_near");
 
+    // time travel and activate nodes
     testing_env!(get_context_with_deposit_at_block(acc.clone(), 1000000));
     contract.process_epoch();
 

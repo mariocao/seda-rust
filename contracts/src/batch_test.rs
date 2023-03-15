@@ -10,11 +10,12 @@ use super::test_utils::{
     get_context_with_deposit_at_block,
     new_contract,
 };
+use crate::consts::INIT_MINIMUM_STAKE;
 
 #[test]
 fn post_signed_batch() {
     let mut contract = new_contract();
-    let deposit_amount = U128(100_000_000_000_000_000_000_000_000);
+    let deposit_amount = U128(INIT_MINIMUM_STAKE);
 
     // post some data requests to the accumulator
     testing_env!(get_context_with_deposit("bob_near".to_string()));
@@ -62,9 +63,10 @@ fn post_signed_batch() {
     assert_eq!(contract.get_committees().len(), 3);
 
     // assert each committee has config.committee_size members
-    for committee in contract.get_committees() {
-        assert_eq!(committee.len() as u64, contract.config.committee_size);
-    }
+    contract
+        .get_committees()
+        .into_iter()
+        .for_each(|comittee| assert_eq!(comittee.len() as u64, contract.config.committee_size));
 
     // get the merkle root (for all nodes to sign)
     let merkle_root = contract.compute_merkle_root();
