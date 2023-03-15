@@ -38,6 +38,16 @@ impl MainchainContract {
         }
         chosen_committee
     }
+
+    pub fn select_slot_leader(&self, random_number: u64) -> AccountId {
+        let current_committee = self.committees.first().unwrap().clone();
+        let hash = Sha256::digest([random_number.to_le_bytes().as_ref(), self.get_current_slot().to_le_bytes().as_ref()].concat());
+        let prn: near_bigint::U256 = near_bigint::U256::from_little_endian(&hash);
+        let chosen_index = (prn % self.config.committee_size).as_usize();
+        current_committee.get(chosen_index).unwrap().clone()
+
+        
+    }
 }
 
 /// Contract public methods
@@ -45,6 +55,9 @@ impl MainchainContract {
 impl MainchainContract {
     pub fn get_committees(&self) -> Vec<Vec<AccountId>> {
         self.committees.clone()
+    }
+    pub fn get_slot_leader(&self) -> AccountId {
+        self.select_slot_leader(self.last_generated_random_number)
     }
 }
 

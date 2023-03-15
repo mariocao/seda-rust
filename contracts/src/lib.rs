@@ -23,6 +23,7 @@ use near_sdk::{
     BorshStorageKey,
     PanicOnDefault,
 };
+use rand::Rng;
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
@@ -69,18 +70,19 @@ pub struct MainchainContract {
     pending_nodes:               UnorderedMap<AccountId, EpochHeight>,
     // Sub-set of active nodes that are part of the committee of the current epoch
     // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][SLOTS_PER_EPOCH]
-    committees:                  Vec<Vec<AccountId>>,
-    data_request_accumulator:    Vector<String>,
-    num_batches:                 BatchHeight,
-    batch_ids_by_height:         LookupMap<BatchHeight, BatchId>,
-    batch_by_id:                 LookupMap<BatchId, Batch>,
-    last_total_balance:          Balance,
-    nodes_by_bn254_public_key:   LookupMap<Vec<u8>, AccountId>,
     nodes_by_ed25519_public_key: LookupMap<Vec<u8>, AccountId>,
     depositors:                  LookupMap<AccountId, UnorderedMap<Vec<u8>, Balance>>,
-    random_seed:                 CryptoHash,
-    bootstrapping_phase:         bool,
-    last_processed_epoch:        EpochHeight,
+    committees:                Vec<Vec<AccountId>>,
+    data_request_accumulator:  Vector<String>,
+    num_batches:               BatchHeight,
+    batch_ids_by_height:       LookupMap<BatchHeight, BatchId>,
+    batch_by_id:               LookupMap<BatchId, Batch>,
+    last_total_balance:        Balance,
+    nodes_by_bn254_public_key: LookupMap<Vec<u8>, AccountId>,
+    random_seed:               CryptoHash,
+    bootstrapping_phase:       bool,
+    last_processed_epoch:      EpochHeight,
+    last_generated_random_number: u64,
 }
 
 /// Contract public methods
@@ -97,6 +99,9 @@ impl MainchainContract {
             committee_size,
             ..Default::default()
         };
+        let mut rng = rand::thread_rng();
+        let last_generated_random_number = rng.gen::<u64>();
+
         metadata.assert_valid();
         let mut this = Self {
             token: FungibleToken::new(MainchainStorageKeys::FungibleToken),
@@ -118,6 +123,7 @@ impl MainchainContract {
             random_seed: CryptoHash::default(),
             bootstrapping_phase: true,
             last_processed_epoch: 0,
+            last_generated_random_number,
         };
         this.token.internal_register_account(&dao);
         this.token.internal_deposit(&dao, initial_supply.into());

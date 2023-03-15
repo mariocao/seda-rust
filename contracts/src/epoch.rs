@@ -40,9 +40,7 @@ impl MainchainContract {
             });
             log!("pending_nodes: {:?}", self.pending_nodes.to_vec());
 
-            // TODO: replace after refactoring post_signed_batch
-            let mut rng = rand::thread_rng();
-            let random_number = rng.gen::<u64>();
+            
 
             // if bootstrapping phase, wait until there are committee_size active nodes
             if self.bootstrapping_phase {
@@ -54,7 +52,7 @@ impl MainchainContract {
                 log!("Exiting bootstrapping phase");
                 // select committees EPOCH_COMMITTEES_LOOKAHEAD epochs in advance
                 for _ in 0..EPOCH_COMMITTEES_LOOKAHEAD {
-                    let committee = self.select_committee(random_number);
+                    let committee = self.select_committee(self.last_generated_random_number);
                     self.committees.push(committee);
                 }
             } else {
@@ -63,7 +61,7 @@ impl MainchainContract {
             }
 
             // select committee from active nodes
-            let committee = self.select_committee(random_number);
+            let committee = self.select_committee(self.last_generated_random_number);
             log!(
                 "Selected committee for epoch {}: {:?}",
                 self.get_current_epoch(),
