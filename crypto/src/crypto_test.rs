@@ -23,7 +23,6 @@ fn generate_bn254_pair() {
     assert!(ECDSA::verify(msg, &signature, &bn_pair.public_key).is_ok())
 }
 
-
 #[test]
 fn generate_ed25519_pair() {
     generate_test_sk();

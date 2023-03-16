@@ -2,7 +2,7 @@ use bn254::ECDSA;
 use clap::Args;
 use seda_chains::{chain, Client};
 use seda_config::{ChainConfigsInner, DelegateConfig};
-use seda_crypto::{derive_bn254_key_pair, derive_ed25519_key_pair};
+use seda_crypto::KeyPair;
 use seda_runtime_sdk::Chain;
 use serde_json::json;
 
@@ -21,12 +21,12 @@ pub struct Register {
 
 impl Register {
     pub async fn handle(self, config: DelegateConfig) -> Result<()> {
-        let bn254_key = derive_bn254_key_pair(&config.validator_secret_key, 0)?;
-        let ed25519_key = derive_ed25519_key_pair(&config.validator_secret_key, 0)?;
-        let ed25519_public_key = ed25519_key.public_key.as_bytes().to_vec();
-        let account_id = hex::encode(&ed25519_public_key);
+        let bn254_key = KeyPair::derive(&config.validator_secret_key, 0)?;
+        let ed25519_key = KeyPair::derive_ed25519(&config.validator_secret_key, 0)?;
+        let ed25519_public_key = ed25519_key.public_key.as_ref();
+        let account_id = hex::encode(ed25519_public_key);
         let signature = ECDSA::sign(&account_id, &bn254_key.private_key)?;
-        let ed25519_secret_key_bytes: Vec<u8> = ed25519_key.into();
+        let ed25519_secret_key_bytes = ed25519_key.private_key.to_bytes();
 
         // TODO: Make construct_signed_tx only accept bytes and not strings & make this
         // easier
@@ -51,7 +51,7 @@ impl Register {
 
         println!(
             "Registring {} on contract {}..",
-            &hex::encode(&ed25519_public_key),
+            &hex::encode(ed25519_public_key),
             self.delegation_contract_id
         );
 

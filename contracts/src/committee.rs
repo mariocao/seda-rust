@@ -20,7 +20,7 @@ impl MainchainContract {
 
             // if the chosen validator index was previously selected, we fetch another one
             while chosen_indices.contains(&chosen_index) {
-                rerolls = rerolls + 1;
+                rerolls += 1;
 
                 let hash = Sha256::digest(
                     [

@@ -44,10 +44,10 @@ fn test_committee_selection() {
             contract.get_node(acc.try_into().unwrap()).unwrap().multi_addr
         );
     }
-    let acc = format!("1_near");
+    let acc = "1_near".to_string();
 
     // time travel and activate nodes
-    testing_env!(get_context_with_deposit_at_block(acc.clone(), 1000000));
+    testing_env!(get_context_with_deposit_at_block(acc, 1000000));
     contract.process_epoch();
 
     // assert we have committees for this epoch and the next 2

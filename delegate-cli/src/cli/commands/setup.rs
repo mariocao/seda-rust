@@ -1,6 +1,6 @@
 use clap::Args;
 use seda_config::DelegateConfig;
-use seda_crypto::derive_ed25519_key_pair;
+use seda_crypto::KeyPair;
 
 use super::{register::Register, stake::Stake, top_up::TopUp};
 use crate::cli::errors::Result;
@@ -25,12 +25,12 @@ pub struct Setup {
 
 impl Setup {
     pub async fn handle(self, config: DelegateConfig) -> Result<()> {
-        let ed25519_key = derive_ed25519_key_pair(&config.validator_secret_key, 0).unwrap();
-        let ed25519_public_key = ed25519_key.public_key.as_bytes().to_vec();
+        let ed25519_key = KeyPair::derive_ed25519(&config.validator_secret_key, 0).unwrap();
+        let ed25519_public_key = ed25519_key.public_key.as_bytes();
 
         let top_up = TopUp {
             amount:   self.topup_amount,
-            receiver: hex::encode(&ed25519_public_key),
+            receiver: hex::encode(ed25519_public_key),
         };
 
         top_up.handle(config.clone()).await?;

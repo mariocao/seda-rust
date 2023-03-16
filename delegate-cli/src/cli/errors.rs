@@ -1,6 +1,6 @@
 use bn254::Error as Bn254Error;
 use seda_chains::ChainAdapterError;
-use seda_crypto::errors::CryptoError;
+use seda_crypto::CryptoError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
