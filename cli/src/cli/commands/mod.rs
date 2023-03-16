@@ -4,6 +4,9 @@ pub(crate) use node::*;
 mod run;
 pub(crate) use run::*;
 
+mod init;
+pub(crate) use init::*;
+
 #[cfg(debug_assertions)]
 mod sub_chain;
 use seda_chains::{chain, Client};

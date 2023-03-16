@@ -1,5 +1,6 @@
 use seda_chains::ChainAdapterError;
 use seda_config::ConfigError;
+use seda_crypto::CryptoError;
 use seda_node::NodeError;
 use thiserror::Error;
 
@@ -24,6 +25,9 @@ pub enum CliError {
     #[cfg(debug_assertions)]
     #[error(transparent)]
     CLIDocument(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Crypto(#[from] CryptoError),
 }
 
 impl From<&str> for CliError {

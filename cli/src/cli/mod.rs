@@ -53,6 +53,9 @@ pub enum Command {
         #[command(subcommand)]
         sub_chain_command: SubChain,
     },
+    /// Creates a new config and secret key (if it doesn't exist) and outputs
+    /// it's derived contents
+    Init(Init),
 }
 
 impl Command {
@@ -70,6 +73,7 @@ impl Command {
                 file.write_all(help_content.as_bytes())?;
                 Ok(())
             }
+            Self::Init(init_command) => init_command.handle(),
             Self::Generate { shell } => {
                 let mut cmd = CliOptions::command();
                 let cmd_name = cmd.get_name().to_string();

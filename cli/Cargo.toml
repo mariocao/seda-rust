@@ -9,13 +9,21 @@ name = "seda"
 path = "src/main.rs"
 
 [dependencies]
+async-trait = { workspace = true }
 bn254 = { workspace = true }
+bs58 = { workspace = true }
 clap = { workspace = true, features = ["default"] }
-clap_complete = { workspace = true }
 clap-markdown = { workspace = true }
+clap_complete = { workspace = true }
 dotenv = { workspace = true }
+ed25519-dalek = { workspace = true }
 hex = { workspace = true }
 jsonrpsee = { workspace = true, features = ["client"] }
+near-crypto = { workspace = true }
+near-jsonrpc-client = { workspace = true }
+near-jsonrpc-primitives = { workspace = true }
+near-primitives = { workspace = true }
+rand = "0.7"
 seda-chains = { workspace = true }
 seda-crypto = { workspace = true }
 seda-common = { workspace = true, features = ["cli"] }
@@ -27,5 +35,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+tracing = { workspace = true }
 
 [dev-dependencies]
+jsonrpsee = { workspace = true }

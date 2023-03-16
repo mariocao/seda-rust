@@ -18,7 +18,7 @@ pub const FULL_CONFIG_PATH: &str = "./config.toml";
 pub const FULL_CONFIG_PATH: &str = "C:\\ProgramData\\seda-rust\\config.toml";
 
 #[cfg(not(target_family = "wasm"))]
-fn config_path() -> PathBuf {
+fn default_config_path() -> PathBuf {
     let config_path = std::env::var("SEDA_CONFIG_PATH").unwrap_or_default();
     if !config_path.trim().is_empty() {
         Path::new(&config_path).to_path_buf()
@@ -29,8 +29,13 @@ fn config_path() -> PathBuf {
 
 #[cfg(not(target_family = "wasm"))]
 #[cfg(feature = "cli")]
-pub fn create_and_load_or_load_config() -> (AppConfig, PartialLoggerConfig) {
-    let path = config_path();
+pub fn create_and_load_or_load_config(config_toml_path: Option<PathBuf>) -> (AppConfig, PartialLoggerConfig) {
+    let path: PathBuf = if let Some(config_path) = config_toml_path {
+        config_path
+    } else {
+        default_config_path()
+    };
+
     if !path.exists() {
         if let Err(err) = PartialAppConfig::create_template_from_path(&path) {
             eprintln!("{err}");
