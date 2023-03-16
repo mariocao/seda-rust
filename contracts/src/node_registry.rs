@@ -321,6 +321,32 @@ impl MainchainContract {
             .insert(&ed25519_public_key, &node_withdraw_requests);
     }
 
+    #[payable]
+    pub fn cancel_withdraw_request(&mut self, ed25519_public_key: Vec<u8>) {
+        let depositor_account_id = env::signer_account_id();
+        let mut node_withdraw_requests = self.withdraw_requests.get(&ed25519_public_key).unwrap_or_else(|| {
+            LookupMap::new(MainchainStorageKeys::WithdrawRequest {
+                account_hash: env::sha256_array(ed25519_public_key.as_slice()),
+            })
+        });
+        let withdraw_request = node_withdraw_requests
+            .get(&depositor_account_id)
+            .expect("No pending withdrawal found for this account");
+        assert!(
+            withdraw_request.epoch <= self.get_current_epoch(),
+            "Not enough epochs have passed to cancel the withdrawal request"
+        );
+        node_withdraw_requests.remove(&depositor_account_id);
+        self.withdraw_requests
+            .insert(&ed25519_public_key, &node_withdraw_requests);
+        let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+        log!(
+            "{} cancelled withdrawal request for {}",
+            depositor_account_id,
+            node_account_id
+        );
+    }
+
     /// Withdraws the balance for given account.
     #[payable]
     pub fn withdraw(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
