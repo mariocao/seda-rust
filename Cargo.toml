@@ -44,6 +44,7 @@ opt-level = "z"
 [workspace.dependencies]
 actix = "0.13"
 async-trait = "0.1"
+bs58 = "0.4.0"
 base64 = "0.13"
 bn254 = { git = "https://github.com/sedaprotocol/bn254", branch = "main" }
 borsh = { version = "0.9", default-features = false }

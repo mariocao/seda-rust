@@ -115,6 +115,7 @@ impl DelegateConfigInner {
 }
 
 impl DelegateConfigInner {
+    // 300 Tgas
     pub const GAS: u64 = 300_000_000_000_000;
     pub const RPC_URL: &str = "https://rpc.testnet.near.org";
 }

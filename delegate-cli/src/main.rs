@@ -1,11 +1,12 @@
 use clap::Parser;
+use cli::errors::Result;
 use seda_config::{Config, PartialDelegateConfig};
 
 use crate::cli::CliOptions;
 
 mod cli;
 
-fn main() {
+fn main() -> Result<()> {
     // Load the dotenv file first since our config overloads values from it.
     dotenv::dotenv().ok();
 
@@ -15,5 +16,5 @@ fn main() {
 
     let config = options.delegate_config.to_config(env_config).unwrap();
 
-    options.command.handle(config);
+    options.command.handle(config)
 }

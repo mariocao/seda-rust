@@ -3,7 +3,7 @@ use std::fs::read_to_string;
 use bn254::{PrivateKey as Bn254PrivateKey, PublicKey as Bn254PublicKey};
 use concat_kdf::derive_key;
 use ed25519_dalek::{PublicKey as Ed25519PublicKey, SecretKey as Ed25519PrivateKey, SECRET_KEY_LENGTH};
-mod errors;
+pub mod errors;
 use crate::errors::CryptoError;
 #[derive(PartialEq)]
 pub enum KeyType {

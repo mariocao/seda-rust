@@ -1,7 +1,10 @@
 use clap::{command, Parser, Subcommand};
 use seda_config::{DelegateConfig, PartialDelegateConfig};
+
+use self::errors::Result;
 mod commands;
 
+pub mod errors;
 mod utils;
 
 #[derive(Parser)]
@@ -32,20 +35,22 @@ pub enum Command {
 
 impl Command {
     #[tokio::main]
-    pub async fn handle(self, config: DelegateConfig) {
+    pub async fn handle(self, config: DelegateConfig) -> Result<()> {
         match self {
             Self::TopUp(top_up) => {
-                top_up.handle(config).await;
+                top_up.handle(config).await?;
             }
             Self::Register(register) => {
-                register.handle(config).await;
+                register.handle(config).await?;
             }
             Self::Stake(stake) => {
-                stake.handle(config).await;
+                stake.handle(config).await?;
             }
             Self::Setup(setup) => {
-                setup.handle(config).await;
+                setup.handle(config).await?;
             }
         }
+
+        Ok(())
     }
 }

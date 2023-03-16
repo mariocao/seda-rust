@@ -4723,6 +4723,7 @@ dependencies = [
  "seda-crypto",
  "seda-runtime-sdk",
  "serde_json",
+ "thiserror",
  "tokio",
 ]
 

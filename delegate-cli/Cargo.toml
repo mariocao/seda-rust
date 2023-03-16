@@ -10,15 +10,16 @@ path = "src/main.rs"
 
 [dependencies]
 bn254 = { workspace = true }
-bs58 = "0.4.0"
+bs58 = { workspace = true }
 clap = { workspace = true, features = ["default"] }
 clap-markdown = { workspace = true }
 clap_complete = { workspace = true }
 dotenv = { workspace = true }
-hex = "0.4"
+hex = { workspace = true }
 seda-chains = { workspace = true }
 seda-config = { workspace = true, features = ["cli", "delegate-cli"] }
 seda-crypto = { workspace = true }
 seda-runtime-sdk = { workspace = true }
 serde_json = { workspace = true, features = ["std"] }
 tokio = { workspace = true }
+thiserror = { workspace = true }
