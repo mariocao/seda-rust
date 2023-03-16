@@ -1,6 +1,6 @@
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::UnorderedMap,
+    collections::{LookupMap, UnorderedMap},
     env,
     json_types::{U128, U64},
     log,
@@ -17,6 +17,13 @@ use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt, Mai
 pub struct HumanReadableDepositInfo {
     pub node_ed25519_public_key: Vec<u8>,
     pub amount:                  Balance,
+}
+
+/// Withdraw request info for one account to a node
+#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
+pub struct WithdrawRequest {
+    pub amount: Balance,
+    pub epoch:  u64,
 }
 /// Node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone, Default)]
@@ -134,7 +141,7 @@ impl MainchainContract {
 
     pub fn internal_withdraw(&mut self, amount: Balance, ed25519_public_key: Vec<u8>) {
         // TODO: epoch delay for withdrawal
-        manage_storage_deposit!(self, "require", {
+        manage_storage_deposit!(self, {
             assert!(amount > 0, "Withdrawal amount should be positive");
             let mut node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
             assert!(node.balance >= amount, "Not enough balance to withdraw");
@@ -150,6 +157,23 @@ impl MainchainContract {
                 .expect("No deposit info found for this node");
             assert!(deposited >= amount, "Not enough balance to withdraw");
 
+            // find withdraw request
+            let mut node_withdraw_requests = self.withdraw_requests.get(&ed25519_public_key).unwrap_or_else(|| {
+                LookupMap::new(MainchainStorageKeys::WithdrawRequest {
+                    account_hash: env::sha256_array(ed25519_public_key.as_slice()),
+                })
+            });
+            // assert there is a pending withdrawal for this depositor
+            let withdraw_request = node_withdraw_requests
+                .get(&depositor_account_id)
+                .expect("No pending withdrawal request found for this account");
+            // check that the epoch is valid
+            let current_epoch = self.get_current_epoch();
+            assert!(
+                withdraw_request.epoch <= current_epoch,
+                "Not enough epochs have passed to withdraw"
+            );
+
             // subtract from contract balance and add to user balance
             self.mint(&depositor_account_id, amount);
             node.balance -= amount;
@@ -160,6 +184,11 @@ impl MainchainContract {
 
             // update global balance
             self.last_total_balance -= amount;
+
+            // remove the withdraw request
+            node_withdraw_requests.remove(&depositor_account_id);
+            self.withdraw_requests
+                .insert(&ed25519_public_key, &node_withdraw_requests);
 
             env::log_str(
                 format!(
@@ -244,6 +273,52 @@ impl MainchainContract {
     pub fn deposit(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
         let amount: Balance = amount.into();
         self.internal_deposit(amount, ed25519_public_key);
+    }
+
+    #[payable]
+    pub fn request_withdraw(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
+        let amount: Balance = amount.into();
+        assert!(amount > 0, "Withdrawal amount should be positive");
+        let node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
+        assert!(node.balance >= amount, "Not enough balance to withdraw");
+
+        // find depositor info for this node
+        let depositor_account_id = env::signer_account_id();
+        let depositor = self
+            .depositors
+            .get(&depositor_account_id)
+            .expect("No deposit info found for this account");
+        let deposited = depositor
+            .get(&ed25519_public_key)
+            .expect("No deposit info found for this node");
+        assert!(deposited >= amount, "Not enough balance to withdraw");
+
+        // create a new pending withdrawal
+        let mut node_withdraw_requests = self.withdraw_requests.get(&ed25519_public_key).unwrap_or_else(|| {
+            LookupMap::new(MainchainStorageKeys::WithdrawRequest {
+                account_hash: env::sha256_array(ed25519_public_key.as_slice()),
+            })
+        });
+        // assert there is no pending withdrawal for this depositor
+        assert!(
+            node_withdraw_requests.get(&depositor_account_id).is_none(),
+            "There is already a pending withdrawal for this account"
+        );
+        let pending_withdraw = WithdrawRequest {
+            amount,
+            epoch: self.get_current_epoch() + self.config.withdraw_delay,
+        };
+        let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+        log!(
+            "{} requested withdrawal of {} from {}'s node. Will be available at epoch {}",
+            depositor_account_id,
+            amount,
+            node_account_id,
+            self.config.withdraw_delay + self.get_current_epoch()
+        );
+        node_withdraw_requests.insert(&depositor_account_id, &pending_withdraw);
+        self.withdraw_requests
+            .insert(&ed25519_public_key, &node_withdraw_requests);
     }
 
     /// Withdraws the balance for given account.

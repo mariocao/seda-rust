@@ -23,6 +23,7 @@ use near_sdk::{
     BorshStorageKey,
     PanicOnDefault,
 };
+use node_registry::WithdrawRequest;
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
@@ -45,6 +46,8 @@ enum MainchainStorageKeys {
     NodesByEd25519PublicKey,
     Depositors,
     Depositor { account_hash: [u8; 32] },
+    WithdrawRequests,
+    WithdrawRequest { account_hash: [u8; 32] },
 }
 
 /// Contract global state
@@ -83,6 +86,7 @@ pub struct MainchainContract {
     bootstrapping_phase:          bool,
     last_processed_epoch:         EpochHeight,
     last_generated_random_number: near_bigint::U256,
+    withdraw_requests:            LookupMap<Vec<u8>, LookupMap<AccountId, WithdrawRequest>>,
 }
 
 /// Contract public methods
@@ -124,6 +128,7 @@ impl MainchainContract {
             nodes_by_bn254_public_key: LookupMap::new(MainchainStorageKeys::NodesByBn254PublicKey),
             nodes_by_ed25519_public_key: LookupMap::new(MainchainStorageKeys::NodesByEd25519PublicKey),
             depositors: LookupMap::new(MainchainStorageKeys::Depositors),
+            withdraw_requests: LookupMap::new(MainchainStorageKeys::WithdrawRequests),
             random_seed: CryptoHash::default(),
             bootstrapping_phase: true,
             last_processed_epoch: 0,

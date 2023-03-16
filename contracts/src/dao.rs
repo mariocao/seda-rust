@@ -17,6 +17,7 @@ pub struct Config {
     pub minimum_stake:            u128,
     pub epoch_delay_for_election: u64,
     pub committee_size:           u64,
+    pub withdraw_delay:           u64,
 }
 
 impl Default for Config {
@@ -25,6 +26,7 @@ impl Default for Config {
             minimum_stake:            INIT_MINIMUM_STAKE,
             epoch_delay_for_election: INIT_EPOCH_DELAY_FOR_ELECTION,
             committee_size:           DEFAULT_COMMITTEE_SIZE,
+            withdraw_delay:           INIT_EPOCH_DELAY_FOR_ELECTION,
         }
     }
 }

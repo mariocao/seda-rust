@@ -247,8 +247,12 @@ fn deposit_withdraw() {
     let node_balance = contract.get_node_balance("alice_near".to_string().try_into().unwrap());
     assert_eq!(node_balance, deposit_amount);
 
+    // alice requests withdraw
+    testing_env!(get_context_with_deposit(alice.clone()));
+    contract.request_withdraw(deposit_amount, alice.clone().ed25519_public_key.as_bytes().to_vec());
+
     // alice withdraws
-    testing_env!(get_context(alice.clone()));
+    testing_env!(get_context_with_deposit_at_block(alice.clone(), 1000000));
     contract.withdraw(deposit_amount, alice.ed25519_public_key.as_bytes().to_vec());
 
     // check alice's balance has increased again and the node balance has decreased
@@ -346,10 +350,16 @@ fn deposit_withdraw_one_node_two_depositors() {
     let node_balance = contract.get_node_balance("alice_near".to_string().try_into().unwrap());
     assert_eq!(node_balance, U128(deposit_amount.0 * 2));
 
+    // alice and bob request withdraws
+    testing_env!(get_context_with_deposit(alice.clone()));
+    contract.request_withdraw(deposit_amount, alice.clone().ed25519_public_key.as_bytes().to_vec());
+    testing_env!(get_context_with_deposit(bob.clone()));
+    contract.request_withdraw(deposit_amount, alice.clone().ed25519_public_key.as_bytes().to_vec());
+
     // alice and bob withdraw
-    testing_env!(get_context(alice.clone()));
+    testing_env!(get_context_with_deposit_at_block(alice.clone(), 1000000));
     contract.withdraw(deposit_amount, alice.clone().ed25519_public_key.as_bytes().to_vec());
-    testing_env!(get_context(bob));
+    testing_env!(get_context_with_deposit_at_block(bob, 1000000));
     contract.withdraw(deposit_amount, alice.ed25519_public_key.as_bytes().to_vec());
 
     // check total deposited amount is now 0
@@ -414,8 +424,19 @@ fn deposit_withdraw_two_nodes_one_depositor() {
     let node_balance = contract.get_node_balance("bob_near".to_string().try_into().unwrap());
     assert_eq!(node_balance, U128(deposit_amount.0 / 2));
 
-    // alice withdraws from both pools
+    // alice requests withdraws from both pools
     testing_env!(get_context(alice.clone()));
+    contract.request_withdraw(
+        U128(deposit_amount.0 / 2),
+        alice.clone().ed25519_public_key.as_bytes().to_vec(),
+    );
+    contract.request_withdraw(
+        U128(deposit_amount.0 / 2),
+        bob.clone().ed25519_public_key.as_bytes().to_vec(),
+    );
+
+    // alice withdraws from both pools
+    testing_env!(get_context_with_deposit_at_block(alice.clone(), 1000000));
     contract.withdraw(U128(deposit_amount.0 / 2), alice.ed25519_public_key.as_bytes().to_vec());
     contract.withdraw(U128(deposit_amount.0 / 2), bob.ed25519_public_key.as_bytes().to_vec());
 
