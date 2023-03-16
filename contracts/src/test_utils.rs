@@ -38,7 +38,7 @@ pub struct TestAccount {
 pub fn make_test_account(account_id: String) -> TestAccount {
     // reroll until we get a valid ed25519_public_key
     // TODO: this is ugly but works for now
-    let mut truncated;
+    let truncated;
     loop {
         let rng = &mut rand::thread_rng();
         let bytes = rng.gen::<[u8; 32]>();
@@ -47,10 +47,9 @@ pub fn make_test_account(account_id: String) -> TestAccount {
             continue;
         }
         truncated = encoded[..44].to_string();
-        if truncated.len() == 44 {
-            break;
-        }
+        break;
     }
+
     let ed25519_public_key: near_sdk::PublicKey = truncated.parse().unwrap();
 
     let rng = &mut rand::thread_rng();

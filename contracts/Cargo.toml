@@ -10,6 +10,7 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 bn254 = { workspace = true }
+bs58 = "0.4.0"
 getrandom = { workspace = true, features = ["custom"], default-features = false}
 rand = {workspace = true, features = ["std"], default-features = false }
 hex = { workspace = true }
@@ -21,4 +22,3 @@ schemars = { workspace = true }
 serde = { workspace = true }
 sha2 = { workspace = true, features = ["std"] }
 uint = { workspace = true }
-bs58 = "0.4.0"
