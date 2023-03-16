@@ -55,13 +55,13 @@ fn total_supply_includes_staked() {
     testing_env!(get_context_with_deposit(bob.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        bob.clone().bn254_public_key.to_compressed().unwrap(),
+        bob.bn254_public_key.to_compressed().unwrap(),
         bob_signature.to_compressed().unwrap(),
     );
 
     // bob deposits
     testing_env!(get_context_with_deposit(bob.clone()));
-    contract.deposit(deposit_amount, bob.clone().ed25519_public_key.into_bytes());
+    contract.deposit(deposit_amount, bob.ed25519_public_key.into_bytes());
 
     assert_eq!(contract.ft_total_supply(), U128(INITIAL_SUPPLY));
 }

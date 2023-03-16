@@ -17,6 +17,13 @@ impl Node {
 
         let contract_account_id = config.node.to_contract_account_id(self.contract_id)?;
         let args = GetNodeArgs::from(contract_account_id.clone()).to_string();
-        view::<Option<HumanReadableNode>>(Chain::Near, &contract_account_id, "get_node", args, &chains_config).await
+        view::<Option<HumanReadableNode>>(
+            Chain::Near,
+            &contract_account_id,
+            "get_node",
+            Some(args),
+            &chains_config,
+        )
+        .await
     }
 }

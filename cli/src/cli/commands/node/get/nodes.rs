@@ -21,6 +21,13 @@ impl Nodes {
 
         let contract_account_id = config.node.to_contract_account_id(self.contract_id)?;
         let args = GetNodesArgs::from((self.limit, self.offset)).to_string();
-        view::<Vec<HumanReadableNode>>(Chain::Near, &contract_account_id, "get_nodes", args, &chains_config).await
+        view::<Vec<HumanReadableNode>>(
+            Chain::Near,
+            &contract_account_id,
+            "get_nodes",
+            Some(args),
+            &chains_config,
+        )
+        .await
     }
 }

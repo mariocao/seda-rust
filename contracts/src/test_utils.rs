@@ -65,7 +65,7 @@ pub fn make_test_account(account_id: String) -> TestAccount {
     let bn254_public_key = PublicKey::from_private_key(&bn254_private_key);
 
     TestAccount {
-        account_id: account_id.to_string().try_into().unwrap(),
+        account_id: account_id.try_into().unwrap(),
         ed25519_public_key,
         bn254_private_key,
         bn254_public_key,

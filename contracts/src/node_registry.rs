@@ -7,7 +7,7 @@ use near_sdk::{
     AccountId,
     Balance,
 };
-use seda_common::{HumanReadableNode, Node, UpdateNode};
+use seda_common::{HumanReadableDepositInfo, HumanReadableNode, Node, UpdateNode};
 
 use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt, MainchainStorageKeys};
 
