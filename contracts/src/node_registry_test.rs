@@ -4,7 +4,7 @@ use near_sdk::{
     test_utils::get_logs,
     testing_env,
 };
-use seda_common::{HumanReadableNode, UpdateNode};
+use seda_common::{NodeInfo, UpdateNode};
 
 use super::test_utils::{
     bn254_sign,
@@ -138,21 +138,21 @@ fn get_nodes() {
     contract.process_epoch();
 
     // define expected nodes
-    let node1 = HumanReadableNode {
+    let node1 = NodeInfo {
         account_id:         "bob_near".to_string().try_into().unwrap(),
         balance:            deposit_amount.0,
         multi_addr:         "0.0.0.0:8080".to_string(),
         bn254_public_key:   bob.clone().bn254_public_key.to_compressed().unwrap(),
         ed25519_public_key: bob.ed25519_public_key.into_bytes(),
     };
-    let node2 = HumanReadableNode {
+    let node2 = NodeInfo {
         account_id:         "alice_near".to_string().try_into().unwrap(),
         balance:            deposit_amount.0,
         multi_addr:         "1.1.1.1:8080".to_string(),
         bn254_public_key:   alice.clone().bn254_public_key.to_compressed().unwrap(),
         ed25519_public_key: alice.ed25519_public_key.into_bytes(),
     };
-    let node3 = HumanReadableNode {
+    let node3 = NodeInfo {
         account_id:         "carol_near".to_string().try_into().unwrap(),
         balance:            deposit_amount.0,
         multi_addr:         "2.2.2.2:8080".to_string(),

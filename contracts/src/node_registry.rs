@@ -7,7 +7,7 @@ use near_sdk::{
     AccountId,
     Balance,
 };
-use seda_common::{HumanReadableDepositInfo, HumanReadableNode, Node, UpdateNode};
+use seda_common::{DepositInfo, Node, NodeInfo, UpdateNode};
 
 use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt, MainchainStorageKeys};
 
@@ -343,10 +343,10 @@ impl MainchainContract {
         U128(self.internal_get_node(&account_id).unwrap().balance)
     }
 
-    pub fn get_node(&self, account_id: AccountId) -> Option<HumanReadableNode> {
+    pub fn get_node(&self, account_id: AccountId) -> Option<NodeInfo> {
         let node = self.internal_get_node(&account_id);
         if let Some(node) = node {
-            Some(HumanReadableNode {
+            Some(NodeInfo {
                 account_id,
                 multi_addr: node.multi_addr,
                 balance: node.balance,
@@ -358,14 +358,14 @@ impl MainchainContract {
         }
     }
 
-    pub fn get_nodes(&self, limit: U64, offset: U64) -> Vec<HumanReadableNode> {
+    pub fn get_nodes(&self, limit: U64, offset: U64) -> Vec<NodeInfo> {
         let mut nodes = Vec::new();
         let mut index = self.active_nodes.len() - u64::from(offset);
         let limit = u64::from(limit);
         while index > 0 && nodes.len() < limit.try_into().unwrap() {
             if let Some(node_id) = self.active_nodes.keys().nth(index as usize - 1) {
                 let node = self.active_nodes.get(&node_id).unwrap();
-                let human_readable_node = HumanReadableNode {
+                let human_readable_node = NodeInfo {
                     account_id:         node_id,
                     multi_addr:         node.multi_addr,
                     balance:            node.balance,
@@ -379,11 +379,11 @@ impl MainchainContract {
         nodes
     }
 
-    pub fn get_deposits(&self, account_id: AccountId) -> Vec<HumanReadableDepositInfo> {
+    pub fn get_deposits(&self, account_id: AccountId) -> Vec<DepositInfo> {
         let depositor = self.depositors.get(&account_id).unwrap();
         let mut deposits = Vec::new();
         for deposit in depositor.iter() {
-            deposits.push(HumanReadableDepositInfo {
+            deposits.push(DepositInfo {
                 amount:                  deposit.1,
                 node_ed25519_public_key: deposit.0,
             });
@@ -391,10 +391,10 @@ impl MainchainContract {
         deposits
     }
 
-    pub fn get_node_by_ed25519_public_key(&self, ed25519_public_key: Vec<u8>) -> HumanReadableNode {
+    pub fn get_node_by_ed25519_public_key(&self, ed25519_public_key: Vec<u8>) -> NodeInfo {
         let account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
         let node = self.internal_get_node(&account_id).unwrap();
-        HumanReadableNode {
+        NodeInfo {
             account_id,
             multi_addr: node.multi_addr,
             balance: node.balance,
@@ -403,10 +403,10 @@ impl MainchainContract {
         }
     }
 
-    pub fn get_node_by_bn254_public_key(&self, bn254_public_key: Vec<u8>) -> HumanReadableNode {
+    pub fn get_node_by_bn254_public_key(&self, bn254_public_key: Vec<u8>) -> NodeInfo {
         let account_id = self.nodes_by_bn254_public_key.get(&bn254_public_key).unwrap();
         let node = self.internal_get_node(&account_id).unwrap();
-        HumanReadableNode {
+        NodeInfo {
             account_id,
             multi_addr: node.multi_addr,
             balance: node.balance,

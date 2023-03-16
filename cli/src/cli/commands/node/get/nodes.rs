@@ -1,5 +1,5 @@
 use clap::Args;
-use seda_common::{GetNodesArgs, HumanReadableNode};
+use seda_common::{GetNodesArgs, NodeInfo};
 use seda_config::{AppConfig, PartialChainConfigs};
 use seda_runtime_sdk::Chain;
 
@@ -21,7 +21,7 @@ impl Nodes {
 
         let contract_account_id = config.node.to_contract_account_id(self.contract_id)?;
         let args = GetNodesArgs::from((self.limit, self.offset)).to_string();
-        view::<Vec<HumanReadableNode>>(
+        view::<Vec<NodeInfo>>(
             Chain::Near,
             &contract_account_id,
             "get_nodes",
