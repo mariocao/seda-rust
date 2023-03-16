@@ -34,6 +34,7 @@ impl MainchainContract {
                     // log!("Moving pending node {} to active nodes", account_id);
                     false
                 } else {
+                    // log!("Pending node {} is not eligible for this epoch", account_id);
                     true
                 }
             });

@@ -1,13 +1,15 @@
 use bn254::{PrivateKey, PublicKey, ECDSA};
 use near_sdk::testing_env;
 
-use super::test_utils::{bob, get_context, new_contract};
+use super::test_utils::{get_context, new_contract};
+use crate::tests::test_utils::make_test_account;
 
 /// Test `ECDSA::verify` function with own signed message
 #[test]
 fn test_verify_signed_msg() {
-    testing_env!(get_context(bob()));
     let mut contract = new_contract();
+    let bob = make_test_account("bob_near".to_string());
+    testing_env!(get_context(bob));
 
     // Public key
     let private_key = PrivateKey::try_from("2009da7287c158b126123c113d1c85241b6e3294dd75c643588630a8bc0f934c").unwrap();
@@ -29,8 +31,9 @@ fn test_verify_signed_msg() {
 /// Test aggregate signature verification
 #[test]
 fn test_verify_aggregate_signatures() {
-    testing_env!(get_context(bob()));
     let mut contract = new_contract();
+    let bob = make_test_account("bob_near".to_string());
+    testing_env!(get_context(bob));
 
     // Message
     let msg = hex::decode("73616d706c65").unwrap();
