@@ -23,7 +23,6 @@ use near_sdk::{
     BorshStorageKey,
     PanicOnDefault,
 };
-use rand::Rng;
 
 use crate::{
     batch::{Batch, BatchHeight, BatchId},
@@ -72,6 +71,7 @@ pub struct MainchainContract {
     // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][SLOTS_PER_EPOCH]
     nodes_by_ed25519_public_key: LookupMap<Vec<u8>, AccountId>,
     depositors:                  LookupMap<AccountId, UnorderedMap<Vec<u8>, Balance>>,
+    // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][config.committee_size]
     committees:                Vec<Vec<AccountId>>,
     data_request_accumulator:  Vector<String>,
     num_batches:               BatchHeight,
@@ -89,7 +89,7 @@ pub struct MainchainContract {
 #[near_bindgen]
 impl MainchainContract {
     #[init]
-    pub fn new(dao: AccountId, initial_supply: U128, metadata: FungibleTokenMetadata, committee_size: u64) -> Self {
+    pub fn new(dao: AccountId, initial_supply: U128, metadata: FungibleTokenMetadata, committee_size: u64, random_seed: u64) -> Self {
         assert!(!env::state_exists(), "Already initialized");
         assert!(
             env::is_valid_account_id(dao.as_bytes()),
@@ -99,8 +99,6 @@ impl MainchainContract {
             committee_size,
             ..Default::default()
         };
-        let mut rng = rand::thread_rng();
-        let last_generated_random_number = rng.gen::<u64>();
 
         metadata.assert_valid();
         let mut this = Self {
@@ -123,7 +121,7 @@ impl MainchainContract {
             random_seed: CryptoHash::default(),
             bootstrapping_phase: true,
             last_processed_epoch: 0,
-            last_generated_random_number,
+            last_generated_random_number: random_seed,
         };
         this.token.internal_register_account(&dao);
         this.token.internal_deposit(&dao, initial_supply.into());

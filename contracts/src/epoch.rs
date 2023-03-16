@@ -1,5 +1,4 @@
 use near_sdk::{env, log, near_bindgen};
-use rand::Rng;
 
 use crate::{
     consts::{EPOCH_COMMITTEES_LOOKAHEAD, NEAR_BLOCKS_PER_SEDA_SLOT, SLOTS_PER_EPOCH},

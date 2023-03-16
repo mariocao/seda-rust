@@ -1,7 +1,7 @@
 use bn254::{PrivateKey, PublicKey, Signature, ECDSA};
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 use near_sdk::{json_types::U128, test_utils::VMContextBuilder, AccountId, Balance, VMContext};
-use rand::Rng;
+use rand::{distributions::{Alphanumeric, DistString}, Rng};
 
 use crate::{
     consts::{DATA_IMAGE_SVG_ICON, INITIAL_SUPPLY},
@@ -11,6 +11,9 @@ use crate::{
 const TEST_DEPOSIT_AMOUNT: Balance = 618_720_000_000_000_000_000_000; // enough deposit to cover storage for all functions that require it
 
 pub fn new_contract() -> MainchainContract {
+    let mut rng = rand::thread_rng();
+    let random_seed = rng.gen::<u64>();
+    let committee_size = 2;
     MainchainContract::new(
         "dao_near".to_string().try_into().unwrap(),
         U128(INITIAL_SUPPLY),
@@ -23,7 +26,8 @@ pub fn new_contract() -> MainchainContract {
             reference_hash: None,
             decimals:       24,
         },
-        2,
+        committee_size,
+        random_seed
     )
 }
 
