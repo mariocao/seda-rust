@@ -246,6 +246,22 @@ impl MainchainContract {
         });
     }
 
+    pub fn unregister_node(&mut self, ed25519_public_key: Vec<u8>) {
+        // assert the signer_account_pk matches the ed25519_public_key
+        assert!(
+            env::signer_account_pk().into_bytes().to_vec() == ed25519_public_key,
+            "Invalid ed25519_public_key"
+        );
+
+        // assert the node balance is zero
+        let node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
+        assert!(node.balance == 0, "Node balance is not zero");
+
+        // remove the node
+        let account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+        self.inactive_nodes.remove(&account_id);
+    }
+
     /// Updates one of the node's fields
     #[payable]
     pub fn update_node(&mut self, command: UpdateNode) {

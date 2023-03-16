@@ -264,6 +264,10 @@ fn deposit_withdraw() {
         contract.get_node_balance("alice_near".to_string().try_into().unwrap()),
         U128(0)
     );
+
+    // unregister node now that balance is zero
+    testing_env!(get_context_with_deposit(alice.clone()));
+    contract.unregister_node(alice.clone().ed25519_public_key.as_bytes().to_vec());
 }
 
 #[test]
@@ -552,4 +556,35 @@ fn withdraw_before_epoch() {
 
     // alice withdraws without waiting
     contract.withdraw(deposit_amount, alice.ed25519_public_key.as_bytes().to_vec());
+}
+
+#[test]
+#[should_panic(expected = "Node balance is not zero")]
+fn unregister_nonzero_node() {
+    let mut contract = new_contract();
+    let dao = make_test_account("dao_near".to_string());
+    let alice = make_test_account("alice_near".to_string());
+    let deposit_amount = U128(INIT_MINIMUM_STAKE);
+
+    // DAO transfers tokens to alice
+    testing_env!(get_context_with_deposit(dao.clone()));
+    contract.storage_deposit(Some("alice_near".to_string().try_into().unwrap()), None);
+    testing_env!(get_context_for_ft_transfer(dao));
+    contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
+
+    // alice registers node
+    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
+    testing_env!(get_context_with_deposit(alice.clone()));
+    contract.register_node(
+        "0.0.0.0:8080".to_string(),
+        alice.clone().bn254_public_key.to_compressed().unwrap(),
+        alice_signature.to_compressed().unwrap(),
+    );
+
+    // alice deposits into pool
+    testing_env!(get_context_with_deposit(alice.clone()));
+    contract.deposit(deposit_amount, alice.clone().ed25519_public_key.as_bytes().to_vec());
+
+    // alice tries to unregister node
+    contract.unregister_node(alice.clone().ed25519_public_key.as_bytes().to_vec());
 }
