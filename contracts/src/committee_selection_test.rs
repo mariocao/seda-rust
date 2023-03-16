@@ -44,10 +44,7 @@ fn test_committee_selection() {
         testing_env!(get_context_view());
         assert_eq!(
             "0.0.0.0:8080".to_string(),
-            contract
-                .get_node(acc.account_id.try_into().unwrap())
-                .unwrap()
-                .multi_addr
+            contract.get_node(acc.account_id).unwrap().multi_addr
         );
     }
 

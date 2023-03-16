@@ -61,7 +61,7 @@ fn post_signed_batch() {
     }
 
     // time travel and activate nodes
-    testing_env!(get_context_with_deposit_at_block(test_acc.clone(), 1000000));
+    testing_env!(get_context_with_deposit_at_block(test_acc, 1000000));
     contract.process_epoch();
 
     // assert we have committees for this epoch and the next 2
@@ -77,14 +77,14 @@ fn post_signed_batch() {
     let merkle_root = contract.compute_merkle_root();
     let chosen_committee = contract.get_committees().first().unwrap().clone();
     let (pk, sk) = &test_accounts.get(chosen_committee.first().unwrap()).unwrap();
-    let acc_merkle_root_signature = bn254_sign(&sk, &merkle_root);
+    let acc_merkle_root_signature = bn254_sign(sk, &merkle_root);
 
-    let mut agg_public_key = pk.clone();
+    let mut agg_public_key = *pk;
     let mut agg_signature = acc_merkle_root_signature;
     for index in chosen_committee.iter().skip(1) {
         let (pk, sk) = &test_accounts.get(index).unwrap();
-        let acc_merkle_root_signature = bn254_sign(&sk, &merkle_root);
-        agg_public_key = agg_public_key + pk.clone();
+        let acc_merkle_root_signature = bn254_sign(sk, &merkle_root);
+        agg_public_key = agg_public_key + *pk;
         agg_signature = agg_signature + acc_merkle_root_signature;
     }
     assert_eq!(contract.num_batches, 0);
@@ -165,14 +165,14 @@ fn post_signed_batch_with_wrong_leader_sig() {
     let merkle_root = contract.compute_merkle_root();
     let chosen_committee = contract.get_committees().first().unwrap().clone();
     let (pk, sk) = &test_accounts.get(chosen_committee.first().unwrap()).unwrap();
-    let acc_merkle_root_signature = bn254_sign(&sk, &merkle_root);
+    let acc_merkle_root_signature = bn254_sign(sk, &merkle_root);
 
-    let mut agg_public_key = pk.clone();
+    let mut agg_public_key = *pk;
     let mut agg_signature = acc_merkle_root_signature;
     for index in chosen_committee.iter().skip(1) {
         let (pk, sk) = &test_accounts.get(index).unwrap();
-        let acc_merkle_root_signature = bn254_sign(&sk, &merkle_root);
-        agg_public_key = agg_public_key + pk.clone();
+        let acc_merkle_root_signature = bn254_sign(sk, &merkle_root);
+        agg_public_key = agg_public_key + *pk;
         agg_signature = agg_signature + acc_merkle_root_signature;
     }
     for index in 0..num_of_nodes {
@@ -185,7 +185,7 @@ fn post_signed_batch_with_wrong_leader_sig() {
             let mut rng = rand::thread_rng();
             let random_seed = rng.gen::<u64>();
             let invalid_leader_sig = bn254_sign(
-                &test_accounts.get(&acc.account_id.clone()).unwrap().1,
+                &test_accounts.get(&acc.account_id).unwrap().1,
                 &random_seed.to_le_bytes(),
             );
             contract.post_signed_batch(
