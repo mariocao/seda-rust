@@ -520,7 +520,7 @@ fn cancel_withdraw_request() {
 }
 
 #[test]
-#[should_panic(expected = "Not enough epochs have passed to withdraw")]
+#[should_panic(expected = "2 epochs remain until withdrawal is allowed")]
 fn withdraw_before_epoch() {
     let mut contract = new_contract();
     let dao = make_test_account("dao_near".to_string());

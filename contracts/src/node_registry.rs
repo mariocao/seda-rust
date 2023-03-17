@@ -23,7 +23,7 @@ pub struct HumanReadableDepositInfo {
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone)]
 pub struct WithdrawRequest {
     pub amount: Balance,
-    pub epoch:  u64,
+    pub epoch:  u64, // epoch when funds will be available for withdrawal
 }
 /// Node information
 #[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Eq, PartialEq, Debug, Clone, Default)]
@@ -140,7 +140,6 @@ impl MainchainContract {
     }
 
     pub fn internal_withdraw(&mut self, amount: Balance, ed25519_public_key: Vec<u8>) {
-        // TODO: epoch delay for withdrawal
         manage_storage_deposit!(self, {
             assert!(amount > 0, "Withdrawal amount should be positive");
             let mut node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
@@ -171,7 +170,8 @@ impl MainchainContract {
             let current_epoch = self.get_current_epoch();
             assert!(
                 withdraw_request.epoch <= current_epoch,
-                "Not enough epochs have passed to withdraw"
+                "{} epochs remain until withdrawal is allowed",
+                withdraw_request.epoch - current_epoch
             );
 
             // subtract from contract balance and add to user balance
@@ -350,13 +350,6 @@ impl MainchainContract {
                     account_hash: env::sha256_array(ed25519_public_key.as_slice()),
                 })
             });
-            let withdraw_request = node_withdraw_requests
-                .get(&depositor_account_id)
-                .expect("No pending withdrawal found for this account");
-            assert!(
-                withdraw_request.epoch <= self.get_current_epoch(),
-                "Not enough epochs have passed to cancel the withdrawal request"
-            );
             node_withdraw_requests.remove(&depositor_account_id);
             self.withdraw_requests
                 .insert(&ed25519_public_key, &node_withdraw_requests);
