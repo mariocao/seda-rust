@@ -491,7 +491,7 @@ fn cancel_withdraw_request() {
     contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // alice registers node
-    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), &alice.clone().account_id.as_bytes());
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
@@ -534,7 +534,7 @@ fn withdraw_before_epoch() {
     contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // alice registers node
-    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), &alice.clone().account_id.as_bytes());
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
@@ -573,7 +573,7 @@ fn unregister_nonzero_node() {
     contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // alice registers node
-    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), &alice.clone().account_id.as_bytes());
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),

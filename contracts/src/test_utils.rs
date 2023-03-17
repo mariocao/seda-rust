@@ -1,7 +1,10 @@
 use bn254::{PrivateKey, PublicKey, Signature, ECDSA};
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 use near_sdk::{json_types::U128, test_utils::VMContextBuilder, AccountId, Balance, VMContext};
-use rand::Rng;
+use rand::{
+    distributions::{Alphanumeric, DistString},
+    Rng,
+};
 
 use crate::{
     consts::{DATA_IMAGE_SVG_ICON, INITIAL_SUPPLY},
