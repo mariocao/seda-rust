@@ -29,13 +29,16 @@ pub struct Node {
 
 #[derive(Debug, Serialize)]
 pub struct GetNodesArgs {
-    pub limit:  u64,
-    pub offset: u64,
+    pub limit:  String,
+    pub offset: String,
 }
 
 impl From<(u64, u64)> for GetNodesArgs {
     fn from((limit, offset): (u64, u64)) -> Self {
-        Self { limit, offset }
+        Self {
+            limit:  limit.to_string(),
+            offset: offset.to_string(),
+        }
     }
 }
 
