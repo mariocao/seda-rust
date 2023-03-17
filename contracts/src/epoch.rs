@@ -39,8 +39,6 @@ impl MainchainContract {
             });
             log!("pending_nodes: {:?}", self.pending_nodes.to_vec());
 
-            
-
             // if bootstrapping phase, wait until there are committee_size active nodes
             if self.bootstrapping_phase {
                 if self.active_nodes.len() < self.config.committee_size {

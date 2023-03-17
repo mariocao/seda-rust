@@ -62,26 +62,26 @@ pub struct MainchainContract {
 
     // TODO: do all of these need to be UnorderedMaps?
     // Nodes that are eligible to participate in the current epoch
-    active_nodes:                UnorderedMap<AccountId, Node>,
+    active_nodes:                 UnorderedMap<AccountId, Node>,
     // Nodes that are not eligible to participate in the current epoch
-    inactive_nodes:              UnorderedMap<AccountId, Node>,
+    inactive_nodes:               UnorderedMap<AccountId, Node>,
     // Sub-set of inactive nodes that are waiting to be activated
-    pending_nodes:               UnorderedMap<AccountId, EpochHeight>,
+    pending_nodes:                UnorderedMap<AccountId, EpochHeight>,
     // Sub-set of active nodes that are part of the committee of the current epoch
     // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][SLOTS_PER_EPOCH]
-    nodes_by_ed25519_public_key: LookupMap<Vec<u8>, AccountId>,
-    depositors:                  LookupMap<AccountId, UnorderedMap<Vec<u8>, Balance>>,
+    nodes_by_ed25519_public_key:  LookupMap<Vec<u8>, AccountId>,
+    depositors:                   LookupMap<AccountId, UnorderedMap<Vec<u8>, Balance>>,
     // committees[EPOCH_COMMITTEES_LOOKAHEAD + 1][config.committee_size]
-    committees:                Vec<Vec<AccountId>>,
-    data_request_accumulator:  Vector<String>,
-    num_batches:               BatchHeight,
-    batch_ids_by_height:       LookupMap<BatchHeight, BatchId>,
-    batch_by_id:               LookupMap<BatchId, Batch>,
-    last_total_balance:        Balance,
-    nodes_by_bn254_public_key: LookupMap<Vec<u8>, AccountId>,
-    random_seed:               CryptoHash,
-    bootstrapping_phase:       bool,
-    last_processed_epoch:      EpochHeight,
+    committees:                   Vec<Vec<AccountId>>,
+    data_request_accumulator:     Vector<String>,
+    num_batches:                  BatchHeight,
+    batch_ids_by_height:          LookupMap<BatchHeight, BatchId>,
+    batch_by_id:                  LookupMap<BatchId, Batch>,
+    last_total_balance:           Balance,
+    nodes_by_bn254_public_key:    LookupMap<Vec<u8>, AccountId>,
+    random_seed:                  CryptoHash,
+    bootstrapping_phase:          bool,
+    last_processed_epoch:         EpochHeight,
     last_generated_random_number: u64,
 }
 
@@ -89,7 +89,13 @@ pub struct MainchainContract {
 #[near_bindgen]
 impl MainchainContract {
     #[init]
-    pub fn new(dao: AccountId, initial_supply: U128, metadata: FungibleTokenMetadata, committee_size: u64, random_seed: u64) -> Self {
+    pub fn new(
+        dao: AccountId,
+        initial_supply: U128,
+        metadata: FungibleTokenMetadata,
+        committee_size: u64,
+        random_seed: u64,
+    ) -> Self {
         assert!(!env::state_exists(), "Already initialized");
         assert!(
             env::is_valid_account_id(dao.as_bytes()),
