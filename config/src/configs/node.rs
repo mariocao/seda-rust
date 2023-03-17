@@ -41,6 +41,19 @@ pub struct PartialNodeConfig {
 }
 #[cfg(feature = "cli")]
 impl PartialNodeConfig {
+    pub fn ids(self, signer_account_id: Option<String>, contract_id: Option<String>) -> Result<(String, String)> {
+        let signer_account_id = match (self.signer_account_id, signer_account_id) {
+            (None, None) => Err(ConfigError::from("node.signer_account_id")),
+            (None, Some(field)) | (Some(field), None) | (Some(_), Some(field)) => Ok::<_, crate::ConfigError>(field),
+        }?;
+        let contract_id = match (self.contract_account_id, contract_id) {
+            (None, None) => Err(ConfigError::from("node.contract_account_id")),
+            (None, Some(field)) | (Some(field), None) | (Some(_), Some(field)) => Ok::<_, crate::ConfigError>(field),
+        }?;
+
+        Ok((signer_account_id, contract_id))
+    }
+
     pub fn to_contract_account_id(self, contract_id: Option<String>) -> Result<String> {
         match (self.contract_account_id, contract_id) {
             (None, None) => Err(ConfigError::from("node.contract_account_id")),

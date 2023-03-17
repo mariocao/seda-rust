@@ -10,7 +10,7 @@ use seda_chains::{chain, Client};
 use seda_config::{ChainConfigs, NodeConfig};
 use seda_runtime_sdk::Chain;
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json::{json, Value};
+use serde_json::json;
 #[cfg(debug_assertions)]
 pub(crate) use sub_chain::*;
 
@@ -42,7 +42,7 @@ pub(crate) async fn call<T: DeserializeOwned + Serialize>(
     )
     .await?;
     let result = chain::send_tx(chain, client, &signed_txn).await?;
-    let result_value: Value = serde_json::from_slice(&result)?;
+    let result_value = serde_json::from_slice::<T>(&result)?;
     serde_json::to_writer_pretty(
         std::io::stdout(),
         &json!({
