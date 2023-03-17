@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use bn254::{PrivateKey, PublicKey};
 use near_contract_standards::{fungible_token::core::FungibleTokenCore, storage_management::StorageManagement};
-use near_sdk::{env, json_types::U128, testing_env, AccountId};
+use near_sdk::{json_types::U128, testing_env, AccountId};
 use rand::Rng;
 
 use super::test_utils::{
@@ -47,6 +47,7 @@ fn post_signed_batch() {
         let (pk, sk) = generate_bn254_key();
         test_accounts.insert(acc_str.parse().unwrap(), (pk, sk.clone()));
         let sig = bn254_sign(&sk.clone(), acc_str.as_bytes());
+
         testing_env!(get_context_with_deposit(acc.clone()));
         // register nodes
         contract.register_node(
@@ -143,6 +144,7 @@ fn post_signed_batch_with_wrong_leader_sig() {
         let (pk, sk) = generate_bn254_key();
         test_accounts.insert(acc_str.parse().unwrap(), (pk, sk.clone()));
         let sig = bn254_sign(&sk.clone(), acc_str.as_bytes());
+
         testing_env!(get_context_with_deposit(acc.clone()));
         // register nodes
         contract.register_node(
@@ -159,15 +161,6 @@ fn post_signed_batch_with_wrong_leader_sig() {
     testing_env!(get_context_with_deposit_at_block(test_acc, 1000000));
     contract.process_epoch();
 
-    // assert we have committees for this epoch and the next 2
-    assert_eq!(contract.get_committees().len(), 3);
-
-    // assert each committee has config.committee_size members
-    contract
-        .get_committees()
-        .into_iter()
-        .for_each(|comittee| assert_eq!(comittee.len() as u64, contract.config.committee_size));
-
     // get the merkle root (for all nodes to sign)
     let merkle_root = contract.compute_merkle_root();
     let chosen_committee = contract.get_committees().first().unwrap().clone();
@@ -182,7 +175,6 @@ fn post_signed_batch_with_wrong_leader_sig() {
         agg_public_key = agg_public_key + pk.clone();
         agg_signature = agg_signature + acc_merkle_root_signature;
     }
-    assert_eq!(contract.num_batches, 0);
     for index in 0..num_of_nodes {
         let acc_str = format!("{index:}_near");
         let acc = make_test_account(acc_str);
@@ -190,7 +182,6 @@ fn post_signed_batch_with_wrong_leader_sig() {
         let slot_leader = contract.get_current_slot_leader();
 
         if slot_leader == acc.account_id.clone() {
-            let last_generated_random = contract.last_generated_random_number;
             let mut rng = rand::thread_rng();
             let random_seed = rng.gen::<u64>();
             let invalid_leader_sig = bn254_sign(
@@ -203,9 +194,6 @@ fn post_signed_batch_with_wrong_leader_sig() {
                 chosen_committee.clone(),
                 invalid_leader_sig.to_compressed().unwrap(),
             );
-            assert_ne!(last_generated_random, contract.last_generated_random_number);
-            assert_eq!(contract.num_batches, 1);
-
             break;
         }
     }

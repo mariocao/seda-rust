@@ -8,10 +8,6 @@ impl MainchainContract {
     #[payable]
     pub fn post_data_request(&mut self, data_request: String) {
         manage_storage_deposit!(self, "require", self.data_request_accumulator.push(&data_request));
-        println!(
-            "//////self.data_request_accumulator {:?}",
-            self.data_request_accumulator
-        );
     }
 
     pub fn compute_merkle_root(&self) -> Vec<u8> {
