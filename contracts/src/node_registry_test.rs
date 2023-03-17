@@ -24,7 +24,7 @@ use crate::{
 fn register_and_get_node() {
     let mut contract = new_contract();
     let bob = make_test_account("bob_near".to_string());
-    let bob_signature = bn254_sign(bob.clone(), &bob.clone().account_id.as_bytes());
+    let bob_signature = bn254_sign(&bob.bn254_private_key, &bob.clone().account_id.as_bytes());
 
     // register node
     testing_env!(get_context_with_deposit(bob.clone()));
@@ -47,7 +47,7 @@ fn register_and_get_node() {
 fn register_not_enough_storage() {
     let mut contract = new_contract();
     let bob = make_test_account("bob_near".to_string());
-    let bob_signature = bn254_sign(bob.clone(), &bob.clone().account_id.as_bytes());
+    let bob_signature = bn254_sign(&bob.bn254_private_key.clone(), &bob.clone().account_id.as_bytes());
 
     // register node
     testing_env!(get_context(bob.clone()));
@@ -62,7 +62,7 @@ fn register_not_enough_storage() {
 fn set_node_multi_addr() {
     let mut contract = new_contract();
     let bob = make_test_account("bob_near".to_string());
-    let bob_signature = bn254_sign(bob.clone(), &bob.clone().account_id.as_bytes());
+    let bob_signature = bn254_sign(&bob.bn254_private_key.clone(), &bob.clone().account_id.as_bytes());
 
     // register node
     testing_env!(get_context_with_deposit(bob.clone()));
@@ -92,9 +92,9 @@ fn get_nodes() {
     let alice = make_test_account("alice_near".to_string());
     let carol = make_test_account("carol_near".to_string());
     let deposit_amount = U128(INIT_MINIMUM_STAKE);
-    let bob_signature = bn254_sign(bob.clone(), "bob_near".to_string().as_bytes());
-    let alice_signature = bn254_sign(alice.clone(), "alice_near".to_string().as_bytes());
-    let carol_signature = bn254_sign(carol.clone(), "carol_near".to_string().as_bytes());
+    let bob_signature = bn254_sign(&bob.bn254_private_key.clone(), "bob_near".to_string().as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), "alice_near".to_string().as_bytes());
+    let carol_signature = bn254_sign(&carol.bn254_private_key.clone(), "carol_near".to_string().as_bytes());
 
     // DAO transfers tokens to bob, alice, and carol
     testing_env!(get_context_with_deposit(dao.clone()));
@@ -185,8 +185,8 @@ fn duplicated_key() {
     let mut contract = new_contract();
     let bob = make_test_account("bob_near".to_string());
     let alice = make_test_account("alice_near".to_string());
-    let bob_signature = bn254_sign(bob.clone(), "bob_near".to_string().as_bytes());
-    let alice_signature = bn254_sign(bob.clone(), "alice_near".to_string().as_bytes());
+    let bob_signature = bn254_sign(&bob.bn254_private_key.clone(), "bob_near".to_string().as_bytes());
+    let alice_signature = bn254_sign(&bob.bn254_private_key.clone(), "alice_near".to_string().as_bytes());
 
     // bob registers node
     testing_env!(get_context_with_deposit(bob.clone()));
@@ -219,7 +219,7 @@ fn deposit_withdraw() {
     contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // alice registers node
-    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), &alice.clone().account_id.as_bytes());
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
@@ -278,7 +278,7 @@ fn withdraw_wrong_account() {
     contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // alice registers node
-    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), &alice.clone().account_id.as_bytes());
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
@@ -328,7 +328,7 @@ fn deposit_withdraw_one_node_two_depositors() {
     contract.ft_transfer("bob_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // alice registers node
-    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), &alice.clone().account_id.as_bytes());
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
@@ -372,8 +372,8 @@ fn deposit_withdraw_two_nodes_one_depositor() {
     contract.ft_transfer("alice_near".to_string().try_into().unwrap(), deposit_amount, None);
 
     // alice and bob register nodes
-    let alice_signature = bn254_sign(alice.clone(), &alice.clone().account_id.as_bytes());
-    let bob_signature = bn254_sign(bob.clone(), &bob.clone().account_id.as_bytes());
+    let alice_signature = bn254_sign(&alice.bn254_private_key.clone(), &alice.clone().account_id.as_bytes());
+    let bob_signature = bn254_sign(&bob.bn254_private_key.clone(), &bob.clone().account_id.as_bytes());
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),

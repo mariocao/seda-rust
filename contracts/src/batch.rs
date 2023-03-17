@@ -5,6 +5,7 @@ use near_sdk::{
     near_bindgen,
     AccountId,
 };
+use sha2::{Digest, Sha256};
 
 use crate::{manage_storage_deposit, merkle::CryptoHash, MainchainContract, MainchainContractExt};
 
@@ -45,14 +46,30 @@ impl MainchainContract {
         aggregate_signature: Vec<u8>,
         aggregate_public_key: Vec<u8>,
         signers: Vec<AccountId>,
+        leader_signature: Vec<u8>,
     ) {
-        // require a committee member call this function
-        // TODO: require the slot leader to call this function instead of any committee
-        // member
+        assert_eq!(self.get_current_slot_leader(), env::signer_account_id());
+        let leader_pk = PublicKey::from_compressed(
+            self.active_nodes
+                .get(&env::signer_account_id())
+                .unwrap()
+                .bn254_public_key,
+        )
+        .unwrap()
+        .to_compressed()
+        .unwrap();
         assert!(
-            self.committees[0].contains(&env::signer_account_id()),
-            "Caller must be a committee member"
+            self.bn254_verify(
+                self.last_generated_random_number.to_le_bytes().to_vec(),
+                leader_signature.clone(),
+                leader_pk
+            ),
+            "Invalid slot leader signature"
         );
+        let current_slot = self.get_current_slot();
+        let hash = Sha256::digest([leader_signature, current_slot.to_le_bytes().to_vec()].concat());
+        let new_random: near_bigint::U256 = near_bigint::U256::from_little_endian(&hash);
+        self.last_generated_random_number = new_random;
 
         // require the data request accumulator to be non-empty
         assert!(

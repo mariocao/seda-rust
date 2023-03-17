@@ -17,22 +17,25 @@ fn test_committee_selection() {
     let mut contract = new_contract();
     let dao = make_test_account("dao_near".to_string());
     let bob = make_test_account("bob_near".to_string());
-    let deposit_amount = U128(INIT_MINIMUM_STAKE);
 
-    for x in 1..200 {
-        let acc = make_test_account(format!("{x:}_near"));
-        let signature = bn254_sign(acc.clone(), acc.account_id.as_bytes());
-        testing_env!(get_context_with_deposit(dao.clone()));
-        contract.storage_deposit(Some(acc.clone().account_id.try_into().unwrap()), None);
+    let deposit_amount = U128(INIT_MINIMUM_STAKE);
+    let num_of_nodes = 20;
+    for x in 1..num_of_nodes {
+        let acc_str = format!("{x:}_near");
+        let acc = make_test_account(acc_str.clone());
+
+        let sig = bn254_sign(&acc.bn254_private_key, acc_str.as_bytes());
+        testing_env!(get_context_with_deposit(dao.clone(),));
+        contract.storage_deposit(Some(acc_str.clone().try_into().unwrap()), None);
         testing_env!(get_context_for_ft_transfer(dao.clone()));
-        contract.ft_transfer(acc.clone().account_id.try_into().unwrap(), deposit_amount, None);
+        contract.ft_transfer(acc_str.clone().try_into().unwrap(), deposit_amount, None);
 
         // register node
         testing_env!(get_context_with_deposit(acc.clone()));
         contract.register_node(
             "0.0.0.0:8080".to_string(),
             acc.bn254_public_key.to_compressed().unwrap(),
-            signature.to_compressed().unwrap(),
+            sig.to_compressed().unwrap(),
         );
         testing_env!(get_context_with_deposit(acc.clone()));
         contract.deposit(deposit_amount, acc.ed25519_public_key.into_bytes());

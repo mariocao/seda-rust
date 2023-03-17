@@ -16,6 +16,7 @@ const TEST_DEPOSIT_AMOUNT: Balance = 618_720_000_000_000_000_000_000; // enough 
 pub fn new_contract() -> MainchainContract {
     let mut rng = rand::thread_rng();
     let random_seed = rng.gen::<u64>();
+
     let committee_size = 2;
     MainchainContract::new(
         "dao_near".to_string().try_into().unwrap(),
@@ -30,7 +31,7 @@ pub fn new_contract() -> MainchainContract {
             decimals:       24,
         },
         committee_size,
-        random_seed,
+        random_seed.into(),
     )
 }
 
@@ -121,6 +122,16 @@ pub fn get_context_with_deposit_at_block(test_account: TestAccount, block_index:
         .build()
 }
 
-pub fn bn254_sign(test_account: TestAccount, message: &[u8]) -> Signature {
-    ECDSA::sign(message, &test_account.bn254_private_key).unwrap()
+pub fn generate_bn254_key() -> (PublicKey, PrivateKey) {
+    let random_hex_string = hex::encode(Alphanumeric.sample_string(&mut rand::thread_rng(), 32));
+    let private_key_bytes = hex::decode(random_hex_string).unwrap();
+
+    let private_key = PrivateKey::try_from(private_key_bytes.as_slice()).unwrap();
+    let public_key = PublicKey::from_private_key(&private_key);
+
+    (public_key, private_key)
+}
+
+pub fn bn254_sign(private_key: &PrivateKey, message: &[u8]) -> Signature {
+    ECDSA::sign(message, private_key).unwrap()
 }

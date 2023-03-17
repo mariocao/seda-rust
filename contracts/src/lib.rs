@@ -82,7 +82,7 @@ pub struct MainchainContract {
     random_seed:                  CryptoHash,
     bootstrapping_phase:          bool,
     last_processed_epoch:         EpochHeight,
-    last_generated_random_number: u64,
+    last_generated_random_number: near_bigint::U256,
 }
 
 /// Contract public methods
@@ -94,7 +94,7 @@ impl MainchainContract {
         initial_supply: U128,
         metadata: FungibleTokenMetadata,
         committee_size: u64,
-        random_seed: u64,
+        random_seed: near_bigint::U256,
     ) -> Self {
         assert!(!env::state_exists(), "Already initialized");
         assert!(

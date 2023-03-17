@@ -7,7 +7,7 @@ register_custom_getrandom!(get_random_in_near);
 
 /// Contract private methods
 impl MainchainContract {
-    pub fn select_committee(&mut self, random_number: u64) -> Vec<AccountId> {
+    pub fn select_committee(&mut self, random_number: near_bigint::U256) -> Vec<AccountId> {
         let validators = self.active_nodes.keys_as_vector().to_vec();
         let mut chosen_committee: Vec<AccountId> = Vec::new();
         let mut chosen_indices: Vec<usize> = Vec::new();
@@ -59,7 +59,6 @@ impl MainchainContract {
         );
         let prn: near_bigint::U256 = near_bigint::U256::from_little_endian(&hash);
         let chosen_index = (prn % self.config.committee_size).as_usize();
-
         current_committee
             .get(chosen_index)
             .expect("Couldn't fetch chosen validator")

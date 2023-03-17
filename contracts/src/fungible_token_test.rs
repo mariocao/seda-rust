@@ -42,7 +42,7 @@ fn total_supply_includes_staked() {
     let mut contract = new_contract();
     let dao = make_test_account("dao_near".to_string());
     let bob = make_test_account("bob_near".to_string());
-    let bob_signature = bn254_sign(bob.clone(), "bob_near".to_string().as_bytes());
+    let bob_signature = bn254_sign(&bob.bn254_private_key.clone(), "bob_near".to_string().as_bytes());
     let deposit_amount = U128(INIT_MINIMUM_STAKE);
 
     // DAO transfers tokens to bob
