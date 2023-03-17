@@ -4670,6 +4670,7 @@ dependencies = [
 name = "seda-cli"
 version = "0.1.0"
 dependencies = [
+ "bn254",
  "clap",
  "clap-markdown",
  "clap_complete",
@@ -4693,7 +4694,6 @@ version = "0.1.0"
 dependencies = [
  "borsh",
  "clap",
- "near-sdk",
  "serde",
  "serde_json",
  "thiserror",

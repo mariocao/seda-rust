@@ -347,11 +347,11 @@ impl MainchainContract {
         let node = self.internal_get_node(&account_id);
         if let Some(node) = node {
             Some(NodeInfo {
-                account_id,
-                multi_addr: node.multi_addr,
-                balance: node.balance,
+                account_id:         account_id.to_string(),
+                multi_addr:         node.multi_addr,
+                balance:            node.balance,
                 ed25519_public_key: node.ed25519_public_key,
-                bn254_public_key: node.bn254_public_key,
+                bn254_public_key:   node.bn254_public_key,
             })
         } else {
             None
@@ -366,7 +366,7 @@ impl MainchainContract {
             if let Some(node_id) = self.active_nodes.keys().nth(index as usize - 1) {
                 let node = self.active_nodes.get(&node_id).unwrap();
                 let human_readable_node = NodeInfo {
-                    account_id:         node_id,
+                    account_id:         node_id.to_string(),
                     multi_addr:         node.multi_addr,
                     balance:            node.balance,
                     ed25519_public_key: node.ed25519_public_key,
@@ -395,11 +395,11 @@ impl MainchainContract {
         let account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
         let node = self.internal_get_node(&account_id).unwrap();
         NodeInfo {
-            account_id,
-            multi_addr: node.multi_addr,
-            balance: node.balance,
+            account_id:         account_id.to_string(),
+            multi_addr:         node.multi_addr,
+            balance:            node.balance,
             ed25519_public_key: node.ed25519_public_key,
-            bn254_public_key: node.bn254_public_key,
+            bn254_public_key:   node.bn254_public_key,
         }
     }
 
@@ -407,11 +407,11 @@ impl MainchainContract {
         let account_id = self.nodes_by_bn254_public_key.get(&bn254_public_key).unwrap();
         let node = self.internal_get_node(&account_id).unwrap();
         NodeInfo {
-            account_id,
-            multi_addr: node.multi_addr,
-            balance: node.balance,
+            account_id:         account_id.to_string(),
+            multi_addr:         node.multi_addr,
+            balance:            node.balance,
             ed25519_public_key: node.ed25519_public_key,
-            bn254_public_key: node.bn254_public_key,
+            bn254_public_key:   node.bn254_public_key,
         }
     }
 }

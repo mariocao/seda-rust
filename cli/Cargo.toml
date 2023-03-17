@@ -9,6 +9,7 @@ name = "seda"
 path = "src/main.rs"
 
 [dependencies]
+bn254 = { workspace = true }
 clap = { workspace = true, features = ["default"] }
 clap_complete = { workspace = true }
 clap-markdown = { workspace = true }

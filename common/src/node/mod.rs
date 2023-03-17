@@ -11,7 +11,8 @@ use super::*;
 
 #[derive(Debug, Clone, Eq, PartialEq, BorshDeserialize, BorshSerialize, Deserialize, Serialize)]
 pub struct NodeInfo {
-    pub account_id:         near_sdk::AccountId,
+    // Changed from near_sdk::AccountId, as near_sdk is not compatible on windows machines.
+    pub account_id:         String,
     pub multi_addr:         String,
     pub balance:            u128,
     pub bn254_public_key:   Vec<u8>,

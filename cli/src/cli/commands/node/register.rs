@@ -18,16 +18,19 @@ pub struct Register {
 impl Register {
     pub async fn handle(self, config: AppConfig, chains_config: PartialChainConfigs) -> Result<()> {
         let chains_config = config.chains.to_config(chains_config)?;
-
         let node_config = &config.node.to_config(self.node_config)?;
+
+        let sig = bn254::ECDSA::sign(
+            node_config.signer_account_id.clone(),
+            &node_config.seda_key_pair.private_key,
+        )?;
         let args = RegisterNodeArgs {
             multi_addr:       self.socket_address,
-            // TODO: fix these once we merge in the KeyPair on node config changes.
-            bn254_public_key: node_config.seda_key_pair.public_key.to_compressed().expect("TODO"),
-            signature:        vec![0; 32],
+            bn254_public_key: node_config.seda_key_pair.public_key.to_compressed()?,
+            signature:        sig.to_compressed()?,
         }
         .to_string();
-        call::<String>(
+        call::<Option<serde_json::Value>>(
             Chain::Near,
             &node_config.contract_account_id,
             "register_node",

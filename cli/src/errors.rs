@@ -17,6 +17,10 @@ pub enum CliError {
     Node(#[from] NodeError),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
+    #[error(transparent)]
+    Bn254(#[from] bn254::Error),
+    // #[error(transparent)]
+    // Crypt(#[from] )
     #[cfg(debug_assertions)]
     #[error(transparent)]
     CLIDocument(#[from] std::io::Error),
