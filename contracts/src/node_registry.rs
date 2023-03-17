@@ -247,19 +247,21 @@ impl MainchainContract {
     }
 
     pub fn unregister_node(&mut self, ed25519_public_key: Vec<u8>) {
-        // assert the signer_account_pk matches the ed25519_public_key
-        assert!(
-            env::signer_account_pk().into_bytes().to_vec() == ed25519_public_key,
-            "Invalid ed25519_public_key"
-        );
+        manage_storage_deposit!(self, "refund", {
+            // assert the signer_account_pk matches the ed25519_public_key
+            assert!(
+                env::signer_account_pk().into_bytes().to_vec() == ed25519_public_key,
+                "Invalid ed25519_public_key"
+            );
 
-        // assert the node balance is zero
-        let node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
-        assert!(node.balance == 0, "Node balance is not zero");
+            // assert the node balance is zero
+            let node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
+            assert!(node.balance == 0, "Node balance is not zero");
 
-        // remove the node
-        let account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
-        self.inactive_nodes.remove(&account_id);
+            // remove the node
+            let account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+            self.inactive_nodes.remove(&account_id);
+        });
     }
 
     /// Updates one of the node's fields
@@ -293,74 +295,78 @@ impl MainchainContract {
 
     #[payable]
     pub fn request_withdraw(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
-        let amount: Balance = amount.into();
-        assert!(amount > 0, "Withdrawal amount should be positive");
-        let node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
-        assert!(node.balance >= amount, "Not enough balance to withdraw");
+        manage_storage_deposit!(self, "require", {
+            let amount: Balance = amount.into();
+            assert!(amount > 0, "Withdrawal amount should be positive");
+            let node = self.get_expect_node_by_ed25519_public_key(ed25519_public_key.clone());
+            assert!(node.balance >= amount, "Not enough balance to withdraw");
 
-        // find depositor info for this node
-        let depositor_account_id = env::signer_account_id();
-        let depositor = self
-            .depositors
-            .get(&depositor_account_id)
-            .expect("No deposit info found for this account");
-        let deposited = depositor
-            .get(&ed25519_public_key)
-            .expect("No deposit info found for this node");
-        assert!(deposited >= amount, "Not enough balance to withdraw");
+            // find depositor info for this node
+            let depositor_account_id = env::signer_account_id();
+            let depositor = self
+                .depositors
+                .get(&depositor_account_id)
+                .expect("No deposit info found for this account");
+            let deposited = depositor
+                .get(&ed25519_public_key)
+                .expect("No deposit info found for this node");
+            assert!(deposited >= amount, "Not enough balance to withdraw");
 
-        // create a new pending withdrawal
-        let mut node_withdraw_requests = self.withdraw_requests.get(&ed25519_public_key).unwrap_or_else(|| {
-            LookupMap::new(MainchainStorageKeys::WithdrawRequest {
-                account_hash: env::sha256_array(ed25519_public_key.as_slice()),
-            })
+            // create a new pending withdrawal
+            let mut node_withdraw_requests = self.withdraw_requests.get(&ed25519_public_key).unwrap_or_else(|| {
+                LookupMap::new(MainchainStorageKeys::WithdrawRequest {
+                    account_hash: env::sha256_array(ed25519_public_key.as_slice()),
+                })
+            });
+            // assert there is no pending withdrawal for this depositor
+            assert!(
+                node_withdraw_requests.get(&depositor_account_id).is_none(),
+                "There is already a pending withdrawal for this account"
+            );
+            let pending_withdraw = WithdrawRequest {
+                amount,
+                epoch: self.get_current_epoch() + self.config.withdraw_delay,
+            };
+            let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+            log!(
+                "{} requested withdrawal of {} from {}'s node. Will be available at epoch {}",
+                depositor_account_id,
+                amount,
+                node_account_id,
+                self.config.withdraw_delay + self.get_current_epoch()
+            );
+            node_withdraw_requests.insert(&depositor_account_id, &pending_withdraw);
+            self.withdraw_requests
+                .insert(&ed25519_public_key, &node_withdraw_requests);
         });
-        // assert there is no pending withdrawal for this depositor
-        assert!(
-            node_withdraw_requests.get(&depositor_account_id).is_none(),
-            "There is already a pending withdrawal for this account"
-        );
-        let pending_withdraw = WithdrawRequest {
-            amount,
-            epoch: self.get_current_epoch() + self.config.withdraw_delay,
-        };
-        let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
-        log!(
-            "{} requested withdrawal of {} from {}'s node. Will be available at epoch {}",
-            depositor_account_id,
-            amount,
-            node_account_id,
-            self.config.withdraw_delay + self.get_current_epoch()
-        );
-        node_withdraw_requests.insert(&depositor_account_id, &pending_withdraw);
-        self.withdraw_requests
-            .insert(&ed25519_public_key, &node_withdraw_requests);
     }
 
     #[payable]
     pub fn cancel_withdraw_request(&mut self, ed25519_public_key: Vec<u8>) {
-        let depositor_account_id = env::signer_account_id();
-        let mut node_withdraw_requests = self.withdraw_requests.get(&ed25519_public_key).unwrap_or_else(|| {
-            LookupMap::new(MainchainStorageKeys::WithdrawRequest {
-                account_hash: env::sha256_array(ed25519_public_key.as_slice()),
-            })
+        manage_storage_deposit!(self, {
+            let depositor_account_id = env::signer_account_id();
+            let mut node_withdraw_requests = self.withdraw_requests.get(&ed25519_public_key).unwrap_or_else(|| {
+                LookupMap::new(MainchainStorageKeys::WithdrawRequest {
+                    account_hash: env::sha256_array(ed25519_public_key.as_slice()),
+                })
+            });
+            let withdraw_request = node_withdraw_requests
+                .get(&depositor_account_id)
+                .expect("No pending withdrawal found for this account");
+            assert!(
+                withdraw_request.epoch <= self.get_current_epoch(),
+                "Not enough epochs have passed to cancel the withdrawal request"
+            );
+            node_withdraw_requests.remove(&depositor_account_id);
+            self.withdraw_requests
+                .insert(&ed25519_public_key, &node_withdraw_requests);
+            let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
+            log!(
+                "{} cancelled withdrawal request for {}",
+                depositor_account_id,
+                node_account_id
+            );
         });
-        let withdraw_request = node_withdraw_requests
-            .get(&depositor_account_id)
-            .expect("No pending withdrawal found for this account");
-        assert!(
-            withdraw_request.epoch <= self.get_current_epoch(),
-            "Not enough epochs have passed to cancel the withdrawal request"
-        );
-        node_withdraw_requests.remove(&depositor_account_id);
-        self.withdraw_requests
-            .insert(&ed25519_public_key, &node_withdraw_requests);
-        let node_account_id = self.nodes_by_ed25519_public_key.get(&ed25519_public_key).unwrap();
-        log!(
-            "{} cancelled withdrawal request for {}",
-            depositor_account_id,
-            node_account_id
-        );
     }
 
     /// Withdraws the balance for given account.

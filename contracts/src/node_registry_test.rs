@@ -429,7 +429,7 @@ fn deposit_withdraw_two_nodes_one_depositor() {
     assert_eq!(node_balance, U128(deposit_amount.0 / 2));
 
     // alice requests withdraws from both pools
-    testing_env!(get_context(alice.clone()));
+    testing_env!(get_context_with_deposit(alice.clone()));
     contract.request_withdraw(
         U128(deposit_amount.0 / 2),
         alice.clone().ed25519_public_key.as_bytes().to_vec(),
