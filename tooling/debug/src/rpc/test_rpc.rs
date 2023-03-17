@@ -21,6 +21,7 @@ use near_primitives::{
     },
 };
 use rand::{rngs::OsRng, Rng};
+use seda_common::NodeInfo;
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
@@ -89,12 +90,7 @@ impl MockNearRpcServer for MockNearRpc {
                     kind:         QueryResponseKind::CallResult(CallResult {
                         // TODO we have this structure defined already in the CLI
                         // So we can move it to somewhere common
-                        result: serde_json::to_vec_pretty(&json!({
-                                "owner":          "near_rpc_mocked",
-                                "pending_owner":  None::<String>,
-                                "socket_address": "127.0.0.1:6666"
-                        }))
-                        .unwrap(),
+                        result: serde_json::to_vec_pretty(&NodeInfo::random()).unwrap(),
                         logs:   Default::default(),
                     }),
                     block_height: 119467302,
@@ -104,11 +100,11 @@ impl MockNearRpcServer for MockNearRpc {
                     kind:         QueryResponseKind::CallResult(CallResult {
                         // TODO we have this structure defined already in the CLI
                         // So we can move it to somewhere common
-                        result: serde_json::to_vec_pretty(&json!([{
-                                        "owner":          "near_rpc_mocked",
-                                        "pending_owner":  None::<String>,
-                                        "socket_address": "127.0.0.1:6666"
-                        }]))
+                        result: serde_json::to_vec_pretty(&json!([
+                            NodeInfo::random(),
+                            NodeInfo::random(),
+                            NodeInfo::random()
+                        ]))
                         .unwrap(),
                         logs:   Default::default(),
                     }),

@@ -7,10 +7,13 @@ rust-version.workspace = true
 [features]
 default = []
 cli = ["clap"]
+test = ["rand"]
 
 [dependencies]
 borsh = { workspace = true }
 clap = { workspace = true, optional = true, features = ["derive"] }
+rand = { workspace = true, optional = true }
+seda-crypto = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

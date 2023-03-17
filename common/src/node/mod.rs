@@ -18,3 +18,31 @@ pub struct NodeInfo {
     pub bn254_public_key:   Vec<u8>,
     pub ed25519_public_key: Vec<u8>,
 }
+
+impl NodeInfo {
+    #[cfg(feature = "rand")]
+    pub fn random() -> Self {
+        use rand::{distributions::Alphanumeric, thread_rng, Rng};
+        let rng = &mut thread_rng();
+        let account_id_stem = rng
+            .sample_iter(&Alphanumeric)
+            .take(7)
+            .map(char::from)
+            .collect::<String>();
+        let kp = seda_crypto::KeyPair::generate();
+        Self {
+            account_id:         format!("{account_id_stem}.testnet"),
+            multi_addr:         format!(
+                "{}.{}.{}.{}:{}",
+                rng.gen_range(1..255),
+                rng.gen_range(1..255),
+                rng.gen_range(1..255),
+                rng.gen_range(1..255),
+                rng.gen_range(1..65535)
+            ),
+            balance:            rng.gen_range(0..u128::MAX),
+            bn254_public_key:   kp.public_key.to_compressed().unwrap(),
+            ed25519_public_key: rng.gen::<[u8; 32]>().to_vec(),
+        }
+    }
+}

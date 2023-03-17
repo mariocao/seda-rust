@@ -4694,6 +4694,8 @@ version = "0.1.0"
 dependencies = [
  "borsh",
  "clap",
+ "rand 0.8.5",
+ "seda-crypto",
  "serde",
  "serde_json",
  "thiserror",
@@ -4740,6 +4742,7 @@ dependencies = [
  "near-jsonrpc-primitives",
  "near-primitives 0.15.0",
  "rand 0.8.5",
+ "seda-common",
  "serde_json",
  "tokio",
  "tracing",

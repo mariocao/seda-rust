@@ -20,6 +20,7 @@ near-jsonrpc-client = { workspace = true }
 near-jsonrpc-primitives = { workspace = true }
 near-primitives = { workspace = true }
 rand = { workspace = true }
+seda-common = { workspace = true, features = ["test"] }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "signal"] }
 tracing = { workspace = true }

@@ -19,7 +19,6 @@ impl ToString for GetNodeArgs {
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, BorshDeserialize, BorshSerialize, Deserialize, Serialize)]
-
 pub struct Node {
     pub multi_addr:         String,
     pub balance:            u128,
