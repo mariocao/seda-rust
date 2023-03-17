@@ -48,6 +48,10 @@ impl MainchainContract {
         self.committees.clone()
     }
 
+    pub fn get_last_generated_random_number(&self) -> near_bigint::U256 {
+        self.last_generated_random_number
+    }
+
     pub fn get_current_slot_leader(&self) -> AccountId {
         let current_committee = self.committees.first().expect("Couldn't fetch current committee");
         let hash = Sha256::digest(
