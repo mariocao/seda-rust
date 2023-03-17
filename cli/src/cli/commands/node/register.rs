@@ -23,7 +23,7 @@ impl Register {
         let args = RegisterNodeArgs {
             multi_addr:       self.socket_address,
             // TODO: fix these once we merge in the KeyPair on node config changes.
-            bn254_public_key: vec![0; 32],
+            bn254_public_key: node_config.seda_key_pair.public_key.to_compressed().expect("TODO"),
             signature:        vec![0; 32],
         }
         .to_string();
