@@ -122,16 +122,6 @@ pub fn get_context_with_deposit_at_block(test_account: TestAccount, block_index:
         .build()
 }
 
-pub fn generate_bn254_key() -> (PublicKey, PrivateKey) {
-    let random_hex_string = hex::encode(Alphanumeric.sample_string(&mut rand::thread_rng(), 32));
-    let private_key_bytes = hex::decode(random_hex_string).unwrap();
-
-    let private_key = PrivateKey::try_from(private_key_bytes.as_slice()).unwrap();
-    let public_key = PublicKey::from_private_key(&private_key);
-
-    (public_key, private_key)
-}
-
 pub fn bn254_sign(private_key: &PrivateKey, message: &[u8]) -> Signature {
     ECDSA::sign(message, private_key).unwrap()
 }
