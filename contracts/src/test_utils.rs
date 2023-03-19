@@ -1,10 +1,7 @@
 use bn254::{PrivateKey, PublicKey, Signature, ECDSA};
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 use near_sdk::{json_types::U128, test_utils::VMContextBuilder, AccountId, Balance, VMContext};
-use rand::{
-    distributions::{Alphanumeric, DistString},
-    Rng,
-};
+use rand::Rng;
 
 use crate::{
     consts::{DATA_IMAGE_SVG_ICON, INITIAL_SUPPLY},
@@ -124,4 +121,19 @@ pub fn get_context_with_deposit_at_block(test_account: TestAccount, block_index:
 
 pub fn bn254_sign(private_key: &PrivateKey, message: &[u8]) -> Signature {
     ECDSA::sign(message, private_key).unwrap()
+}
+
+pub fn bn254_sign_aggregate(accounts: Vec<TestAccount>, message: &[u8]) -> (Signature, PublicKey) {
+    // initialize with first account
+    let mut agg_signature = bn254_sign(&accounts[0].bn254_private_key, &message);
+    let mut agg_public_key = accounts[0].bn254_public_key.clone();
+
+    // aggregate the rest
+    for account in accounts.iter().skip(1) {
+        let signature = bn254_sign(&account.bn254_private_key, &message);
+        agg_public_key = agg_public_key + account.bn254_public_key.clone();
+        agg_signature = agg_signature + signature;
+    }
+
+    (agg_signature, agg_public_key)
 }

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use bn254::{PrivateKey, PublicKey};
 use near_contract_standards::{fungible_token::core::FungibleTokenCore, storage_management::StorageManagement};
 use near_sdk::{json_types::U128, testing_env, AccountId};
 use rand::Rng;
@@ -15,7 +14,7 @@ use super::test_utils::{
 };
 use crate::{
     consts::INIT_MINIMUM_STAKE,
-    tests::test_utils::{make_test_account, TestAccount},
+    tests::test_utils::{bn254_sign_aggregate, make_test_account, TestAccount},
 };
 
 #[test]
@@ -74,18 +73,15 @@ fn post_signed_batch() {
 
     // get the merkle root (for all nodes to sign)
     let merkle_root = contract.compute_merkle_root();
-    let chosen_committee = contract.get_committees().first().unwrap().clone();
-    let acc_merkle_root_signer = test_accounts.get(chosen_committee.first().unwrap()).unwrap();
-    let acc_merkle_root_signature = bn254_sign(&acc_merkle_root_signer.bn254_private_key, &merkle_root);
 
-    let mut agg_public_key = acc_merkle_root_signer.bn254_public_key.clone();
-    let mut agg_signature = acc_merkle_root_signature;
-    for index in chosen_committee.iter().skip(1) {
-        let test_account = test_accounts.get(index).unwrap();
-        let acc_merkle_root_signature = bn254_sign(&test_account.bn254_private_key, &merkle_root);
-        agg_public_key = agg_public_key + test_account.bn254_public_key.clone();
-        agg_signature = agg_signature + acc_merkle_root_signature;
-    }
+    // gather the chosen committee test accounts for signing
+    let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
+    let chosen_committee: Vec<TestAccount> = chosen_committee_account_ids
+        .iter()
+        .map(|acc_id| test_accounts.get(acc_id).unwrap().clone())
+        .collect();
+    let (agg_signature, agg_public_key) = bn254_sign_aggregate(chosen_committee, &merkle_root);
+
     assert_eq!(contract.num_batches, 0);
     for index in 0..num_of_nodes {
         let acc_str = format!("{index:}_near");
@@ -103,7 +99,7 @@ fn post_signed_batch() {
             contract.post_signed_batch(
                 agg_signature.to_compressed().unwrap(),
                 agg_public_key.to_compressed().unwrap(),
-                chosen_committee.clone(),
+                chosen_committee_account_ids,
                 leader_sig.to_compressed().unwrap(),
             );
             assert_ne!(last_generated_random, contract.last_generated_random_number);
@@ -161,30 +157,15 @@ fn post_signed_batch_with_wrong_leader_sig() {
 
     // get the merkle root (for all nodes to sign)
     let merkle_root = contract.compute_merkle_root();
-    let chosen_committee = contract.get_committees().first().unwrap().clone();
-<<<<<<< HEAD
-    let (pk, sk) = &test_accounts.get(chosen_committee.first().unwrap()).unwrap();
-    let acc_merkle_root_signature = bn254_sign(sk, &merkle_root);
 
-    let mut agg_public_key = *pk;
-    let mut agg_signature = acc_merkle_root_signature;
-    for index in chosen_committee.iter().skip(1) {
-        let (pk, sk) = &test_accounts.get(index).unwrap();
-        let acc_merkle_root_signature = bn254_sign(sk, &merkle_root);
-        agg_public_key = agg_public_key + *pk;
-=======
-    let acc_merkle_root_signer = test_accounts.get(chosen_committee.first().unwrap()).unwrap();
-    let acc_merkle_root_signature = bn254_sign(&acc_merkle_root_signer.bn254_private_key, &merkle_root);
+    // gather the chosen committee test accounts for signing
+    let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
+    let chosen_committee: Vec<TestAccount> = chosen_committee_account_ids
+        .iter()
+        .map(|acc_id| test_accounts.get(acc_id).unwrap().clone())
+        .collect();
+    let (agg_signature, agg_public_key) = bn254_sign_aggregate(chosen_committee, &merkle_root);
 
-    let mut agg_public_key = acc_merkle_root_signer.bn254_public_key.clone();
-    let mut agg_signature = acc_merkle_root_signature;
-    for index in chosen_committee.iter().skip(1) {
-        let test_account = &test_accounts.get(index).unwrap();
-        let acc_merkle_root_signature = bn254_sign(&test_account.bn254_private_key, &merkle_root);
-        agg_public_key = agg_public_key + test_account.bn254_public_key.clone();
->>>>>>> f5c8169 (refactor(contracts): remove `generate_bn254_key` in favor of `make_test_account`)
-        agg_signature = agg_signature + acc_merkle_root_signature;
-    }
     for index in 0..num_of_nodes {
         let acc_str = format!("{index:}_near");
         let acc = make_test_account(acc_str);
@@ -195,17 +176,13 @@ fn post_signed_batch_with_wrong_leader_sig() {
             let mut rng = rand::thread_rng();
             let random_seed = rng.gen::<u64>();
             let invalid_leader_sig = bn254_sign(
-<<<<<<< HEAD
-                &test_accounts.get(&acc.account_id).unwrap().1,
-=======
                 &test_accounts.get(&acc.account_id.clone()).unwrap().bn254_private_key,
->>>>>>> f5c8169 (refactor(contracts): remove `generate_bn254_key` in favor of `make_test_account`)
                 &random_seed.to_le_bytes(),
             );
             contract.post_signed_batch(
                 agg_signature.to_compressed().unwrap(),
                 agg_public_key.to_compressed().unwrap(),
-                chosen_committee.clone(),
+                chosen_committee_account_ids,
                 invalid_leader_sig.to_compressed().unwrap(),
             );
             break;
