@@ -7,7 +7,7 @@ use near_sdk::{
     AccountId,
     Balance,
 };
-use seda_common::{DepositInfo, Node, NodeInfo, UpdateNode};
+use seda_common::{DepositInfo, Node, NodeInfo, UpdateNode, WithdrawRequest};
 
 use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt, MainchainStorageKeys};
 
