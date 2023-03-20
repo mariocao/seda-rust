@@ -4723,6 +4723,7 @@ dependencies = [
  "concat-kdf",
  "ed25519-dalek",
  "hex",
+ "rand 0.7.3",
  "rand 0.8.5",
  "serde",
  "sha2 0.10.6",
