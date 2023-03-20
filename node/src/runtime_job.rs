@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf, sync::Arc};
+use std::{fs, sync::Arc};
 
 use actix::{prelude::*, Handler, Message};
 use parking_lot::{Mutex, RwLock};
@@ -35,13 +35,6 @@ impl<HA: HostAdapter> Actor for RuntimeWorker<HA> {
     type Context = SyncContext<Self>;
 
     fn started(&mut self, _ctx: &mut Self::Context) {
-        // TODO: Replace the binary conditionally with the consensus binary
-        let mut path_prefix = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        #[cfg(debug_assertions)]
-        path_prefix.push("../target/wasm32-wasi/debug/consensus.wasm");
-        #[cfg(not(debug_assertions))]
-        path_prefix.push("../target/wasm32-wasi/release/consensus.wasm");
-
         let node_config = self.node_config.clone();
         let chain_configs = self.chain_configs.clone();
         let shared_memory = self.shared_memory.clone();
@@ -53,7 +46,9 @@ impl<HA: HostAdapter> Actor for RuntimeWorker<HA> {
                 .expect("TODO")
         });
 
-        runtime.init(fs::read(path_prefix).unwrap()).unwrap();
+        runtime
+            .init(fs::read(&self.node_config.consensus_wasm_path).unwrap())
+            .unwrap();
 
         self.runtime = Some(runtime);
     }

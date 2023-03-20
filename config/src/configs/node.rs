@@ -1,6 +1,4 @@
-#[cfg(feature = "cli")]
-use std::path::PathBuf;
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use seda_crypto::{Bn254KeyPair, Ed25519KeyPair, MasterKey};
 #[cfg(feature = "cli")]
@@ -35,7 +33,24 @@ pub struct PartialNodeConfig {
     /// An option to override the node runtime worker threads config value.
     #[arg(long)]
     pub runtime_worker_threads:  Option<u8>,
+    /// An option to override the path of the consensus WASM binary.
+    #[arg(long)]
+    pub consensus_wasm_path:     Option<PathBuf>,
 }
+
+fn default_consensus_wasm_path() -> PathBuf {
+    // TODO: Once we have a remote production WASM binary we should move this to the
+    // debug only flag
+    let mut path_prefix = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+
+    #[cfg(debug_assertions)]
+    path_prefix.push("../target/wasm32-wasi/debug/consensus.wasm");
+    #[cfg(not(debug_assertions))]
+    path_prefix.push("../target/wasm32-wasi/release/consensus.wasm");
+
+    path_prefix
+}
+
 #[cfg(feature = "cli")]
 impl PartialNodeConfig {
     pub fn get_node_public_key(self) -> Result<Vec<u8>> {
@@ -112,6 +127,13 @@ impl PartialNodeConfig {
             |f| f as usize
         )?;
 
+        let consensus_wasm_path: PathBuf = merge_config_cli!(
+            self,
+            cli_options,
+            consensus_wasm_path,
+            Ok(default_consensus_wasm_path())
+        )?;
+
         // Make sure we will not run the node with the account secret key
         if std::env::var("ACCOUNT_SECRET_KEY").is_ok() {
             return Err(ConfigError::UnwantedConfig("ACCOUNT_SECRET_KEY".to_string()));
@@ -125,6 +147,7 @@ impl PartialNodeConfig {
             contract_account_id,
             job_manager_interval_ms,
             runtime_worker_threads,
+            consensus_wasm_path,
         }))
     }
 }
@@ -140,6 +163,7 @@ impl Config for PartialNodeConfig {
             contract_account_id:     None,
             job_manager_interval_ms: None,
             runtime_worker_threads:  None,
+            consensus_wasm_path:     None,
         }
     }
 
@@ -156,6 +180,7 @@ pub struct NodeConfigInner {
     pub contract_account_id:     String,
     pub job_manager_interval_ms: u64,
     pub runtime_worker_threads:  usize,
+    pub consensus_wasm_path:     PathBuf,
 }
 
 impl NodeConfigInner {
@@ -171,6 +196,7 @@ impl NodeConfigInner {
             contract_account_id:     String::new(),
             job_manager_interval_ms: Self::JOB_MANAGER_INTERVAL_MS,
             runtime_worker_threads:  Self::RUNTIME_WORKER_THREADS,
+            consensus_wasm_path:     default_consensus_wasm_path(),
         })
     }
 }
