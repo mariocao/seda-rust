@@ -1,16 +1,15 @@
 use std::{fs, path::Path};
 
-use bn254::{PrivateKey, ECDSA};
-use ed25519_dalek::{Keypair, Signature, Signer};
-use rand::rngs::OsRng;
+use bn254::ECDSA;
+use ed25519_dalek::{Keypair, SecretKey, Signature, Signer};
 
 use super::*;
 
 const TEST_SK_PATH: &str = "./seda_test_sk";
 fn generate_test_sk() {
     if !Path::new(&TEST_SK_PATH).exists() {
-        let sk = PrivateKey::random(&mut OsRng);
-        fs::write(TEST_SK_PATH, hex::encode(sk.to_bytes().unwrap())).expect("Unable to write secret key");
+        let sk = SecretKey::generate(&mut ed_rand::rngs::OsRng);
+        fs::write(TEST_SK_PATH, hex::encode(sk.to_bytes())).expect("Unable to write secret key");
     }
 }
 

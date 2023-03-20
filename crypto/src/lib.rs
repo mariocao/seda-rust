@@ -7,7 +7,7 @@ mod errors;
 pub use errors::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum KeyType {
     Bn254,
     Ed25519,
