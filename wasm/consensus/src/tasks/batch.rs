@@ -27,7 +27,11 @@ impl Batch {
         // TODO temp work around while env bug exists
         shared_memory_set(
             "private_key_bytes",
-            CONFIG.seda_key_pair.private_key.to_bytes().expect("TODO"),
+            CONFIG
+                .seda_key_pair
+                .private_key
+                .to_bytes()
+                .expect("Failed to convert priv key to bytes"),
         );
         chain_view(
             seda_runtime_sdk::Chain::Near,
@@ -45,19 +49,20 @@ fn batch_step_1() {
     log!(Level::Debug, "Batch Step 1");
     // TODO temp work around while env bug exists
     let pk_bytes = shared_memory_get("private_key_bytes");
-    let pk = Bn254PrivateKey::try_from(pk_bytes.as_slice()).expect("TODO");
+    let pk = Bn254PrivateKey::try_from(pk_bytes.as_slice()).expect("Failed to get priv key from bytes");
     let result = Promise::result(0);
     match result {
         PromiseStatus::Fulfilled(Some(batch_bytes)) => {
-            log!(Level::Debug, "{batch_bytes:?}");
             let signature = bn254_sign(&batch_bytes, &pk);
-            let hex = hex::encode(signature.to_compressed().expect("TODO"));
+            let hex = hex::encode(signature.to_compressed().expect("Failed to convert sig to hex"));
+            log!(Level::Debug, "hex sig compressed bytes: {:?}", hex.clone().into_bytes());
 
             shared_memory_set("latest_batch", batch_bytes);
             let message = Message {
-                message: hex,
+                message: hex.into_bytes(),
                 kind:    MessageKind::Batch,
             };
+            log!(Level::Debug, "batch message bytes: {:?}", message.to_bytes());
             p2p_broadcast_message(message.to_bytes())
                 .start()
                 .then(call_self("batch_step_2", vec![]));

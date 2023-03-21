@@ -18,14 +18,18 @@ impl fmt::Display for MessageKind {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
-    pub message: String,
+    pub message: Vec<u8>,
     pub kind:    MessageKind,
 }
 
 // TODO: impl Bytes Trait
 impl Message {
     pub fn to_bytes(&self) -> Vec<u8> {
-        serde_json::to_vec(self).expect("TODO")
+        serde_json::to_vec(self).expect("Failed to convert to json bytes")
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        serde_json::from_slice(bytes).expect("Failed to get message from json bytes")
     }
 }
 
@@ -34,6 +38,6 @@ impl FromStr for Message {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(serde_json::from_str(s).expect("TODO"))
+        Ok(serde_json::from_str(s).expect("Failed to read from json string"))
     }
 }

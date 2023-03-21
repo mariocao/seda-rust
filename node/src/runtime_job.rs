@@ -70,7 +70,9 @@ impl<HA: HostAdapter> Handler<RuntimeJob> for RuntimeWorker<HA> {
             EventData::ChainTick => vec![],
             EventData::CliCall(args) => args,
             // TODO: Make args accept bytes only
-            EventData::P2PMessage(message) => vec!["p2p".to_string(), String::from_bytes_vec(message.data).unwrap()],
+            EventData::P2PMessage(message) => {
+                vec!["p2p".to_string(), String::from_bytes_vec(dbg!(message.data)).unwrap()]
+            }
         };
 
         let vm_config = VmConfig {
