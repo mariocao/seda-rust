@@ -1,6 +1,14 @@
+use std::collections::HashMap;
+
 use bn254::{PrivateKey, PublicKey, Signature, ECDSA};
-use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
-use near_sdk::{json_types::U128, test_utils::VMContextBuilder, AccountId, Balance, VMContext};
+use near_contract_standards::{
+    fungible_token::{
+        core::FungibleTokenCore,
+        metadata::{FungibleTokenMetadata, FT_METADATA_SPEC},
+    },
+    storage_management::StorageManagement,
+};
+use near_sdk::{json_types::U128, test_utils::VMContextBuilder, testing_env, AccountId, Balance, VMContext};
 use rand::Rng;
 
 use crate::{
@@ -8,13 +16,18 @@ use crate::{
     MainchainContract,
 };
 
+pub const ONE_EPOCH: u64 = 320; // one SEDA epoch in terms of NEAR blocks
+pub const ONE_SLOT: u64 = 10; // one SEDA slot in terms of NEAR blocks
 const TEST_DEPOSIT_AMOUNT: Balance = 618_720_000_000_000_000_000_000; // enough deposit to cover storage for all functions that require it
+pub const TEST_COMMITTEE_SIZE: u64 = 2;
 
 pub fn new_contract() -> MainchainContract {
+    new_contract_with_committee_size(TEST_COMMITTEE_SIZE)
+}
+
+pub fn new_contract_with_committee_size(committee_size: u64) -> MainchainContract {
     let mut rng = rand::thread_rng();
     let random_seed = rng.gen::<u64>();
-
-    let committee_size = 2;
     MainchainContract::new(
         "dao_near".to_string().try_into().unwrap(),
         U128(INITIAL_SUPPLY),
@@ -136,4 +149,55 @@ pub fn bn254_sign_aggregate(accounts: Vec<TestAccount>, message: &[u8]) -> (Sign
     }
 
     (agg_signature, agg_public_key)
+}
+
+pub fn call_random_data_request(contract: &mut MainchainContract, min_data_requests: usize, max_data_requests: usize) {
+    let mut rng = rand::thread_rng();
+    let num_data_requests = rng.gen_range(min_data_requests..=max_data_requests);
+
+    for i in 0..num_data_requests {
+        let data_request_name = format!("data_request_{}", i);
+        contract.post_data_request(data_request_name);
+    }
+    println!("Posted {} data requests", num_data_requests);
+}
+
+pub fn make_register_test_accounts(
+    contract: &mut MainchainContract,
+    dao: &TestAccount,
+    min_nodes: usize,
+    max_nodes: usize,
+    deposit_amount: U128,
+) -> HashMap<AccountId, TestAccount> {
+    let mut test_accounts: HashMap<AccountId, TestAccount> = HashMap::new();
+
+    let mut rng = rand::thread_rng();
+    let num_of_nodes = rng.gen_range(min_nodes..=max_nodes);
+
+    for x in 0..num_of_nodes {
+        let acc_str = format!("{x}_near", x = x);
+        let acc = make_test_account(acc_str.clone());
+
+        // transfer some tokens
+        testing_env!(get_context_with_deposit(dao.clone(),));
+        contract.storage_deposit(Some(acc_str.clone().try_into().unwrap()), None);
+        testing_env!(get_context_for_ft_transfer(dao.clone()));
+        contract.ft_transfer(acc_str.clone().try_into().unwrap(), deposit_amount, None);
+
+        test_accounts.insert(acc_str.parse().unwrap(), acc.clone());
+        let sig = bn254_sign(&acc.bn254_private_key.clone(), acc_str.as_bytes());
+
+        // register nodes
+        testing_env!(get_context_with_deposit(acc.clone()));
+        contract.register_node(
+            "0.0.0.0:8080".to_string(),
+            acc.bn254_public_key.to_compressed().unwrap(),
+            sig.to_compressed().unwrap(),
+        );
+        // deposit into contract
+        testing_env!(get_context_with_deposit(acc.clone()));
+        contract.deposit(deposit_amount, acc.ed25519_public_key.clone().into());
+    }
+    println!("Created {} test accounts", num_of_nodes);
+    test_accounts
 }

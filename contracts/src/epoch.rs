@@ -18,7 +18,7 @@ impl MainchainContract {
 
     #[payable]
     pub fn process_epoch(&mut self) {
-        manage_storage_deposit!(self, "require", {
+        manage_storage_deposit!(self, {
             // check if epoch has already been processed
             if self.get_current_epoch() <= self.last_processed_epoch {
                 log!("Epoch has already been processed");

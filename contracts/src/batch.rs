@@ -122,7 +122,7 @@ impl MainchainContract {
             transactions: self.compute_merkle_root(),
         });
 
-        manage_storage_deposit!(self, "require", {
+        manage_storage_deposit!(self, {
             // store batch
             self.num_batches += 1;
             self.batch_by_id.insert(&batch_id, &batch);

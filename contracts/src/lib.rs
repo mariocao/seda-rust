@@ -148,6 +148,7 @@ mod tests {
     mod dao_test;
     mod data_request_test;
     mod fungible_token_test;
+    mod integration_test;
     mod node_registry_test;
     mod slot_test;
     mod test_utils;
