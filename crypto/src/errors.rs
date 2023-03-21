@@ -2,14 +2,16 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum CryptoError {
-    #[error("Couldn't read mnemonic phrase from file")]
+    #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("Couldn't derive key")]
-    DerivationE(#[from] concat_kdf::Error),
-    #[error("Couldn't convert phrase to mnemonic type: {0}")]
-    PhraseConversion(String),
+    #[error("Key derivation error: {0}")]
+    KeyDerivation(#[from] concat_kdf::Error),
     #[error(transparent)]
     Bn254Error(#[from] bn254::Error),
+    #[error("Invalid master key length: {0}")]
+    InvalidMasterKeyLength(#[from] std::array::TryFromSliceError),
+    #[error("Invalid hex: {0}")]
+    FromHex(#[from] hex::FromHexError),
 }
 
 pub type Result<T, E = CryptoError> = core::result::Result<T, E>;

@@ -4,7 +4,7 @@ use rand::RngCore;
 
 use crate::{errors::Result, CryptoError};
 
-struct MasterKey {
+pub struct MasterKey {
     pub seed: [u8; 32],
 }
 
@@ -17,10 +17,8 @@ impl MasterKey {
     }
 
     pub fn from_fs<T: AsRef<Path>>(path: T) -> Result<Self> {
-        // TODO: remove unwrap
-        // let seed: [u8;32] = read(path)?.try_into().map_err(|e|
-        // CryptoError::MasterKey(e))?;
-        let seed: [u8; 32] = read(path)?.try_into().unwrap();
+        let bytes = read(path)?;
+        let seed = bytes.as_slice().try_into()?;
 
         Ok(Self { seed })
     }
@@ -33,18 +31,23 @@ impl MasterKey {
     }
 }
 
+impl From<MasterKey> for String {
+    fn from(master_key: MasterKey) -> Self {
+        hex::encode(master_key.seed)
+    }
+}
+
 impl From<[u8; 32]> for MasterKey {
     fn from(seed: [u8; 32]) -> Self {
         Self { seed }
     }
 }
 
-impl TryFrom<&str> for MasterKey {
+impl TryFrom<String> for MasterKey {
     type Error = CryptoError;
 
-    fn try_from(hex_string: &str) -> std::result::Result<Self, Self::Error> {
-        // TODO: remove unwraps
-        let seed: [u8; 32] = hex::decode(hex_string).unwrap().try_into().unwrap();
+    fn try_from(hex_string: String) -> std::result::Result<Self, Self::Error> {
+        let seed: [u8; 32] = hex::decode(hex_string)?.as_slice().try_into()?;
 
         Ok(Self { seed })
     }
