@@ -17,8 +17,8 @@ pub struct P2P {
 
 impl P2P {
     pub fn handle(self) {
-        log!(Level::Debug, "P2P Handle {self:?}");
         let message = Message::from_str(&self.message).expect("Failed to decode message");
+        log!(Level::Debug, "P2P Handle {message:?}");
         match message.kind {
             MessageKind::Batch => {
                 let batch_bytes = shared_memory_get("latest_batch");
