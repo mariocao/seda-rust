@@ -839,6 +839,7 @@ dependencies = [
  "clap",
  "hex",
  "seda-runtime-sdk",
+ "serde",
  "serde_json",
 ]
 

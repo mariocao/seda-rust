@@ -1,6 +1,7 @@
 use clap::Parser;
 use seda_runtime_sdk::{wasm::log, Level};
 
+mod message;
 mod tasks;
 
 #[derive(Debug, Parser)]

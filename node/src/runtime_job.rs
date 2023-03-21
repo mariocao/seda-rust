@@ -69,7 +69,7 @@ impl<HA: HostAdapter> Handler<RuntimeJob> for RuntimeWorker<HA> {
             EventData::BatchChainTick => vec!["batch".to_string()],
             EventData::ChainTick => vec![],
             EventData::CliCall(args) => args,
-            // TODO: Make args accept byes only
+            // TODO: Make args accept bytes only
             EventData::P2PMessage(message) => vec!["p2p".to_string(), String::from_bytes_vec(message.data).unwrap()],
         };
 

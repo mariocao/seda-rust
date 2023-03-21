@@ -1,7 +1,6 @@
 use clap::Args;
 use seda_runtime_sdk::{
     log,
-    p2p::MessageKind,
     wasm::{
         bn254_sign,
         call_self,
@@ -16,6 +15,8 @@ use seda_runtime_sdk::{
     Level,
     PromiseStatus,
 };
+
+use crate::message::{Message, MessageKind};
 
 #[derive(Debug, Args)]
 pub struct Batch;
@@ -49,11 +50,15 @@ fn batch_step_1() {
     match result {
         PromiseStatus::Fulfilled(Some(batch_bytes)) => {
             log!(Level::Debug, "{batch_bytes:?}");
-            let result = bn254_sign(&batch_bytes, &pk);
-            let hex = hex::encode(result.to_compressed().expect("TODO"));
+            let signature = bn254_sign(&batch_bytes, &pk);
+            let hex = hex::encode(signature.to_compressed().expect("TODO"));
 
             shared_memory_set("latest_batch", batch_bytes);
-            p2p_broadcast_message(hex.into_bytes(), MessageKind::Batch)
+            let message = Message {
+                message: hex,
+                kind:    MessageKind::Batch,
+            };
+            p2p_broadcast_message(message.to_bytes())
                 .start()
                 .then(call_self("batch_step_2", vec![]));
         }
