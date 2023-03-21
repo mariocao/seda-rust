@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 use seda_runtime_sdk::{
-    p2p::MessageKind,
     wasm::{call_self, chain_call, chain_view, db_set, http_fetch, log, p2p_broadcast_message, Promise},
     Chain,
     FromBytes,
@@ -52,7 +51,7 @@ fn main() {
             }
             Commands::P2p { message } => {
                 println!("Received a message from inside wasm {message}");
-                p2p_broadcast_message(vec![23], MessageKind::Batch).start();
+                p2p_broadcast_message(vec![23]).start();
             }
             Commands::Hello => {
                 println!("Hello World from inside wasm");

@@ -2,7 +2,7 @@ use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{events::Event, p2p::MessageKind, Chain};
+use crate::{events::Event, Chain};
 
 // TODO: all action types with Vec<u8> can just be the Bytes type.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -88,5 +88,4 @@ pub struct TriggerEventAction {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct P2PBroadcastAction {
     pub data: Vec<u8>,
-    pub kind: MessageKind,
 }
