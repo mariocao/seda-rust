@@ -59,7 +59,7 @@ fn post_signed_batch() {
     }
 
     // time travel and activate nodes
-    testing_env!(get_context_with_deposit_at_block(test_acc, 1000000));
+    testing_env!(get_context_with_deposit_at_block(test_acc.clone(), 1000000));
     contract.process_epoch();
 
     // assert we have committees for this epoch and the next 2
@@ -83,31 +83,26 @@ fn post_signed_batch() {
     let (agg_signature, agg_public_key) = bn254_sign_aggregate(chosen_committee, &merkle_root);
 
     assert_eq!(contract.num_batches, 0);
-    for index in 0..num_of_nodes {
-        let acc_str = format!("{index:}_near");
-        let acc = make_test_account(acc_str);
 
-        testing_env!(get_context_for_post_signed_batch(acc.clone()));
-        let slot_leader = contract.get_current_slot_leader();
+    // find the slot leader
+    testing_env!(get_context_for_post_signed_batch(test_acc.clone()));
+    let slot_leader_account_id = contract.get_current_slot_leader();
+    let slot_leader_test_account = test_accounts.get(&slot_leader_account_id).unwrap();
 
-        if slot_leader == acc.account_id.clone() {
-            let last_generated_random = contract.last_generated_random_number;
-            let leader_sig = bn254_sign(
-                &test_accounts.get(&acc.account_id).unwrap().bn254_private_key,
-                &last_generated_random.to_le_bytes(),
-            );
-            contract.post_signed_batch(
-                agg_signature.to_compressed().unwrap(),
-                agg_public_key.to_compressed().unwrap(),
-                chosen_committee_account_ids,
-                leader_sig.to_compressed().unwrap(),
-            );
-            assert_ne!(last_generated_random, contract.last_generated_random_number);
-            assert_eq!(contract.num_batches, 1);
-
-            break;
-        }
-    }
+    // sign and post the batch
+    testing_env!(get_context_for_post_signed_batch(slot_leader_test_account.clone()));
+    let num_batches = contract.num_batches;
+    let leader_sig = bn254_sign(
+        &slot_leader_test_account.bn254_private_key,
+        &contract.last_generated_random_number.to_le_bytes(),
+    );
+    contract.post_signed_batch(
+        agg_signature.to_compressed().unwrap(),
+        agg_public_key.to_compressed().unwrap(),
+        chosen_committee_account_ids,
+        leader_sig.to_compressed().unwrap(),
+    );
+    assert_eq!(contract.num_batches, num_batches + 1);
 }
 
 #[test]
@@ -152,7 +147,7 @@ fn post_signed_batch_with_wrong_leader_sig() {
     }
 
     // time travel and activate nodes
-    testing_env!(get_context_with_deposit_at_block(test_acc, 1000000));
+    testing_env!(get_context_with_deposit_at_block(test_acc.clone(), 1000000));
     contract.process_epoch();
 
     // get the merkle root (for all nodes to sign)
@@ -166,26 +161,22 @@ fn post_signed_batch_with_wrong_leader_sig() {
         .collect();
     let (agg_signature, agg_public_key) = bn254_sign_aggregate(chosen_committee, &merkle_root);
 
-    for index in 0..num_of_nodes {
-        let acc_str = format!("{index:}_near");
-        let acc = make_test_account(acc_str);
-        testing_env!(get_context_for_post_signed_batch(acc.clone()));
-        let slot_leader = contract.get_current_slot_leader();
+    // find the slot leader
+    testing_env!(get_context_for_post_signed_batch(test_acc.clone()));
+    let slot_leader_account_id = contract.get_current_slot_leader();
+    let slot_leader_test_account = test_accounts.get(&slot_leader_account_id).unwrap();
 
-        if slot_leader == acc.account_id.clone() {
-            let mut rng = rand::thread_rng();
-            let random_seed = rng.gen::<u64>();
-            let invalid_leader_sig = bn254_sign(
-                &test_accounts.get(&acc.account_id.clone()).unwrap().bn254_private_key,
-                &random_seed.to_le_bytes(),
-            );
-            contract.post_signed_batch(
-                agg_signature.to_compressed().unwrap(),
-                agg_public_key.to_compressed().unwrap(),
-                chosen_committee_account_ids,
-                invalid_leader_sig.to_compressed().unwrap(),
-            );
-            break;
-        }
-    }
+    // sign and post the batch with an invalid signature
+    testing_env!(get_context_for_post_signed_batch(slot_leader_test_account.clone()));
+    let num_batches = contract.num_batches;
+    let mut rng = rand::thread_rng();
+    let random_seed = rng.gen::<u64>();
+    let invalid_leader_sig = bn254_sign(&slot_leader_test_account.bn254_private_key, &random_seed.to_le_bytes());
+    contract.post_signed_batch(
+        agg_signature.to_compressed().unwrap(),
+        agg_public_key.to_compressed().unwrap(),
+        chosen_committee_account_ids,
+        invalid_leader_sig.to_compressed().unwrap(),
+    );
+    assert_eq!(contract.num_batches, num_batches + 1);
 }
