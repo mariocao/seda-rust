@@ -151,7 +151,11 @@ pub fn bn254_sign_aggregate(accounts: Vec<TestAccount>, message: &[u8]) -> (Sign
     (agg_signature, agg_public_key)
 }
 
-pub fn call_random_data_request(contract: &mut MainchainContract, min_data_requests: usize, max_data_requests: usize) {
+pub fn call_random_data_request(
+    contract: &mut MainchainContract,
+    min_data_requests: usize,
+    max_data_requests: usize,
+) -> usize {
     let mut rng = rand::thread_rng();
     let num_data_requests = rng.gen_range(min_data_requests..=max_data_requests);
 
@@ -160,6 +164,7 @@ pub fn call_random_data_request(contract: &mut MainchainContract, min_data_reque
         contract.post_data_request(data_request_name);
     }
     println!("Posted {} data requests", num_data_requests);
+    num_data_requests
 }
 
 pub fn make_register_test_accounts(

@@ -26,7 +26,6 @@ const MAX_NODES: u64 = COMMITTEE_SIZE;
 const TEST_EPOCHS: u64 = 1;
 
 /// Simulates committee selection and posting batches to a set amount of epochs
-// TODO: test empty slots
 // TODO: test registering/depositing/withdrawing nodes during an epoch
 #[test]
 fn integration_test_1() {
@@ -63,7 +62,11 @@ fn integration_test_1() {
 
             // post some data requests to the accumulator
             testing_env!(get_context_with_deposit_at_block(test_acc.clone(), block_number));
-            call_random_data_request(&mut contract, 1, MAX_DATA_REQUESTS as usize);
+            let num_data_requests = call_random_data_request(&mut contract, 0, MAX_DATA_REQUESTS as usize);
+            if num_data_requests == 0 {
+                println!("No data requests posted for this slot");
+                continue;
+            }
 
             // get the merkle root (for all nodes to sign)
             let merkle_root = contract.compute_merkle_root();
