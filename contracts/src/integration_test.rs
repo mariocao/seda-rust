@@ -16,7 +16,7 @@ use crate::{
 // Realistic test parameters
 // const MAX_DATA_REQUESTS: u32 = 128;
 // const COMMITTEE_SIZE: u64 = 128;
-// const MAX_NODES: u64 = COMMITTEE_SIZE * 3;
+// const MAX_NODES: u64 = COMMITTEE_SIZE * 2;
 // const TEST_EPOCHS: u64 = 5;
 
 // Fast test parameters
@@ -57,14 +57,16 @@ fn integration_test_1() {
         println!("Epoch: {}", epoch);
 
         // loop through every slot in this epoch and post a batch
-        for _ in 1..SLOTS_PER_EPOCH {
-            assert_eq!(contract.get_current_epoch(), epoch);
+        for _ in 0..SLOTS_PER_EPOCH {
+            testing_env!(get_context_at_block(block_number));
+            assert_eq!(contract.get_current_epoch(), epoch, "Epoch changed unexpectedly");
 
             // post some data requests to the accumulator
             testing_env!(get_context_with_deposit_at_block(test_acc.clone(), block_number));
             let num_data_requests = call_random_data_request(&mut contract, 0, MAX_DATA_REQUESTS as usize);
             if num_data_requests == 0 {
-                println!("No data requests posted for this slot");
+                println!("No data requests/batch posted for this slot");
+                block_number += ONE_SLOT;
                 continue;
             }
 
@@ -108,7 +110,5 @@ fn integration_test_1() {
             // time travel to the next slot
             block_number += ONE_SLOT;
         }
-        // time travel to the next epoch
-        block_number += ONE_SLOT;
     }
 }
