@@ -16,7 +16,7 @@ fn generate_test_sk() {
 #[test]
 fn generate_bn254_pair() {
     generate_test_sk();
-    let bn_pair = KeyPair::derive(TEST_SK_PATH, 1).expect("Couldn't derive bn254 key pair");
+    let bn_pair = KeyPair::derive_bn254(TEST_SK_PATH, 1).expect("Couldn't derive bn254 key pair");
     let msg = "awesome-seda";
     let signature = ECDSA::sign(msg, &bn_pair.private_key).expect("couldnt sign msg");
     assert!(ECDSA::verify(msg, &signature, &bn_pair.public_key).is_ok())
