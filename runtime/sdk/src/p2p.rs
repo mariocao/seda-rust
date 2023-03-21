@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -29,4 +30,9 @@ pub enum P2PCommand {
     AddPeer(AddPeerCommand),
     RemovePeer(RemovePeerCommand),
     DiscoverPeers,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, ValueEnum)]
+pub enum MessageKind {
+    Batch,
 }

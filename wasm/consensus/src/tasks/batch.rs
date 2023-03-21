@@ -1,6 +1,7 @@
 use clap::Args;
 use seda_runtime_sdk::{
     log,
+    p2p::MessageKind,
     wasm::{
         bn254_sign,
         call_self,
@@ -46,11 +47,13 @@ fn batch_step_1() {
     let pk = Bn254PrivateKey::try_from(pk_bytes.as_slice()).expect("TODO");
     let result = Promise::result(0);
     match result {
-        PromiseStatus::Fulfilled(Some(bytes)) => {
-            log!(Level::Debug, "{bytes:?}");
-            let result = bn254_sign(&bytes, &pk);
+        PromiseStatus::Fulfilled(Some(batch_bytes)) => {
+            log!(Level::Debug, "{batch_bytes:?}");
+            let result = bn254_sign(&batch_bytes, &pk);
             let hex = hex::encode(result.to_compressed().expect("TODO"));
-            p2p_broadcast_message(hex.into_bytes())
+
+            shared_memory_set("latest_batch", batch_bytes);
+            p2p_broadcast_message(hex.into_bytes(), MessageKind::Batch)
                 .start()
                 .then(call_self("batch_step_2", vec![]));
         }
