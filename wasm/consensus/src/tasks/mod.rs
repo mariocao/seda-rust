@@ -8,7 +8,7 @@ mod p2p;
 pub enum Task {
     Batch(batch::Batch),
     Bridge(bridge::Bridge),
-    P2P(p2p::P2p),
+    P2P(p2p::P2P),
 }
 
 impl Task {

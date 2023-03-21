@@ -13,7 +13,7 @@ pub struct BatchTickManager;
 
 impl BatchTickManager {
     // In ms
-    const BATCH_TICK_INTERVAL: u64 = 1000 * 5;
+    const BATCH_TICK_INTERVAL: u64 = 1000 * 10;
 }
 
 impl<HA: HostAdapter> Handler<BatchTickManager> for Host<HA> {
