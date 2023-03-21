@@ -5,6 +5,8 @@ use concat_kdf::derive_key;
 use ed25519_dalek::{PublicKey as Ed25519PublicKey, SecretKey as Ed25519PrivateKey, SECRET_KEY_LENGTH};
 mod errors;
 pub use errors::*;
+mod master_key;
+pub use master_key::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq)]
@@ -22,7 +24,8 @@ pub struct KeyPair<Private = Bn254PrivateKey, Public = Bn254PublicKey> {
 }
 
 impl KeyPair {
-    pub fn derive<T: AsRef<Path>>(sk_path: T, index: usize) -> Result<Self> {
+    // TODO: change signature to have master key as input
+    pub fn derive_bn254<T: AsRef<Path>>(sk_path: T, index: usize) -> Result<Self> {
         let seed = read_to_string(sk_path)?;
         let master_sk = derive_key::<sha2::Sha256>(seed.as_bytes(), b"bn254", SECRET_KEY_LENGTH)?;
         let sk = derive_key::<sha2::Sha256>(master_sk.as_slice(), &index.to_ne_bytes(), SECRET_KEY_LENGTH)?;
@@ -34,6 +37,7 @@ impl KeyPair {
         })
     }
 
+    // TODO: remove
     pub fn save_to_path<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let pk: Bn254PrivateKey = self.private_key.clone();
         let hex = String::try_from(pk)?;
@@ -42,6 +46,7 @@ impl KeyPair {
         Ok(())
     }
 
+    // TODO: remove
     pub fn generate() -> Self {
         let private_key = Bn254PrivateKey::random(&mut rand::rngs::OsRng);
         let public_key = Bn254PublicKey::from_private_key(&private_key);
@@ -56,6 +61,7 @@ impl KeyPair {
     }
 }
 
+// TODO: remove
 impl TryFrom<&str> for KeyPair {
     type Error = CryptoError;
 
@@ -69,6 +75,7 @@ impl TryFrom<&str> for KeyPair {
     }
 }
 
+// TODO: remove
 impl TryFrom<String> for KeyPair {
     type Error = CryptoError;
 
