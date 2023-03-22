@@ -22,11 +22,11 @@ impl Register {
 
         let sig = bn254::ECDSA::sign(
             node_config.signer_account_id.clone(),
-            &node_config.seda_key_pair.private_key,
+            &node_config.keypair_bn254.private_key,
         )?;
         let args = RegisterNodeArgs {
             multi_addr:       self.socket_address,
-            bn254_public_key: node_config.seda_key_pair.public_key.to_compressed()?,
+            bn254_public_key: node_config.keypair_bn254.public_key.to_compressed()?,
             signature:        sig.to_compressed()?,
         }
         .to_string();

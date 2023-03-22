@@ -16,6 +16,7 @@ clap-markdown = { workspace = true }
 dotenv = { workspace = true }
 jsonrpsee = { workspace = true, features = ["client"] }
 seda-chains = { workspace = true }
+seda-crypto = { workspace = true }
 seda-common = { workspace = true, features = ["cli"] }
 seda-config = { workspace = true, features = ["cli"] }
 seda-logger = { workspace = true }

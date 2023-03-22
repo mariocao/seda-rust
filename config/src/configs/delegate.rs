@@ -36,7 +36,7 @@ pub struct PartialDelegateConfig {
 #[cfg(feature = "delegate-cli")]
 impl PartialDelegateConfig {
     pub fn to_config(self, cli_options: Self) -> Result<DelegateConfig> {
-        let validator_secret_key = merge_config_cli!(self, cli_options, validator_secret_key, Ok(String::new()))?;
+        let validator_master_key = merge_config_cli!(self, cli_options, validator_secret_key, Ok(String::new()))?;
         let account_secret_key = merge_config_cli!(
             self,
             cli_options,
@@ -55,7 +55,7 @@ impl PartialDelegateConfig {
         let gas = merge_config_cli!(self, cli_options, gas, Ok(DelegateConfigInner::GAS))?;
 
         Ok(Arc::new(DelegateConfigInner {
-            validator_secret_key,
+            validator_master_key,
             account_secret_key,
             signer_account_id,
             delegate_contract_id,
@@ -88,7 +88,7 @@ impl Config for PartialDelegateConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DelegateConfigInner {
     pub account_secret_key:   String,
-    pub validator_secret_key: String,
+    pub validator_master_key: String,
     pub signer_account_id:    String,
     pub delegate_contract_id: String,
     pub rpc_url:              String,
@@ -101,7 +101,7 @@ impl DelegateConfigInner {
         Arc::new(Self {
             delegate_contract_id: String::new(),
             rpc_url:              String::new(),
-            validator_secret_key: String::new(),
+            validator_master_key: String::new(),
             account_secret_key:   String::new(),
             signer_account_id:    String::new(),
             gas:                  Self::GAS,
