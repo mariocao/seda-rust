@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 rust-version.workspace = true
 
-
 [dependencies]
 bn254 = { workspace = true, features = ["serde"] }
 concat-kdf = { workspace = true, features = ["std"] }
@@ -17,3 +16,4 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 ed_rand = { package = "rand", version = "0.7" }
+serde_json = { workspace=true, features = ["std"] }
