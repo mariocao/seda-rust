@@ -1,9 +1,11 @@
 use std::{fs::read, path::Path};
 
 use rand::RngCore;
+use serde::{Deserialize, Serialize};
 
-use crate::{errors::Result, CryptoError};
+use super::{CryptoError, Result};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MasterKey {
     pub seed: [u8; 32],
 }
@@ -16,14 +18,14 @@ impl MasterKey {
         Self { seed }
     }
 
-    pub fn from_fs<T: AsRef<Path>>(path: T) -> Result<Self> {
+    pub fn read_from_path<T: AsRef<Path>>(path: T) -> Result<Self> {
         let bytes = read(path)?;
         let seed = bytes.as_slice().try_into()?;
 
         Ok(Self { seed })
     }
 
-    pub fn to_fs<T: AsRef<Path>>(&self, path: T) -> Result<()> {
+    pub fn write_to_path<T: AsRef<Path>>(&self, path: T) -> Result<()> {
         let hex = hex::encode(self.seed);
         std::fs::write(path, hex)?;
 
@@ -43,10 +45,16 @@ impl From<[u8; 32]> for MasterKey {
     }
 }
 
-impl TryFrom<String> for MasterKey {
+impl From<MasterKey> for [u8; 32] {
+    fn from(master_key: MasterKey) -> Self {
+        master_key.seed
+    }
+}
+
+impl TryFrom<&String> for MasterKey {
     type Error = CryptoError;
 
-    fn try_from(hex_string: String) -> std::result::Result<Self, Self::Error> {
+    fn try_from(hex_string: &String) -> std::result::Result<Self, Self::Error> {
         let seed: [u8; 32] = hex::decode(hex_string)?.as_slice().try_into()?;
 
         Ok(Self { seed })
