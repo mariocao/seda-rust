@@ -29,7 +29,7 @@ impl NodeInfo {
             .take(7)
             .map(char::from)
             .collect::<String>();
-        let kp = seda_crypto::KeyPair::generate();
+        let master_key = seda_crypto::MasterKey::random();
         Self {
             account_id:         format!("{account_id_stem}.testnet"),
             multi_addr:         format!(
@@ -41,8 +41,8 @@ impl NodeInfo {
                 rng.gen_range(1..65535)
             ),
             balance:            rng.gen_range(0..u128::MAX),
-            bn254_public_key:   kp.public_key.to_compressed().unwrap(),
-            ed25519_public_key: rng.gen::<[u8; 32]>().to_vec(),
+            bn254_public_key:   master_key.derive_bn254(0).unwrap().public_key.to_compressed().unwrap(),
+            ed25519_public_key: master_key.derive_ed25519(0).unwrap().public_key.as_bytes().to_vec(),
         }
     }
 }

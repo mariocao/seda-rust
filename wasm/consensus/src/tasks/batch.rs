@@ -25,7 +25,11 @@ impl Batch {
         // TODO temp work around while env bug exists
         shared_memory_set(
             "private_key_bytes",
-            CONFIG.seda_key_pair.private_key.to_bytes().expect("TODO"),
+            CONFIG
+                .keypair_bn254
+                .private_key
+                .to_bytes()
+                .expect("Bn254 private should exist"),
         );
         chain_view(
             seda_runtime_sdk::Chain::Near,

@@ -1,6 +1,6 @@
 use clap::Args;
 use seda_config::DelegateConfig;
-use seda_crypto::KeyPair;
+use seda_crypto::MasterKey;
 
 use super::{register::Register, stake::Stake, top_up::TopUp};
 use crate::cli::errors::Result;
@@ -25,7 +25,8 @@ pub struct Setup {
 
 impl Setup {
     pub async fn handle(self, config: DelegateConfig) -> Result<()> {
-        let ed25519_key = KeyPair::derive_ed25519(&config.validator_secret_key, 0).unwrap();
+        let validator_master_key = MasterKey::try_from(&config.validator_master_key).unwrap();
+        let ed25519_key = validator_master_key.derive_ed25519(0).unwrap();
         let ed25519_public_key = ed25519_key.public_key.as_bytes();
 
         let top_up = TopUp {

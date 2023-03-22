@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use seda_crypto::KeyPair;
+use seda_crypto::{Bn254KeyPair, Ed25519KeyPair, MasterKey};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "cli")]
@@ -22,7 +22,7 @@ pub struct PartialNodeConfig {
     pub seda_chain_secret_key:   Option<String>,
     /// An option to override the node secret key config value.
     #[arg(long)]
-    pub seda_secret_key:         Option<String>,
+    pub master_key:              Option<String>,
     /// The path where you want to write to the generated secret key.
     #[arg(long)]
     pub seda_sk_file_path:       Option<PathBuf>,
@@ -74,20 +74,22 @@ impl PartialNodeConfig {
         )?;
 
         let seda_sk_file_path: Option<PathBuf> = merge_config_cli!(self, cli_options, seda_sk_file_path);
-        let seda_secret_key = merge_config_cli!(self, cli_options, seda_secret_key);
-        let seda_key_pair = match (seda_sk_file_path, seda_secret_key) {
+        let master_key = merge_config_cli!(self, cli_options, master_key);
+        let master_key = match (seda_sk_file_path, master_key) {
             (None, None) => {
-                let kp = KeyPair::generate();
-                kp.save_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
+                let kp = MasterKey::random();
+                kp.write_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
                 kp
             }
             (Some(path), None) => {
-                let kp = KeyPair::generate();
-                kp.save_to_path(path)?;
+                let kp = MasterKey::random();
+                kp.write_to_path(path)?;
                 kp
             }
-            (Some(_), Some(sk_str)) | (None, Some(sk_str)) => KeyPair::try_from(sk_str)?,
+            (Some(_), Some(seda_master_key)) | (None, Some(seda_master_key)) => MasterKey::try_from(&seda_master_key)?,
         };
+        let keypair_ed25519 = master_key.derive_ed25519(0)?;
+        let keypair_bn254 = master_key.derive_bn254(0)?;
 
         let signer_account_id = merge_config_cli!(
             self,
@@ -124,7 +126,8 @@ impl PartialNodeConfig {
             deposit,
             gas,
             seda_chain_secret_key,
-            seda_key_pair,
+            keypair_bn254,
+            keypair_ed25519,
             signer_account_id,
             contract_account_id,
             job_manager_interval_ms,
@@ -140,7 +143,7 @@ impl Config for PartialNodeConfig {
             deposit:                 None,
             gas:                     None,
             seda_chain_secret_key:   None,
-            seda_secret_key:         None,
+            master_key:              None,
             seda_sk_file_path:       None,
             signer_account_id:       None,
             contract_account_id:     None,
@@ -151,15 +154,16 @@ impl Config for PartialNodeConfig {
 
     fn overwrite_from_env(&mut self) {
         env_overwrite!(self.seda_chain_secret_key, "SEDA_CHAIN_SECRET_KEY");
-        env_overwrite!(self.seda_secret_key, "SEDA_SECRET_KEY");
+        env_overwrite!(self.master_key, "SEDA_SECRET_KEY");
     }
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct NodeConfigInner {
     pub deposit:                 u128,
     pub gas:                     u64,
     pub seda_chain_secret_key:   String,
-    pub seda_key_pair:           KeyPair,
+    pub keypair_bn254:           Bn254KeyPair,
+    pub keypair_ed25519:         Ed25519KeyPair,
     pub signer_account_id:       String,
     pub contract_account_id:     String,
     pub job_manager_interval_ms: u64,
@@ -169,10 +173,13 @@ pub struct NodeConfigInner {
 impl NodeConfigInner {
     // TODO cfg this
     pub fn test_config() -> NodeConfig {
+        let master_key = MasterKey::random();
+
         Arc::new(Self {
             deposit:                 Self::DEPOSIT,
             gas:                     Self::GAS,
-            seda_key_pair:           KeyPair::generate(),
+            keypair_bn254:           master_key.derive_bn254(0).unwrap(),
+            keypair_ed25519:         master_key.derive_ed25519(0).unwrap(),
             seda_chain_secret_key:   String::new(),
             signer_account_id:       String::new(),
             contract_account_id:     String::new(),
