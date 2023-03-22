@@ -48,7 +48,7 @@ impl MainchainContract {
         signers: Vec<AccountId>,
         leader_signature: Vec<u8>,
     ) {
-        assert_eq!(self.get_current_slot_leader(), env::signer_account_id());
+        assert_eq!(self.get_current_slot_leader().unwrap(), env::signer_account_id());
         let leader_pk = PublicKey::from_compressed(
             self.active_nodes
                 .get(&env::signer_account_id())
@@ -98,9 +98,9 @@ impl MainchainContract {
         );
 
         // verify aggregate signature
-        let merkle_root = self.compute_merkle_root();
+        let merkle_root = self.internal_compute_merkle_root();
         assert!(
-            self.bn254_verify(merkle_root, aggregate_signature, aggregate_public_key),
+            self.bn254_verify(merkle_root.clone(), aggregate_signature, aggregate_public_key),
             "Invalid aggregate signature"
         );
 
@@ -119,7 +119,7 @@ impl MainchainContract {
         let batch_id = CryptoHash::hash_borsh(&MerklizedBatch {
             prev_root: self.get_latest_batch_id(),
             header,
-            transactions: self.compute_merkle_root(),
+            transactions: merkle_root,
         });
 
         manage_storage_deposit!(self, {

@@ -52,8 +52,8 @@ impl MainchainContract {
         self.last_generated_random_number
     }
 
-    pub fn get_current_slot_leader(&self) -> AccountId {
-        let current_committee = self.committees.first().expect("Couldn't fetch current committee");
+    pub fn get_current_slot_leader(&self) -> Option<AccountId> {
+        let current_committee = self.committees.first()?;
         let hash = Sha256::digest(
             [
                 self.last_generated_random_number.to_le_bytes().as_ref(),
@@ -63,10 +63,7 @@ impl MainchainContract {
         );
         let prn: near_bigint::U256 = near_bigint::U256::from_little_endian(&hash);
         let chosen_index = (prn % self.config.committee_size).as_usize();
-        current_committee
-            .get(chosen_index)
-            .expect("Couldn't fetch chosen validator")
-            .clone()
+        current_committee.get(chosen_index).cloned()
     }
 }
 

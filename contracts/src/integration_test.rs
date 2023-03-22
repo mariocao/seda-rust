@@ -71,7 +71,7 @@ fn integration_test_1() {
             }
 
             // get the merkle root (for all nodes to sign)
-            let merkle_root = contract.compute_merkle_root();
+            let merkle_root = contract.compute_merkle_root().merkle_root;
 
             // gather the chosen committee test accounts for signing
             let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
@@ -83,7 +83,7 @@ fn integration_test_1() {
 
             // find the slot leader
             testing_env!(get_context_at_block(block_number));
-            let slot_leader_account_id = contract.get_current_slot_leader();
+            let slot_leader_account_id = contract.get_current_slot_leader().unwrap();
             let slot_leader_test_account = test_accounts.get(&slot_leader_account_id).unwrap();
 
             // sign and post the batch

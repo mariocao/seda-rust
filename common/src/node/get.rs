@@ -47,3 +47,10 @@ impl ToString for GetNodesArgs {
         json.to_string()
     }
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct ComputeMerkleRootResult {
+    pub merkle_root:         Vec<u8>,
+    pub current_slot:        u64,
+    pub current_slot_leader: Option<String>,
+}

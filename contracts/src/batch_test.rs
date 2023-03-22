@@ -72,7 +72,7 @@ fn post_signed_batch() {
         .for_each(|comittee| assert_eq!(comittee.len() as u64, contract.config.committee_size));
 
     // get the merkle root (for all nodes to sign)
-    let merkle_root = contract.compute_merkle_root();
+    let merkle_root = contract.compute_merkle_root().merkle_root;
 
     // gather the chosen committee test accounts for signing
     let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
@@ -86,7 +86,7 @@ fn post_signed_batch() {
 
     // find the slot leader
     testing_env!(get_context_for_post_signed_batch(test_acc.clone()));
-    let slot_leader_account_id = contract.get_current_slot_leader();
+    let slot_leader_account_id = contract.get_current_slot_leader().unwrap();
     let slot_leader_test_account = test_accounts.get(&slot_leader_account_id).unwrap();
 
     // sign and post the batch
@@ -151,7 +151,7 @@ fn post_signed_batch_with_wrong_leader_sig() {
     contract.process_epoch();
 
     // get the merkle root (for all nodes to sign)
-    let merkle_root = contract.compute_merkle_root();
+    let merkle_root = contract.compute_merkle_root().merkle_root;
 
     // gather the chosen committee test accounts for signing
     let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
@@ -163,7 +163,7 @@ fn post_signed_batch_with_wrong_leader_sig() {
 
     // find the slot leader
     testing_env!(get_context_for_post_signed_batch(test_acc.clone()));
-    let slot_leader_account_id = contract.get_current_slot_leader();
+    let slot_leader_account_id = contract.get_current_slot_leader().unwrap();
     let slot_leader_test_account = test_accounts.get(&slot_leader_account_id).unwrap();
 
     // sign and post the batch with an invalid signature
