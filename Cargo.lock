@@ -4680,6 +4680,7 @@ dependencies = [
  "seda-chains",
  "seda-common",
  "seda-config",
+ "seda-crypto",
  "seda-logger",
  "seda-node",
  "seda-runtime-sdk",
@@ -4727,6 +4728,7 @@ dependencies = [
  "rand 0.7.3",
  "rand 0.8.5",
  "serde",
+ "serde_json",
  "sha2 0.10.6",
  "thiserror",
 ]

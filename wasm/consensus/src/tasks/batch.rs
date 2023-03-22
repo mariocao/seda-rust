@@ -28,10 +28,10 @@ impl Batch {
         shared_memory_set(
             "private_key_bytes",
             CONFIG
-                .seda_key_pair
+                .keypair_bn254
                 .private_key
                 .to_bytes()
-                .expect("Failed to convert priv key to bytes"),
+                .expect("Bn254 private should exist"),
         );
         chain_view(
             seda_runtime_sdk::Chain::Near,
