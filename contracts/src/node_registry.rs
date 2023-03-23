@@ -7,7 +7,7 @@ use near_sdk::{
     AccountId,
     Balance,
 };
-use seda_common::{DepositInfo, Node, NodeInfo, UpdateNode, WithdrawRequest};
+use seda_common::{DepositInfo, Node, NodeInfo, RequestWithdrawResult, UpdateNode, WithdrawRequest};
 
 use crate::{manage_storage_deposit, MainchainContract, MainchainContractExt, MainchainStorageKeys};
 
@@ -255,7 +255,7 @@ impl MainchainContract {
     }
 
     #[payable]
-    pub fn request_withdraw(&mut self, amount: U128, ed25519_public_key: Vec<u8>) {
+    pub fn request_withdraw(&mut self, amount: U128, ed25519_public_key: Vec<u8>) -> RequestWithdrawResult {
         manage_storage_deposit!(self, "require", {
             let amount: Balance = amount.into();
             assert!(amount > 0, "Withdrawal amount should be positive");
@@ -300,6 +300,10 @@ impl MainchainContract {
             self.withdraw_requests
                 .insert(&ed25519_public_key, &node_withdraw_requests);
         });
+        RequestWithdrawResult {
+            current_epoch:  self.get_current_epoch(),
+            withdraw_epoch: self.config.withdraw_delay + self.get_current_epoch(),
+        }
     }
 
     #[payable]

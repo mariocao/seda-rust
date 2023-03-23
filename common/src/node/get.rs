@@ -54,3 +54,9 @@ pub struct ComputeMerkleRootResult {
     pub current_slot:        u64,
     pub current_slot_leader: Option<String>,
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct RequestWithdrawResult {
+    pub current_epoch:  u64,
+    pub withdraw_epoch: u64,
+}
