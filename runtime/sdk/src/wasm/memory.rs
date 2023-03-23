@@ -43,3 +43,16 @@ pub fn shared_memory_set(key: &str, mut value: Vec<u8>) {
         raw::shared_memory_write(key.as_mut_ptr(), key_len, value.as_mut_ptr(), value_len);
     }
 }
+
+pub fn shared_memory_contains_key(key: &str) -> bool {
+    let key_len = key.len() as i64;
+    let mut key = key.to_string().into_bytes();
+
+    let result = unsafe { raw::shared_memory_contains_key(key.as_mut_ptr(), key_len) };
+
+    match result {
+        0 => false,
+        1 => true,
+        _ => panic!("Bn254 verify returned invalid bool in u8: {}", result),
+    }
+}

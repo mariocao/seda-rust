@@ -3,6 +3,7 @@ use seda_runtime_sdk::{wasm::log, Level};
 
 mod message;
 mod tasks;
+mod types;
 
 #[derive(Debug, Parser)]
 struct Options {
@@ -12,7 +13,5 @@ struct Options {
 
 fn main() {
     let options = Options::parse();
-    log!(Level::Debug, "options: {options:?}");
-
     options.task.handle();
 }

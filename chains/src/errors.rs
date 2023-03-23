@@ -25,7 +25,7 @@ pub enum ChainAdapterError {
     #[error("error parsing string to near secretkey")]
     ParseAccountId(#[from] ParseAccountError),
 
-    #[error("near json rpc query error")]
+    #[error("near json rpc query error {0}")]
     JsonRpcQueryError(
         #[from] near_jsonrpc_client::errors::JsonRpcError<near_jsonrpc_client::methods::query::RpcQueryError>,
     ),

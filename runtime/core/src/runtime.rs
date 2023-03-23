@@ -128,8 +128,13 @@ impl<HA: HostAdapter> RunnableRuntime for Runtime<HA> {
                         let stdout_pipe = Pipe::new();
                         let stderr_pipe = Pipe::new();
 
+                        // TODO: For some reason a second run does not include any env variables
                         let mut wasi_env = WasiState::new(&call_action.function_name)
                             .env("ORACLE_CONTRACT_ID", &self.node_config.contract_account_id)
+                            .env(
+                                "BN254_PUBLIC_KEY",
+                                hex::encode(&self.node_config.keypair_bn254.public_key.to_compressed().unwrap()),
+                            )
                             .args(call_action.args.clone())
                             .stdout(Box::new(stdout_pipe))
                             .stderr(Box::new(stderr_pipe))

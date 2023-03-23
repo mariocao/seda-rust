@@ -838,6 +838,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "hex",
+ "seda-common",
  "seda-runtime-sdk",
  "serde",
  "serde_json",
@@ -4853,6 +4854,7 @@ dependencies = [
  "async-trait",
  "bn254",
  "futures",
+ "hex",
  "lazy_static",
  "parking_lot 0.12.1",
  "reqwest",

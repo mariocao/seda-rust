@@ -22,4 +22,8 @@ impl MemoryAdapter for InMemory {
     {
         self.memory.insert(key.into(), value.to_bytes())
     }
+
+    fn contains_key(&self, key: &str) -> bool {
+        self.memory.contains_key(key)
+    }
 }

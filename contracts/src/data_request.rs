@@ -19,7 +19,7 @@ impl MainchainContract {
     }
 
     /// Returns the merkle root of the data request accumulator, the current
-    /// slot and the current slot leader
+    /// slot and the current slot leader`
     pub fn compute_merkle_root(&self) -> ComputeMerkleRootResult {
         ComputeMerkleRootResult {
             merkle_root:         self.internal_compute_merkle_root(),

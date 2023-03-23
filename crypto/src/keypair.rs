@@ -23,6 +23,17 @@ pub struct KeyPair<Private, Public> {
 pub type Ed25519KeyPair = KeyPair<Ed25519PrivateKey, Ed25519PublicKey>;
 pub type Bn254KeyPair = KeyPair<Bn254PrivateKey, Bn254PublicKey>;
 
+impl From<Ed25519KeyPair> for Vec<u8> {
+    fn from(val: Ed25519KeyPair) -> Self {
+        let mut result = vec![];
+
+        result.extend_from_slice(val.private_key.as_bytes());
+        result.extend_from_slice(val.public_key.as_bytes());
+
+        result
+    }
+}
+
 impl MasterKey {
     pub fn derive_bn254(&self, index: usize) -> Result<KeyPair<Bn254PrivateKey, Bn254PublicKey>> {
         let master_sk = derive_key::<sha2::Sha256>(&self.seed, b"bn254", SECRET_KEY_LENGTH)?;

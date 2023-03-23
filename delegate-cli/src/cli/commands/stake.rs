@@ -21,9 +21,12 @@ impl Stake {
         let amount_yocto = to_yocto(&self.amount.to_string());
         let validator_master_key = MasterKey::try_from(&config.validator_master_key)?;
         let ed25519_key = validator_master_key.derive_ed25519(0)?;
-        let ed25519_public_key = ed25519_key.public_key.as_bytes();
 
-        let account_id = hex::encode(ed25519_public_key);
+        // This is needed to be compliant to be with NEAR
+        let mut ed25519_public_key: Vec<u8> = vec![0];
+        ed25519_public_key.extend_from_slice(ed25519_key.public_key.as_bytes());
+
+        let account_id = hex::encode(&ed25519_public_key);
 
         println!(
             "Staking {} SEDA on {} for node {account_id}..",
