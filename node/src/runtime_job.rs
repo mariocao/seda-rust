@@ -71,7 +71,7 @@ impl<HA: HostAdapter> Handler<RuntimeJob> for RuntimeWorker<HA> {
             EventData::CliCall(args) => args,
             // TODO: Make args accept bytes only
             EventData::P2PMessage(message) => {
-                vec!["p2p".to_string(), String::from_bytes_vec(dbg!(message.data)).unwrap()]
+                vec!["p2p".to_string(), String::from_bytes_vec(message.data).unwrap()]
             }
         };
 

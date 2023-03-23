@@ -223,6 +223,24 @@ pub fn shared_memory_read_length_import_obj(store: &Store, vm_context: VmContext
     Function::new_native_with_env(store, vm_context, shared_memory_read_length)
 }
 
+/// Reads the value from memory as byte array and sends the number of bytes to
+/// WASM.
+pub fn shared_memory_contains_key_import_obj(store: &Store, vm_context: VmContext) -> Function {
+    fn shared_memory_contains_key(env: &VmContext, key: WasmPtr<u8, Array>, key_length: i64) -> Result<u8> {
+        let memory_ref = get_memory(env)?;
+        let key = key
+            .get_utf8_string(memory_ref, key_length as u32)
+            .ok_or("Error getting promise data")?;
+
+        let memory_adapter = env.shared_memory.read();
+        let contains = memory_adapter.contains_key(&key);
+
+        Ok(contains.into())
+    }
+
+    Function::new_native_with_env(store, vm_context, shared_memory_contains_key)
+}
+
 /// Writes the value from WASM to the memory storage object.
 pub fn shared_memory_write_import_obj(store: &Store, vm_context: VmContext) -> Function {
     fn shared_memory_write(
@@ -414,6 +432,7 @@ pub fn create_wasm_imports(
             "memory_read" => memory_read_import_obj(store, vm_context.clone()),
             "memory_read_length" => memory_read_length_import_obj(store, vm_context.clone()),
             "memory_write" => memory_write_import_obj(store, vm_context.clone()),
+            "shared_memory_contains_key" => shared_memory_contains_key_import_obj(store, vm_context.clone()),
             "shared_memory_read" => shared_memory_read_import_obj(store, vm_context.clone()),
             "shared_memory_read_length" => shared_memory_read_length_import_obj(store, vm_context.clone()),
             "shared_memory_write" => shared_memory_write_import_obj(store, vm_context.clone()),

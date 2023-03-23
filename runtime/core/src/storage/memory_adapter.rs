@@ -9,4 +9,6 @@ pub trait MemoryAdapter: Default {
     fn put<V>(&mut self, key: &str, value: V) -> Option<Bytes>
     where
         V: ToBytes;
+
+    fn contains_key(&self, key: &str) -> bool;
 }

@@ -24,10 +24,10 @@ impl Register {
         let validator_master_key = MasterKey::try_from(&config.validator_master_key)?;
         let bn254_key = validator_master_key.derive_bn254(0)?;
         let ed25519_key = validator_master_key.derive_ed25519(0)?;
-        let ed25519_public_key = ed25519_key.public_key.as_ref();
-        let account_id = hex::encode(ed25519_public_key);
+        let ed25519_public_key = ed25519_key.public_key.as_bytes().to_vec();
+        let account_id = hex::encode(&ed25519_public_key);
         let signature = ECDSA::sign(&account_id, &bn254_key.private_key)?;
-        let ed25519_secret_key_bytes = ed25519_key.private_key.to_bytes();
+        let ed25519_secret_key_bytes: Vec<u8> = ed25519_key.into();
 
         // TODO: Make construct_signed_tx only accept bytes and not strings & make this
         // easier

@@ -121,6 +121,16 @@ impl MockNearRpcServer for MockNearRpc {
                     block_height: 119467302,
                     block_hash:   self.random_crypto_hash(),
                 }),
+                "get_latest_batch_id" => Ok(RpcQueryResponse {
+                    kind:         QueryResponseKind::CallResult(CallResult {
+                        // TODO: this needs to be a valid random hash :)
+                        // This can be done in the batch sign pr.
+                        result: serde_json::to_vec_pretty(&json!(self.random_crypto_hash().as_bytes())).unwrap(),
+                        logs:   Default::default(),
+                    }),
+                    block_height: 119467302,
+                    block_hash:   self.random_crypto_hash(),
+                }),
                 _ => unimplemented!(),
             },
             "view_access_key" => Ok(RpcQueryResponse {

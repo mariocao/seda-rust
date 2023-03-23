@@ -10,11 +10,11 @@ pub struct Setup {
     /// The contract address to stake on
     pub delegation_contract_id: String,
 
-    #[clap(default_value_t = 5, short, long)]
+    #[clap(default_value_t = 1, short, long)]
     /// Amount of tokens to transfer in wholes (1 = 1 NEAR)
     pub topup_amount: u64,
 
-    #[clap(default_value_t = 32, short, long)]
+    #[clap(default_value_t = 100, short, long)]
     /// The amount of SEDA tokens to stake (1 = 1 SEDA)
     pub stake_amount: u64,
 
@@ -27,7 +27,7 @@ impl Setup {
     pub async fn handle(self, config: DelegateConfig) -> Result<()> {
         let validator_master_key = MasterKey::try_from(&config.validator_master_key).unwrap();
         let ed25519_key = validator_master_key.derive_ed25519(0).unwrap();
-        let ed25519_public_key = ed25519_key.public_key.as_bytes();
+        let ed25519_public_key = ed25519_key.public_key.as_ref();
 
         let top_up = TopUp {
             amount:   self.topup_amount,

@@ -3,23 +3,16 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum MessageKind {
-    Batch,
-}
-
-impl fmt::Display for MessageKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            MessageKind::Batch => write!(f, "batch"),
-        }
-    }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BatchMessage {
+    pub batch:            Vec<u8>,
+    pub bn254_public_key: Vec<u8>,
+    pub signature:        Vec<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Message {
-    pub message: Vec<u8>,
-    pub kind:    MessageKind,
+pub enum Message {
+    Batch(BatchMessage),
 }
 
 // TODO: impl Bytes Trait
