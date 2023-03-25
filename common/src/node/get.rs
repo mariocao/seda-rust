@@ -48,7 +48,7 @@ impl ToString for GetNodesArgs {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, BorshDeserialize, BorshSerialize, Debug, Clone)]
 pub struct ComputeMerkleRootResult {
     pub merkle_root:         Vec<u8>,
     pub current_slot:        u64,
