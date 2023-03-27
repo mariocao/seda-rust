@@ -48,11 +48,22 @@ impl MainchainContract {
             if self.active_nodes.get(account_id).is_some() {
                 // node is already active
                 self.active_nodes.insert(account_id, node);
+                log!(
+                    "Node {} is already active, updated balance to {}",
+                    account_id,
+                    node.balance
+                );
             } else {
                 // node is not active, set epoch when eligible for committee selection
                 let epoch_when_eligible = self.get_current_epoch() + self.config.epoch_delay_for_election;
                 self.inactive_nodes.insert(account_id, node);
                 self.pending_nodes.insert(account_id, &epoch_when_eligible);
+                log!(
+                    "Moving node {} to pending nodes, balance is {}, eligible for committee selection in epoch {}",
+                    account_id,
+                    node.balance,
+                    epoch_when_eligible
+                );
             }
         } else {
             // minimum stake is not reached, check if node is active
@@ -60,9 +71,19 @@ impl MainchainContract {
                 // node is active, remove from active nodes and add to inactive nodes
                 self.active_nodes.remove(account_id);
                 self.inactive_nodes.insert(account_id, node);
+                log!(
+                    "Moving node {} to inactive nodes, balance is {}",
+                    account_id,
+                    node.balance
+                );
             } else {
                 // node is not active, update inactive nodes
                 self.inactive_nodes.insert(account_id, node);
+                log!(
+                    "Node {} is already inactive, updated balance to {}",
+                    account_id,
+                    node.balance
+                );
             }
         }
     }
