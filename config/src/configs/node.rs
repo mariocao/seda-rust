@@ -76,18 +76,26 @@ impl PartialNodeConfig {
             Err(ConfigError::from("node.seda_chain_secret_key"))
         )?;
 
-        let seda_sk_file_path: Option<PathBuf> = merge_config_cli!(self, cli_options, seda_sk_file_path);
-        let master_key = merge_config_cli!(self, cli_options, master_key);
-        let master_key = match (seda_sk_file_path, master_key) {
-            (None, None) => {
-                let mk = MasterKey::random();
-                mk.write_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
+        let seda_sk_file_path = merge_config_cli!(
+            self,
+            cli_options,
+            seda_sk_file_path,
+            Ok(PathBuf::from(NodeConfigInner::SEDA_SECRET_KEY_PATH))
+        )?;
 
-                mk
-            }
-            (Some(path), None) => MasterKey::read_from_path(path)?,
-            (Some(_), Some(seda_master_key)) | (None, Some(seda_master_key)) => MasterKey::try_from(&seda_master_key)?,
+        let master_key_config_option = merge_config_cli!(self, cli_options, master_key);
+
+        let master_key = if let Some(key) = master_key_config_option {
+            MasterKey::try_from(&key)?
+        } else if seda_sk_file_path.exists() {
+            MasterKey::read_from_path(&seda_sk_file_path)?
+        } else {
+            let mk = MasterKey::random();
+            mk.write_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
+
+            mk
         };
+
         let keypair_ed25519 = master_key.derive_ed25519(0)?;
         let keypair_bn254 = master_key.derive_bn254(0)?;
 

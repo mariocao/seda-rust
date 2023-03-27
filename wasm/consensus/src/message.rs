@@ -5,9 +5,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatchMessage {
-    pub batch:            Vec<u8>,
-    pub bn254_public_key: Vec<u8>,
-    pub signature:        Vec<u8>,
+    pub batch:              Vec<u8>,
+    pub bn254_public_key:   Vec<u8>,
+    pub signature:          Vec<u8>,
+    pub ed25519_public_key: Vec<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

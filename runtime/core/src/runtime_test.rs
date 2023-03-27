@@ -62,7 +62,6 @@ async fn test_promise_queue_multiple_calls_with_external_traits() {
     );
 
     let vm_result = runtime_execution_result.await;
-    dbg!(&vm_result);
     assert_eq!(vm_result.exit_info.exit_code, 0);
     let value = runtime.host_adapter.db_get("test_value").await.unwrap();
 

@@ -60,3 +60,11 @@ pub struct RequestWithdrawResult {
     pub current_epoch:  u64,
     pub withdraw_epoch: u64,
 }
+
+#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Clone)]
+pub struct MainChainConfig {
+    pub minimum_stake:            u128,
+    pub epoch_delay_for_election: u64,
+    pub committee_size:           u64,
+    pub withdraw_delay:           u64,
+}

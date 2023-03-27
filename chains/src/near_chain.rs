@@ -158,6 +158,7 @@ impl ChainAdapterTrait for NearChain {
                 return Err(ChainAdapterError::BadTransactionTimestamp);
             }
 
+
             match response {
                 Err(err) => match err.handler_error() {
                     Some(methods::tx::RpcTransactionError::UnknownTransaction { .. }) => {

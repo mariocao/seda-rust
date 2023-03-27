@@ -9,7 +9,12 @@ use seda_runtime_sdk::{
 
 use crate::{
     message::Message,
-    types::batch_signature::{add_signature, get_or_create_batch_signature_store, BATCH_SIGNATURE_STORE_KEY},
+    types::batch_signature::{
+        add_public_key,
+        add_signature,
+        get_or_create_batch_signature_store,
+        BATCH_SIGNATURE_STORE_KEY,
+    },
 };
 
 #[derive(Debug, Args)]
@@ -43,11 +48,23 @@ impl P2P {
                     return;
                 }
 
-                let mut signature_store = get_or_create_batch_signature_store(BATCH_SIGNATURE_STORE_KEY);
+                let mut signature_store = get_or_create_batch_signature_store(BATCH_SIGNATURE_STORE_KEY, None, None);
 
                 signature_store.aggregated_signature = add_signature(signature_store.aggregated_signature, signature)
                     .to_compressed()
                     .expect("Could not compress Bn254 signature");
+
+                // TODO: Validate signature (should come from message later)
+                signature_store
+                    .signers
+                    .push(hex::encode(&batch_message.ed25519_public_key));
+
+                signature_store.aggregated_public_keys = add_public_key(
+                    signature_store.aggregated_public_keys,
+                    Bn254PublicKey::from_compressed(&batch_message.bn254_public_key).expect("Could not derive key"),
+                )
+                .to_compressed()
+                .expect("Could not compress Bn254 Public Key");
 
                 signature_store.signatures.insert(
                     hex::encode(&batch_message.bn254_public_key),
