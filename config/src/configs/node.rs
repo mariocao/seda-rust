@@ -80,15 +80,12 @@ impl PartialNodeConfig {
         let master_key = merge_config_cli!(self, cli_options, master_key);
         let master_key = match (seda_sk_file_path, master_key) {
             (None, None) => {
-                let kp = MasterKey::random();
-                kp.write_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
-                kp
+                let mk = MasterKey::random();
+                mk.write_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
+
+                mk
             }
-            (Some(path), None) => {
-                let kp = MasterKey::random();
-                kp.write_to_path(path)?;
-                kp
-            }
+            (Some(path), None) => MasterKey::read_from_path(path)?,
             (Some(_), Some(seda_master_key)) | (None, Some(seda_master_key)) => MasterKey::try_from(&seda_master_key)?,
         };
         let keypair_ed25519 = master_key.derive_ed25519(0)?;
