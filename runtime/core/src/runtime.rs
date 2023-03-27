@@ -132,6 +132,10 @@ impl<HA: HostAdapter> RunnableRuntime for Runtime<HA> {
                         let mut wasi_env = WasiState::new(&call_action.function_name)
                             .env("ORACLE_CONTRACT_ID", &self.node_config.contract_account_id)
                             .env(
+                                "ED25519_PUBLIC_KEY",
+                                hex::encode(self.node_config.keypair_ed25519.public_key.to_bytes()),
+                            )
+                            .env(
                                 "BN254_PUBLIC_KEY",
                                 hex::encode(&self.node_config.keypair_bn254.public_key.to_compressed().unwrap()),
                             )
@@ -233,6 +237,7 @@ impl<HA: HostAdapter> RunnableRuntime for Runtime<HA> {
                             .into();
                     }
                     PromiseAction::ChainCall(chain_call_action) => {
+                        println!("============ Calling this :) =========");
                         promise_queue_mut.queue[index].status = self
                             .host_adapter
                             .chain_call(

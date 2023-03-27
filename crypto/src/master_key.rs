@@ -1,4 +1,7 @@
-use std::{fs::read, path::Path};
+use std::{
+    fs::{read, read_to_string},
+    path::Path,
+};
 
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
@@ -19,8 +22,8 @@ impl MasterKey {
     }
 
     pub fn read_from_path<T: AsRef<Path>>(path: T) -> Result<Self> {
-        let bytes = read(path)?;
-        let seed = bytes.as_slice().try_into()?;
+        let hex = read_to_string(path)?;
+        let seed = hex::decode(hex)?.as_slice().try_into()?;
 
         Ok(Self { seed })
     }

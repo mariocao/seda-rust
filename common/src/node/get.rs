@@ -48,9 +48,17 @@ impl ToString for GetNodesArgs {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct ComputeMerkleRootResult {
     pub merkle_root:         Vec<u8>,
     pub current_slot:        u64,
     pub current_slot_leader: Option<String>,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Deserialize, Serialize, Clone)]
+pub struct MainChainConfig {
+    pub minimum_stake:            u128,
+    pub epoch_delay_for_election: u64,
+    pub committee_size:           u64,
+    pub withdraw_delay:           u64,
 }

@@ -134,6 +134,7 @@ impl ChainAdapterTrait for NearChain {
     }
 
     async fn send_tx(client: Self::Client, signed_tx: &[u8]) -> Result<Vec<u8>> {
+        println!("============ AAAAAH MOTHERFUCKEKKEKEKEERSSS =========");
         let signed_tx = SignedTransaction::try_from_slice(signed_tx)?;
         let request = methods::broadcast_tx_async::RpcBroadcastTxAsyncRequest {
             signed_transaction: signed_tx.clone(),
@@ -157,6 +158,8 @@ impl ChainAdapterTrait for NearChain {
             if delta > 60 {
                 return Err(ChainAdapterError::BadTransactionTimestamp);
             }
+
+            dbg!(&response);
 
             match response {
                 Err(err) => match err.handler_error() {

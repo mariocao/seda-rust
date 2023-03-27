@@ -10,6 +10,8 @@ pub mod p2p;
 mod promises;
 mod url;
 pub use self::url::*;
+mod near;
+pub use near::*;
 
 #[cfg(feature = "wasm")]
 pub mod wasm;
