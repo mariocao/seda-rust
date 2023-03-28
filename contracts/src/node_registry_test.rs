@@ -84,7 +84,7 @@ fn set_node_multi_addr() {
 }
 
 #[test]
-fn get_nodes() {
+fn get_active_nodes() {
     let mut contract = new_contract();
     let dao = make_test_account("dao_near".to_string());
     let bob = make_test_account("bob_near".to_string());
@@ -166,15 +166,15 @@ fn get_nodes() {
     assert_eq!(get_node.unwrap(), node1);
 
     // check the latest 2 nodes
-    let latest_2_nodes = contract.get_nodes(U64(2), U64(0));
+    let latest_2_nodes = contract.get_active_nodes(U64(2), U64(0));
     assert_eq!(latest_2_nodes, vec![node3.clone(), node2.clone()]);
 
     // check the latest 3 nodes
-    let latest_3_nodes = contract.get_nodes(U64(100), U64(0));
+    let latest_3_nodes = contract.get_active_nodes(U64(100), U64(0));
     assert_eq!(latest_3_nodes, vec![node3, node2.clone(), node1.clone()]);
 
     // check offset of 1
-    let latest_nodes_offset = contract.get_nodes(U64(100), U64(1));
+    let latest_nodes_offset = contract.get_active_nodes(U64(100), U64(1));
     assert_eq!(latest_nodes_offset, vec![node2, node1]);
 }
 
