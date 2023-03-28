@@ -181,6 +181,32 @@ impl MainchainContract {
             );
         });
     }
+
+    pub fn internal_get_nodes(
+        &self,
+        nodes_map: &UnorderedMap<AccountId, Node>,
+        limit: U64,
+        offset: U64,
+    ) -> Vec<NodeInfo> {
+        let mut nodes = Vec::new();
+        let mut index = nodes_map.len() - u64::from(offset);
+        let limit = u64::from(limit);
+        while index > 0 && nodes.len() < limit.try_into().unwrap() {
+            if let Some(node_id) = nodes_map.keys().nth(index as usize - 1) {
+                let node = nodes_map.get(&node_id).unwrap();
+                let human_readable_node = NodeInfo {
+                    account_id:         node_id.to_string(),
+                    multi_addr:         node.multi_addr,
+                    balance:            node.balance,
+                    ed25519_public_key: node.ed25519_public_key,
+                    bn254_public_key:   node.bn254_public_key,
+                };
+                nodes.push(human_readable_node);
+            }
+            index -= 1;
+        }
+        nodes
+    }
 }
 
 /// Contract public methods
@@ -383,46 +409,12 @@ impl MainchainContract {
         }
     }
 
-    pub fn get_active_nodes(&self, limit: U64, offset: U64) -> Vec<NodeInfo> {
-        let mut nodes = Vec::new();
-        let mut index = self.active_nodes.len() - u64::from(offset);
-        let limit = u64::from(limit);
-        while index > 0 && nodes.len() < limit.try_into().unwrap() {
-            if let Some(node_id) = self.active_nodes.keys().nth(index as usize - 1) {
-                let node = self.active_nodes.get(&node_id).unwrap();
-                let human_readable_node = NodeInfo {
-                    account_id:         node_id.to_string(),
-                    multi_addr:         node.multi_addr,
-                    balance:            node.balance,
-                    ed25519_public_key: node.ed25519_public_key,
-                    bn254_public_key:   node.bn254_public_key,
-                };
-                nodes.push(human_readable_node);
-            }
-            index -= 1;
-        }
-        nodes
+    pub fn get_inactive_nodes(&self, limit: U64, offset: U64) -> Vec<NodeInfo> {
+        self.internal_get_nodes(&self.inactive_nodes, limit, offset)
     }
 
-    pub fn get_inactive_nodes(&self, limit: U64, offset: U64) -> Vec<NodeInfo> {
-        let mut nodes = Vec::new();
-        let mut index = self.inactive_nodes.len() - u64::from(offset);
-        let limit = u64::from(limit);
-        while index > 0 && nodes.len() < limit.try_into().unwrap() {
-            if let Some(node_id) = self.inactive_nodes.keys().nth(index as usize - 1) {
-                let node = self.inactive_nodes.get(&node_id).unwrap();
-                let human_readable_node = NodeInfo {
-                    account_id:         node_id.to_string(),
-                    multi_addr:         node.multi_addr,
-                    balance:            node.balance,
-                    ed25519_public_key: node.ed25519_public_key,
-                    bn254_public_key:   node.bn254_public_key,
-                };
-                nodes.push(human_readable_node);
-            }
-            index -= 1;
-        }
-        nodes
+    pub fn get_active_nodes(&self, limit: U64, offset: U64) -> Vec<NodeInfo> {
+        self.internal_get_nodes(&self.active_nodes, limit, offset)
     }
 
     pub fn get_deposits(&self, account_id: AccountId) -> Vec<DepositInfo> {
