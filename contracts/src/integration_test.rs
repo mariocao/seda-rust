@@ -54,7 +54,7 @@ fn integration_test_1() {
     for _ in 0..TEST_EPOCHS {
         testing_env!(get_context_at_block(block_number));
         let epoch = contract.get_current_epoch();
-        println!("Epoch: {}", epoch);
+        println!("\nEpoch: {}", epoch);
 
         // loop through every slot in this epoch and post a batch
         for _ in 0..SLOTS_PER_EPOCH {
@@ -110,5 +110,10 @@ fn integration_test_1() {
             // time travel to the next slot
             block_number += ONE_SLOT;
         }
+
+        // confirm the committee length is EPOCH_COMMITTEES_LOOKAHEAD + 1, because
+        // `post_signed_batch()` should call `process_epoch()` on the last slot of the
+        // epoch
+        assert_eq!(contract.get_committees().len(), 3);
     }
 }

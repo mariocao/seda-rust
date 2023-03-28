@@ -7,7 +7,13 @@ use near_sdk::{
 };
 use sha2::{Digest, Sha256};
 
-use crate::{manage_storage_deposit, merkle::CryptoHash, MainchainContract, MainchainContractExt};
+use crate::{
+    consts::SLOTS_PER_EPOCH,
+    manage_storage_deposit,
+    merkle::CryptoHash,
+    MainchainContract,
+    MainchainContractExt,
+};
 
 pub type BatchHeight = u64;
 pub type BatchId = CryptoHash;
@@ -130,6 +136,12 @@ impl MainchainContract {
 
             // clear data request accumulator
             self.data_request_accumulator.clear();
+
+            // if this is the last slot of the epoch, process the next epoch
+            if self.get_current_slot_within_epoch() == SLOTS_PER_EPOCH - 1 {
+                // log!("Posted batch for last slot within epoch, calling `process_epoch()`");
+                self.internal_process_epoch(self.get_current_epoch() + 1);
+            }
         }); // end manage_storage_deposit
     }
 }

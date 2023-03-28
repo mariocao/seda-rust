@@ -9,25 +9,19 @@ use crate::{
 
 pub type EpochHeight = u64;
 
-/// Contract public methods
-#[near_bindgen]
+/// Contract private methods
 impl MainchainContract {
-    pub fn get_current_epoch(&self) -> u64 {
-        env::block_height() / (NEAR_BLOCKS_PER_SEDA_SLOT * SLOTS_PER_EPOCH)
-    }
-
-    #[payable]
-    pub fn process_epoch(&mut self) {
+    pub fn internal_process_epoch(&mut self, epoch: u64) {
         manage_storage_deposit!(self, {
             // check if epoch has already been processed
-            if self.get_current_epoch() <= self.last_processed_epoch {
+            if epoch <= self.last_processed_epoch {
                 log!("Epoch has already been processed");
                 return;
             }
 
             // move pending nodes to active nodes if they are eligible for this epoch
             self.pending_nodes.to_vec().retain(|(account_id, activation_epoch)| {
-                if activation_epoch <= &self.get_current_epoch() {
+                if activation_epoch <= &epoch {
                     self.active_nodes
                         .insert(account_id, &self.inactive_nodes.get(account_id).unwrap());
                     self.inactive_nodes.remove(account_id);
@@ -60,15 +54,24 @@ impl MainchainContract {
 
             // select committee from active nodes
             let committee = self.select_committee(self.last_generated_random_number);
-            log!(
-                "Selected committee for epoch {}: {:?}",
-                self.get_current_epoch(),
-                committee
-            );
+            log!("Selected committee for epoch {}: {:?}", epoch, committee);
             self.committees.push(committee);
 
             // set last processed epoch to current epoch
-            self.last_processed_epoch = self.get_current_epoch();
+            self.last_processed_epoch = epoch;
         });
+    }
+}
+
+/// Contract public methods
+#[near_bindgen]
+impl MainchainContract {
+    pub fn get_current_epoch(&self) -> u64 {
+        env::block_height() / (NEAR_BLOCKS_PER_SEDA_SLOT * SLOTS_PER_EPOCH)
+    }
+
+    #[payable]
+    pub fn process_epoch(&mut self) {
+        self.internal_process_epoch(self.get_current_epoch());
     }
 }
