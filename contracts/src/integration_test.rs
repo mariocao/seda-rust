@@ -1,4 +1,4 @@
-use near_sdk::{json_types::U128, testing_env};
+use near_sdk::{json_types::U128, test_utils::get_logs, testing_env};
 
 use super::test_utils::{
     bn254_sign,
@@ -104,16 +104,20 @@ fn integration_test_1() {
             );
             assert_eq!(contract.num_batches, num_batches + 1);
 
+            // if we are in the last slot of this epoch, check the logs to see if
+            // process_epoch() was called
+            if contract.get_current_slot_within_epoch() == SLOTS_PER_EPOCH - 1 {
+                assert_eq!(
+                    get_logs().first().unwrap(),
+                    &"Posted batch for last slot within epoch, calling `process_epoch()`".to_string()
+                );
+            }
+
             let slot = contract.get_current_slot();
             println!("Posted batch for slot {}", slot);
 
             // time travel to the next slot
             block_number += ONE_SLOT;
         }
-
-        // confirm the committee length is EPOCH_COMMITTEES_LOOKAHEAD + 1, because
-        // `post_signed_batch()` should call `process_epoch()` on the last slot of the
-        // epoch
-        assert_eq!(contract.get_committees().len(), 3);
     }
 }

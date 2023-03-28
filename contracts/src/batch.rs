@@ -2,6 +2,7 @@ use bn254::PublicKey;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
+    log,
     near_bindgen,
     AccountId,
 };
@@ -139,7 +140,7 @@ impl MainchainContract {
 
             // if this is the last slot of the epoch, process the next epoch
             if self.get_current_slot_within_epoch() == SLOTS_PER_EPOCH - 1 {
-                // log!("Posted batch for last slot within epoch, calling `process_epoch()`");
+                log!("Posted batch for last slot within epoch, calling `process_epoch()`");
                 self.internal_process_epoch(self.get_current_epoch() + 1);
             }
         }); // end manage_storage_deposit
