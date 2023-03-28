@@ -84,7 +84,7 @@ fn set_node_multi_addr() {
 }
 
 #[test]
-fn get_active_nodes() {
+fn get_nodes() {
     let mut contract = new_contract();
     let dao = make_test_account("dao_near".to_string());
     let bob = make_test_account("bob_near".to_string());
@@ -176,6 +176,10 @@ fn get_active_nodes() {
     // check offset of 1
     let latest_nodes_offset = contract.get_active_nodes(U64(100), U64(1));
     assert_eq!(latest_nodes_offset, vec![node2, node1]);
+
+    // assert all nodes are activated
+    let inactive_nodes = contract.get_inactive_nodes(U64(100), U64(0));
+    assert_eq!(inactive_nodes, vec![]);
 }
 
 #[test]
