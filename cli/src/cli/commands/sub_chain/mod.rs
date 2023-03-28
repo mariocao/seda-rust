@@ -14,7 +14,7 @@ pub enum SubChain {
     /// and contract ID.
     Call(Box<call::Call>),
     // TODO maybe a ListMethods command,
-    // seda sub-chain view near mc.mennat0.testnet get_nodes "{\"offset\":\"0\",\"limit\":\"2\"}"
+    // seda sub-chain view near mc.mennat0.testnet get_active_nodes "{\"offset\":\"0\",\"limit\":\"2\"}"
     /// Views the specified method on the specified chain with the given args
     /// and contract ID.
     View(view::View),

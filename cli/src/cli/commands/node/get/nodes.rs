@@ -24,7 +24,7 @@ impl Nodes {
         view::<Vec<NodeInfo>>(
             Chain::Near,
             &contract_account_id,
-            "get_nodes",
+            "get_active_nodes",
             Some(args),
             &chains_config,
         )

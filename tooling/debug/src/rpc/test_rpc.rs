@@ -96,7 +96,7 @@ impl MockNearRpcServer for MockNearRpc {
                     block_height: 119467302,
                     block_hash:   self.random_crypto_hash(),
                 }),
-                "get_nodes" => Ok(RpcQueryResponse {
+                "get_active_nodes" => Ok(RpcQueryResponse {
                     kind:         QueryResponseKind::CallResult(CallResult {
                         // TODO we have this structure defined already in the CLI
                         // So we can move it to somewhere common
