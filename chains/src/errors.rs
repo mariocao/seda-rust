@@ -41,6 +41,9 @@ pub enum ChainAdapterError {
 
     #[error("error serializing to vec")]
     StdIoError(#[from] std::io::Error),
+
+    #[error("error converting slice to Ed25519 keypair")]
+    InvalidEd25519KeyPair,
 }
 
 pub type Result<T, E = ChainAdapterError> = core::result::Result<T, E>;

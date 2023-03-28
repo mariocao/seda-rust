@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use borsh::{BorshDeserialize, BorshSerialize};
+use near_crypto::{ED25519PublicKey, ED25519SecretKey, SecretKey};
 use near_jsonrpc_client::{methods, JsonRpcClient};
 use near_jsonrpc_primitives::types::{query::QueryResponseKind, transactions::TransactionInfo};
 use near_primitives::{
@@ -19,17 +20,14 @@ pub struct NearChain;
 
 impl NearChain {
     async fn construct_tx(
-        signer_acc_str: &str,
-        signer_sk_str: &str,
+        signer_account_id: Option<&str>,
+        signer_keypair: Vec<u8>,
         receiver_id: &str,
         rpc_url: &str,
         actions: Vec<Action>,
     ) -> Result<Vec<u8>> {
         let client = JsonRpcClient::connect(rpc_url);
-        let signer_account_id: AccountId = signer_acc_str.parse()?;
-
-        let signer_secret_key: near_crypto::SecretKey = signer_sk_str.parse()?;
-        let signer = near_crypto::InMemorySigner::from_secret_key(signer_account_id, signer_secret_key);
+        let signer = get_in_memory_signer(signer_account_id, &signer_keypair)?;
 
         let access_key_query_response = client
             .call(methods::query::RpcQueryRequest {
@@ -70,8 +68,8 @@ impl ChainAdapterTrait for NearChain {
     }
 
     async fn construct_signed_tx(
-        signer_acc_str: &str,
-        signer_sk_str: &str,
+        signer_account_id: Option<&str>,
+        signer_keypair: Vec<u8>,
         contract_id: &str,
         method_name: &str,
         args: Vec<u8>,
@@ -80,10 +78,8 @@ impl ChainAdapterTrait for NearChain {
         server_url: &str,
     ) -> Result<Vec<u8>> {
         let client = JsonRpcClient::connect(server_url);
-        let signer_account_id: AccountId = signer_acc_str.parse()?;
-        let signer_secret_key: near_crypto::SecretKey = signer_sk_str.parse()?;
-        let signer = near_crypto::InMemorySigner::from_secret_key(signer_account_id, signer_secret_key);
 
+        let signer = get_in_memory_signer(signer_account_id, &signer_keypair)?;
         let access_key_query_response = client
             .call(methods::query::RpcQueryRequest {
                 block_reference: BlockReference::latest(),
@@ -117,15 +113,15 @@ impl ChainAdapterTrait for NearChain {
     }
 
     async fn construct_transfer_tx(
-        signer_acc_str: &str,
-        signer_sk_str: &str,
+        signer_account_id: Option<&str>,
+        signer_keypair: Vec<u8>,
         receiver_id: &str,
         deposit: u128,
         server_url: &str,
     ) -> Result<Vec<u8>> {
         Self::construct_tx(
-            signer_acc_str,
-            signer_sk_str,
+            signer_account_id,
+            signer_keypair,
             receiver_id,
             server_url,
             vec![Action::Transfer(TransferAction { deposit })],
@@ -134,7 +130,6 @@ impl ChainAdapterTrait for NearChain {
     }
 
     async fn send_tx(client: Self::Client, signed_tx: &[u8]) -> Result<Vec<u8>> {
-        println!("============ AAAAAH MOTHERFUCKEKKEKEKEERSSS =========");
         let signed_tx = SignedTransaction::try_from_slice(signed_tx)?;
         let request = methods::broadcast_tx_async::RpcBroadcastTxAsyncRequest {
             signed_transaction: signed_tx.clone(),
@@ -158,8 +153,6 @@ impl ChainAdapterTrait for NearChain {
             if delta > 60 {
                 return Err(ChainAdapterError::BadTransactionTimestamp);
             }
-
-            dbg!(&response);
 
             match response {
                 Err(err) => match err.handler_error() {
@@ -198,4 +191,30 @@ impl ChainAdapterTrait for NearChain {
             Err(ChainAdapterError::CallViewMethod)
         }
     }
+}
+
+// This function takes as input an `Option` of a string specifying a
+// non-implicit account ID and the Ed25519 keypair bytes.
+fn get_in_memory_signer(signer_account_id: Option<&str>, signer_keypair: &[u8]) -> Result<near_crypto::InMemorySigner> {
+    let ed25519_secret_key = ED25519SecretKey(
+        signer_keypair
+            .try_into()
+            .map_err(|_| ChainAdapterError::InvalidEd25519KeyPair)?,
+    );
+
+    // If human-readable account ID is not given, implicit public key is derived
+    let signer_account_id: AccountId = if let Some(account_id) = signer_account_id {
+        account_id.parse()?
+    } else {
+        let ed25519_public_key: ED25519PublicKey = ed25519_secret_key.0[32..].try_into()?;
+
+        hex::encode(ed25519_public_key).parse()?
+    };
+
+    let signer_secret_key: SecretKey = SecretKey::ED25519(ed25519_secret_key);
+
+    Ok(near_crypto::InMemorySigner::from_secret_key(
+        signer_account_id,
+        signer_secret_key,
+    ))
 }

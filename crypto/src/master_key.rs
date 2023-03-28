@@ -1,7 +1,4 @@
-use std::{
-    fs::{read, read_to_string},
-    path::Path,
-};
+use std::{fs::read_to_string, path::Path};
 
 use rand::RngCore;
 use serde::{Deserialize, Serialize};

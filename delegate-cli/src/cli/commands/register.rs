@@ -27,14 +27,11 @@ impl Register {
         let ed25519_public_key = ed25519_key.public_key.as_bytes().to_vec();
         let account_id = hex::encode(&ed25519_public_key);
         let signature = ECDSA::sign(&account_id, &bn254_key.private_key)?;
-        let ed25519_secret_key_bytes: Vec<u8> = ed25519_key.into();
 
-        // TODO: Make construct_signed_tx only accept bytes and not strings & make this
-        // easier
         let signed_tx = chain::construct_signed_tx(
             Chain::Near,
-            &account_id,
-            &bs58::encode(ed25519_secret_key_bytes).into_string(),
+            None,
+            ed25519_key.as_ref().into(),
             &self.delegation_contract_id,
             "register_node",
             json!({

@@ -237,7 +237,6 @@ impl<HA: HostAdapter> RunnableRuntime for Runtime<HA> {
                             .into();
                     }
                     PromiseAction::ChainCall(chain_call_action) => {
-                        println!("============ Calling this :) =========");
                         promise_queue_mut.queue[index].status = self
                             .host_adapter
                             .chain_call(

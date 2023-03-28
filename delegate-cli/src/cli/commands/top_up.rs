@@ -3,7 +3,10 @@ use seda_chains::{chain, Client};
 use seda_config::{ChainConfigsInner, DelegateConfig};
 use seda_runtime_sdk::Chain;
 
-use crate::cli::{errors::Result, utils::to_yocto};
+use crate::cli::{
+    errors::Result,
+    utils::{get_signer_keypair_from_config, to_yocto},
+};
 
 #[derive(Debug, Args)]
 pub struct TopUp {
@@ -17,11 +20,12 @@ impl TopUp {
     pub async fn handle(self, config: DelegateConfig) -> Result<()> {
         // Convert to yocto NEAR, which uses 24 decimals
         let amount_yocto = to_yocto(&self.amount.to_string());
+        let signer_keypair = get_signer_keypair_from_config(&config.account_secret_key)?;
 
         let signed_tx = chain::construct_transfer_tx(
             Chain::Near,
-            &config.signer_account_id,
-            &config.account_secret_key,
+            Some(&config.signer_account_id),
+            signer_keypair,
             &self.receiver,
             amount_yocto,
             &config.rpc_url,

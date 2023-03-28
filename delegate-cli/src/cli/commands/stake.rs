@@ -5,7 +5,10 @@ use seda_crypto::MasterKey;
 use seda_runtime_sdk::Chain;
 use serde_json::json;
 
-use crate::cli::{errors::Result, utils::to_yocto};
+use crate::cli::{
+    errors::Result,
+    utils::{get_signer_keypair_from_config, to_yocto},
+};
 
 #[derive(Debug, Args)]
 pub struct Stake {
@@ -25,8 +28,9 @@ impl Stake {
         // This is needed to be compliant to be with NEAR
         let mut ed25519_public_key: Vec<u8> = vec![0];
         ed25519_public_key.extend_from_slice(ed25519_key.public_key.as_bytes());
-
         let account_id = hex::encode(&ed25519_public_key);
+
+        let signer_keypair = get_signer_keypair_from_config(&config.account_secret_key)?;
 
         println!(
             "Staking {} SEDA on {} for node {account_id}..",
@@ -35,8 +39,8 @@ impl Stake {
 
         let signed_tx = chain::construct_signed_tx(
             Chain::Near,
-            &config.signer_account_id,
-            &config.account_secret_key,
+            Some(&config.signer_account_id),
+            signer_keypair,
             &self.delegation_contract_id,
             "deposit",
             json!({

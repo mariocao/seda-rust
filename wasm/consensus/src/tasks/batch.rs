@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use clap::Args;
 use primitive_types::U256;
@@ -15,17 +15,14 @@ use seda_runtime_sdk::{
         get_local_ed25519_public_key,
         get_oracle_contract_id,
         p2p_broadcast_message,
-        shared_memory_contains_key,
         shared_memory_get,
         shared_memory_set,
         Bn254PublicKey,
         Promise,
     },
-    Bytes,
     FromBytes,
     Level,
     PromiseStatus,
-    ToBytes,
 };
 use serde_json::json;
 
@@ -35,7 +32,6 @@ use crate::{
         add_public_key,
         add_signature,
         get_or_create_batch_signature_store,
-        BatchSignatureStore,
         BATCH_SIGNATURE_STORE_KEY,
     },
 };

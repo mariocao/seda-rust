@@ -51,8 +51,8 @@ pub mod chain {
     #[allow(clippy::too_many_arguments)]
     pub async fn construct_signed_tx(
         chain: Chain,
-        signer_acc_str: &str,
-        signer_sk_str: &str,
+        signer_account_id: Option<&str>,
+        signer_keypair: Vec<u8>,
         contract_id: &str,
         method_name: &str,
         args: Vec<u8>,
@@ -63,8 +63,8 @@ pub mod chain {
         match chain {
             Chain::Another => {
                 AnotherChain::construct_signed_tx(
-                    signer_acc_str,
-                    signer_sk_str,
+                    signer_account_id,
+                    signer_keypair,
                     contract_id,
                     method_name,
                     args,
@@ -76,8 +76,8 @@ pub mod chain {
             }
             Chain::Near => {
                 NearChain::construct_signed_tx(
-                    signer_acc_str,
-                    signer_sk_str,
+                    signer_account_id,
+                    signer_keypair,
                     contract_id,
                     method_name,
                     args,
@@ -92,19 +92,20 @@ pub mod chain {
 
     pub async fn construct_transfer_tx(
         chain: Chain,
-        signer_acc_str: &str,
-        signer_sk_str: &str,
+        signer_account_id: Option<&str>,
+        signer_keypair: Vec<u8>,
         receiver_id: &str,
         amount: u128,
         server_url: &str,
     ) -> Result<Vec<u8>> {
         match chain {
             Chain::Another => {
-                AnotherChain::construct_transfer_tx(signer_acc_str, signer_sk_str, receiver_id, amount, server_url)
+                AnotherChain::construct_transfer_tx(signer_account_id, signer_keypair, receiver_id, amount, server_url)
                     .await
             }
             Chain::Near => {
-                NearChain::construct_transfer_tx(signer_acc_str, signer_sk_str, receiver_id, amount, server_url).await
+                NearChain::construct_transfer_tx(signer_account_id, signer_keypair, receiver_id, amount, server_url)
+                    .await
             }
         }
     }

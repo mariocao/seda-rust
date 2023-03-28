@@ -19,18 +19,23 @@ pub struct KeyPair<Private, Public> {
     pub public_key:  Public,
 }
 
-// TODO: Remove serialize and deserialize impls
 pub type Ed25519KeyPair = KeyPair<Ed25519PrivateKey, Ed25519PublicKey>;
 pub type Bn254KeyPair = KeyPair<Bn254PrivateKey, Bn254PublicKey>;
 
-impl From<Ed25519KeyPair> for Vec<u8> {
-    fn from(val: Ed25519KeyPair) -> Self {
+impl From<&Ed25519KeyPair> for Vec<u8> {
+    fn from(val: &Ed25519KeyPair) -> Self {
         let mut result = vec![];
 
         result.extend_from_slice(val.private_key.as_bytes());
         result.extend_from_slice(val.public_key.as_bytes());
 
         result
+    }
+}
+
+impl AsRef<Ed25519KeyPair> for Ed25519KeyPair {
+    fn as_ref(&self) -> &Ed25519KeyPair {
+        self
     }
 }
 
