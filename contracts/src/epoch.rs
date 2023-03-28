@@ -30,6 +30,7 @@ impl MainchainContract {
                 if activation_epoch <= &self.get_current_epoch() {
                     self.active_nodes
                         .insert(account_id, &self.inactive_nodes.get(account_id).unwrap());
+                    self.inactive_nodes.remove(account_id);
                     // log!("Moving pending node {} to active nodes", account_id);
                     false
                 } else {
