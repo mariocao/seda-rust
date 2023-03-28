@@ -15,8 +15,8 @@ pub trait ChainAdapterTrait: Debug + Send + Sync + 'static {
     /// Returns a signed transaction given the necessary information.
     #[allow(clippy::too_many_arguments)]
     async fn construct_signed_tx(
-        signer_acc_str: &str,
-        signer_sk_str: &str,
+        signer_account_id: Option<&str>,
+        signer_keypair: Vec<u8>,
         contract_id: &str,
         method_name: &str,
         args: Vec<u8>,
@@ -26,8 +26,8 @@ pub trait ChainAdapterTrait: Debug + Send + Sync + 'static {
     ) -> Result<Vec<u8>>;
 
     async fn construct_transfer_tx(
-        signer_acc_str: &str,
-        signer_sk_str: &str,
+        signer_account_id: Option<&str>,
+        signer_keypair: Vec<u8>,
         receiver_id: &str,
         amount: u128,
         server_url: &str,

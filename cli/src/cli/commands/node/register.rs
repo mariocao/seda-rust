@@ -21,7 +21,7 @@ impl Register {
         let node_config = &config.node.to_config(self.node_config)?;
 
         let sig = bn254::ECDSA::sign(
-            node_config.signer_account_id.clone(),
+            node_config.keypair_bn254.public_key.to_compressed()?,
             &node_config.keypair_bn254.private_key,
         )?;
         let args = RegisterNodeArgs {

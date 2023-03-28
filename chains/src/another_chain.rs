@@ -18,8 +18,8 @@ impl ChainAdapterTrait for AnotherChain {
     }
 
     async fn construct_signed_tx(
-        _signer_acc_str: &str,
-        _signer_sk_str: &str,
+        _signer_account_id: Option<&str>,
+        _signer_keypair: Vec<u8>,
         _contract_id: &str,
         _method_name: &str,
         _args: Vec<u8>,
@@ -31,8 +31,8 @@ impl ChainAdapterTrait for AnotherChain {
     }
 
     async fn construct_transfer_tx(
-        _signer_acc_str: &str,
-        _signer_sk_str: &str,
+        _signer_account_id: Option<&str>,
+        _signer_keypair: Vec<u8>,
         _receiver_id: &str,
         _deposit: u128,
         _server_url: &str,

@@ -4741,6 +4741,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "borsh",
+ "hex",
  "near-crypto 0.15.0",
  "near-jsonrpc-client",
  "near-jsonrpc-primitives",
@@ -4806,10 +4807,11 @@ name = "seda-crypto"
 version = "0.1.0"
 dependencies = [
  "bn254",
+ "bs58",
  "concat-kdf",
  "ed25519-dalek",
  "hex",
- "rand 0.7.3",
+ "near-crypto 0.15.0",
  "rand 0.8.5",
  "serde",
  "serde_json",

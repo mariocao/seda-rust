@@ -1,7 +1,7 @@
 use bn254::ECDSA;
 use ed25519_dalek::{Keypair, Signature, Signer};
 
-use crate::{Bn254KeyPair, CryptoError, MasterKey};
+use crate::{CryptoError, MasterKey};
 
 #[test]
 fn generate_bn254_pair() {
@@ -50,4 +50,35 @@ fn master_key_from_hex_error_invalid() {
     let mk_string: String = "potato".to_string();
     let master_key = MasterKey::try_from(&mk_string);
     assert!(matches!(master_key, Err(CryptoError::FromHex(_))));
+}
+
+#[test]
+fn near_crypto_compat_1() {
+    let mk_string: String = "0000000000000000000000000000000000000000000000000000000000000001".to_string();
+    let master_key = MasterKey::try_from(&mk_string).unwrap();
+
+    let ed25519_keypair = master_key.derive_ed25519(0).unwrap();
+    let expected_public_key = bs58::encode(ed25519_keypair.public_key.as_bytes()).into_string();
+
+    let secret_key_string = bs58::encode::<Vec<u8>>(ed25519_keypair.as_ref().into()).into_string();
+    let secret_key_res: Result<near_crypto::SecretKey, _> = secret_key_string.parse();
+    let derived_public_key = secret_key_res.unwrap().public_key().to_string();
+
+    assert_eq!(derived_public_key, format!("ed25519:{}", expected_public_key));
+}
+
+#[test]
+fn near_crypto_compat_2() {
+    let mk_string: String = "0000000000000000000000000000000000000000000000000000000000000001".to_string();
+    let master_key = MasterKey::try_from(&mk_string).unwrap();
+
+    let ed25519_keypair = master_key.derive_ed25519(0).unwrap();
+    let expected_public_key = bs58::encode(ed25519_keypair.public_key.as_bytes()).into_string();
+
+    let ed25519_keypair_bytes: Vec<u8> = ed25519_keypair.as_ref().into();
+    let signer_secret_key: near_crypto::SecretKey =
+        near_crypto::SecretKey::ED25519(near_crypto::ED25519SecretKey(ed25519_keypair_bytes.try_into().unwrap()));
+    let derived_public_key = signer_secret_key.public_key().to_string();
+
+    assert_eq!(derived_public_key, format!("ed25519:{}", expected_public_key));
 }

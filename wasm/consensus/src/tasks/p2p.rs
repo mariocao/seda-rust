@@ -3,7 +3,7 @@ use std::str::FromStr;
 use clap::Args;
 use seda_runtime_sdk::{
     log,
-    wasm::{bn254_verify, shared_memory_get, shared_memory_set, Bn254PublicKey, Bn254Signature},
+    wasm::{bn254_verify, shared_memory_set, Bn254PublicKey, Bn254Signature},
     Level,
 };
 

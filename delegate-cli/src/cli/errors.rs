@@ -5,6 +5,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum DelegateCliError {
+    #[error("Config error: {0}")]
+    Config(String),
+
     #[error("Could not convert key: {0}")]
     Crypto(#[from] CryptoError),
 

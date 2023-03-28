@@ -44,9 +44,13 @@ impl MainchainContract {
     #[payable]
     pub fn post_signed_batch(
         &mut self,
+        // Bn254 aggregate signature
         aggregate_signature: Vec<u8>,
+        // Bn254 aggregate public key
         aggregate_public_key: Vec<u8>,
+        // Ed25519 public keys of bn254 signers
         signers: Vec<AccountId>,
+        // Ed25519 signature
         leader_signature: Vec<u8>,
     ) {
         manage_storage_deposit!(self, {

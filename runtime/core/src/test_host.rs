@@ -76,8 +76,8 @@ impl HostAdapter for RuntimeTestAdapter {
 
         let signed_txn = chain::construct_signed_tx(
             chain,
-            &node_config.signer_account_id,
-            &node_config.seda_chain_secret_key,
+            None,
+            node_config.keypair_ed25519.as_ref().into(),
             contract_id,
             method_name,
             args,
