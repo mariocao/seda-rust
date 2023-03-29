@@ -15,7 +15,8 @@ pub fn to_yocto(value: &str) -> u128 {
     }
 }
 
-/// Retrieve Ed25519 keypair bytes from a string in the format of `ed25519:base58-encoded-string`
+/// Retrieve Ed25519 keypair bytes from a string in the format of
+/// `ed25519:base58-encoded-string`
 pub(crate) fn get_signer_keypair_from_config(account_secret_key: &str) -> Result<Vec<u8>> {
     let signer_keypair_str = account_secret_key
         .strip_prefix("ed25519:")

@@ -14,7 +14,7 @@ pub enum Task {
 impl Task {
     pub fn handle(self) {
         match self {
-            Self::Batch(bridge) => bridge.handle(),
+            Self::Batch(batch) => batch.handle(),
             Self::Bridge(bridge) => bridge.handle(),
             Self::P2P(p2p) => p2p.handle(),
         }
