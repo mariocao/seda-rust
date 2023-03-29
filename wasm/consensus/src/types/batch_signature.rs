@@ -8,36 +8,60 @@ use serde::{Deserialize, Serialize};
 
 pub const BATCH_SIGNATURE_STORE_KEY: &str = "batch_signatures";
 
+pub static EMPTY_SHA256: [u8; 32] = [
+    227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39, 174, 65, 228, 100, 155, 147, 76,
+    164, 149, 153, 27, 120, 82, 184, 85,
+];
+
 #[derive(Serialize, Deserialize)]
 pub struct BatchSignatureStore {
     pub aggregated_signature:   Vec<u8>,
     pub aggregated_public_keys: Vec<u8>,
     /// Vec of accountIds (implicit ed25519 public keys)
     pub signers:                Vec<String>,
+    // Hashmap<Bn254PublicKey, Bn254Signature>
     pub signatures:             HashMap<String, Vec<u8>>,
     pub slot:                   u64,
-    pub root:                   Vec<u8>,
+    pub batch_header:           Vec<u8>,
+    pub p2p_message:            Vec<u8>,
 }
 
-pub fn get_or_create_batch_signature_store(
-    storage_key: &str,
-    slot: Option<u64>,
-    root: Option<Vec<u8>>,
-) -> BatchSignatureStore {
+impl Default for BatchSignatureStore {
+    fn default() -> Self {
+        Self {
+            aggregated_public_keys: Default::default(),
+            aggregated_signature:   Default::default(),
+            batch_header:           EMPTY_SHA256.to_vec(),
+            p2p_message:            Default::default(),
+            signatures:             Default::default(),
+            signers:                Default::default(),
+            slot:                   0,
+        }
+    }
+}
+
+impl BatchSignatureStore {
+    pub fn new(slot: u64, root: Vec<u8>) -> Self {
+        BatchSignatureStore {
+            aggregated_public_keys: Vec::new(),
+            aggregated_signature: Vec::new(),
+            batch_header: root,
+            p2p_message: Default::default(),
+            signatures: HashMap::new(),
+            signers: Vec::new(),
+            slot,
+        }
+    }
+}
+
+pub fn get_or_create_batch_signature_store(storage_key: &str) -> BatchSignatureStore {
     if shared_memory_contains_key(storage_key) {
         let result = shared_memory_get(storage_key);
         let json_str = String::from_bytes_vec(result).unwrap();
 
-        serde_json::from_str(&json_str).unwrap()
+        serde_json::from_str(&json_str).expect("Invalid stored `BatchSignatureStore` object")
     } else {
-        BatchSignatureStore {
-            aggregated_signature:   Vec::new(),
-            aggregated_public_keys: Vec::new(),
-            signatures:             HashMap::new(),
-            slot:                   slot.unwrap_or(0),
-            root:                   root.unwrap_or(Vec::new()),
-            signers:                Vec::new(),
-        }
+        BatchSignatureStore::default()
     }
 }
 
