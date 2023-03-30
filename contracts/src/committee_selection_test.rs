@@ -53,10 +53,22 @@ fn test_committee_selection() {
     contract.process_epoch();
 
     // assert we have committees for this epoch and the next 2
-    assert_eq!(contract.get_committees().len(), 3);
+    assert_ne!(contract.get_committee(contract.get_current_epoch()).unwrap().len(), 0);
+    assert_ne!(
+        contract.get_committee(contract.get_current_epoch() + 1).unwrap().len(),
+        0
+    );
+    assert_ne!(
+        contract.get_committee(contract.get_current_epoch() + 2).unwrap().len(),
+        0
+    );
+    assert_eq!(contract.get_committee(contract.get_current_epoch() + 3), None);
 
     // assert each committee has DEFAULT_COMMITTEE_SIZE members
-    for committee in contract.get_committees() {
-        assert_eq!(committee.len() as u64, contract.config.committee_size);
+    for i in 0..3 {
+        assert_eq!(
+            contract.get_committee(contract.get_current_epoch() + i).unwrap().len() as u64,
+            contract.config.committee_size
+        );
     }
 }

@@ -63,19 +63,28 @@ fn post_signed_batch() {
     contract.process_epoch();
 
     // assert we have committees for this epoch and the next 2
-    assert_eq!(contract.get_committees().len(), 3);
+    assert_ne!(contract.get_committee(contract.get_current_epoch()).unwrap().len(), 0);
+    assert_ne!(
+        contract.get_committee(contract.get_current_epoch() + 1).unwrap().len(),
+        0
+    );
+    assert_ne!(
+        contract.get_committee(contract.get_current_epoch() + 2).unwrap().len(),
+        0
+    );
+    assert_eq!(contract.get_committee(contract.get_current_epoch() + 3), None);
 
     // assert each committee has config.committee_size members
-    contract
-        .get_committees()
-        .into_iter()
-        .for_each(|comittee| assert_eq!(comittee.len() as u64, contract.config.committee_size));
+    assert_eq!(
+        contract.get_committee(contract.get_current_epoch()).unwrap().len(),
+        contract.config.committee_size as usize
+    );
 
     // get the merkle root (for all nodes to sign)
     let merkle_root = contract.compute_merkle_root().merkle_root;
 
     // gather the chosen committee test accounts for signing
-    let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
+    let chosen_committee_account_ids = contract.get_committee(contract.get_current_epoch()).unwrap();
     let chosen_committee: Vec<TestAccount> = chosen_committee_account_ids
         .iter()
         .map(|acc_id| test_accounts.get(acc_id).unwrap().clone())
@@ -154,7 +163,7 @@ fn post_signed_batch_with_wrong_leader_sig() {
     let merkle_root = contract.compute_merkle_root().merkle_root;
 
     // gather the chosen committee test accounts for signing
-    let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
+    let chosen_committee_account_ids = contract.get_committee(contract.get_current_epoch()).unwrap();
     let chosen_committee: Vec<TestAccount> = chosen_committee_account_ids
         .iter()
         .map(|acc_id| test_accounts.get(acc_id).unwrap().clone())

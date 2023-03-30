@@ -99,7 +99,7 @@ pub fn get_context_for_post_signed_batch(test_account: TestAccount) -> VMContext
         .signer_account_pk(test_account.ed25519_public_key)
         .is_view(false)
         .attached_deposit(TEST_DEPOSIT_AMOUNT)
-        .block_index(100000000)
+        .block_index(1000000)
         .build()
 }
 pub fn get_context_with_deposit(test_account: TestAccount) -> VMContext {

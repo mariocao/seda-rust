@@ -44,8 +44,8 @@ impl MainchainContract {
 /// Contract public methods
 #[near_bindgen]
 impl MainchainContract {
-    pub fn get_committees(&self) -> Vec<Vec<AccountId>> {
-        self.committees.clone()
+    pub fn get_committee(&self, epoch: u64) -> Option<Vec<AccountId>> {
+        self.committees.get(&epoch)
     }
 
     pub fn get_last_generated_random_number(&self) -> near_bigint::U256 {
@@ -53,7 +53,7 @@ impl MainchainContract {
     }
 
     pub fn get_current_slot_leader(&self) -> Option<AccountId> {
-        let current_committee = self.committees.first()?;
+        let current_committee = self.committees.get(&self.get_current_epoch())?;
         let hash = Sha256::digest(
             [
                 self.last_generated_random_number.to_le_bytes().as_ref(),

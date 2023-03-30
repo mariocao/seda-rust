@@ -8,13 +8,7 @@ use near_sdk::{
 };
 use sha2::{Digest, Sha256};
 
-use crate::{
-    consts::SLOTS_PER_EPOCH,
-    manage_storage_deposit,
-    merkle::CryptoHash,
-    MainchainContract,
-    MainchainContractExt,
-};
+use crate::{manage_storage_deposit, merkle::CryptoHash, MainchainContract, MainchainContractExt};
 
 pub type BatchHeight = u64;
 pub type BatchId = CryptoHash;
@@ -55,81 +49,87 @@ impl MainchainContract {
         signers: Vec<AccountId>,
         leader_signature: Vec<u8>,
     ) {
-        assert_eq!(self.get_current_slot_leader().unwrap(), env::signer_account_id());
-        let leader_pk = PublicKey::from_compressed(
-            self.active_nodes
-                .get(&env::signer_account_id())
-                .unwrap()
-                .bn254_public_key,
-        )
-        .unwrap()
-        .to_compressed()
-        .unwrap();
-        assert!(
-            self.bn254_verify(
-                self.last_generated_random_number.to_le_bytes().to_vec(),
-                leader_signature.clone(),
-                leader_pk
-            ),
-            "Invalid slot leader signature"
-        );
-        let current_slot = self.get_current_slot();
-        let hash = Sha256::digest([leader_signature, current_slot.to_le_bytes().to_vec()].concat());
-        let new_random: near_bigint::U256 = near_bigint::U256::from_little_endian(&hash);
-        self.last_generated_random_number = new_random;
-
-        // require the data request accumulator to be non-empty
-        assert!(
-            !self.data_request_accumulator.is_empty(),
-            "Data request accumulator is empty"
-        );
-
-        // reconstruct the aggregate public key from signers[] to verify all signers are
-        // eligible for this batch while also verifying individual eligibility
-        assert!(
-            self.committees[0].contains(&signers[0]),
-            "Node is not part of the committee"
-        );
-        let aggregate_public_key_reconstructed = signers.iter().skip(1).fold(
-            PublicKey::from_compressed(self.active_nodes.get(&signers[0]).unwrap().bn254_public_key).unwrap(),
-            |acc, signer| {
-                assert!(self.committees[0].contains(signer), "Node is not part of the committee");
-                let signer_public_key =
-                    PublicKey::from_compressed(self.active_nodes.get(signer).unwrap().bn254_public_key).unwrap();
-                acc + signer_public_key
-            },
-        );
-        assert!(
-            aggregate_public_key_reconstructed.to_compressed().unwrap() == aggregate_public_key,
-            "Invalid aggregate public key"
-        );
-
-        // verify aggregate signature
-        let merkle_root = self.internal_compute_merkle_root();
-        assert!(
-            self.bn254_verify(merkle_root.clone(), aggregate_signature, aggregate_public_key),
-            "Invalid aggregate signature"
-        );
-
-        let header = BatchHeader {
-            height:     self.num_batches + 1,
-            state_root: CryptoHash::default(), // TODO
-        };
-
-        // create batch
-        let batch = Batch {
-            header:       header.clone(),
-            transactions: self.data_request_accumulator.to_vec(),
-        };
-
-        // calculate batch id
-        let batch_id = CryptoHash::hash_borsh(&MerklizedBatch {
-            prev_root: self.get_latest_batch_id(),
-            header,
-            transactions: merkle_root,
-        });
-
         manage_storage_deposit!(self, {
+            // update the epoch if necessary
+            self.process_epoch();
+
+            log!("slot leader: {}", self.get_current_slot_leader().unwrap());
+            log!("block: {}", env::block_height());
+            assert_eq!(self.get_current_slot_leader().unwrap(), env::signer_account_id());
+            let leader_pk = PublicKey::from_compressed(
+                self.active_nodes
+                    .get(&env::signer_account_id())
+                    .unwrap()
+                    .bn254_public_key,
+            )
+            .unwrap()
+            .to_compressed()
+            .unwrap();
+            assert!(
+                self.bn254_verify(
+                    self.last_generated_random_number.to_le_bytes().to_vec(),
+                    leader_signature.clone(),
+                    leader_pk
+                ),
+                "Invalid slot leader signature"
+            );
+            let current_slot = self.get_current_slot();
+            let hash = Sha256::digest([leader_signature, current_slot.to_le_bytes().to_vec()].concat());
+            let new_random: near_bigint::U256 = near_bigint::U256::from_little_endian(&hash);
+            self.last_generated_random_number = new_random;
+
+            // require the data request accumulator to be non-empty
+            assert!(
+                !self.data_request_accumulator.is_empty(),
+                "Data request accumulator is empty"
+            );
+
+            // reconstruct the aggregate public key from signers[] to verify all signers are
+            // eligible for this batch while also verifying individual eligibility
+            let current_committee = self.committees.get(&self.get_current_epoch()).unwrap();
+            assert!(
+                current_committee.contains(&signers[0]),
+                "Node is not part of the committee"
+            );
+            let aggregate_public_key_reconstructed = signers.iter().skip(1).fold(
+                PublicKey::from_compressed(self.active_nodes.get(&signers[0]).unwrap().bn254_public_key).unwrap(),
+                |acc, signer| {
+                    assert!(current_committee.contains(signer), "Node is not part of the committee");
+                    let signer_public_key =
+                        PublicKey::from_compressed(self.active_nodes.get(signer).unwrap().bn254_public_key).unwrap();
+                    acc + signer_public_key
+                },
+            );
+            assert!(
+                aggregate_public_key_reconstructed.to_compressed().unwrap() == aggregate_public_key,
+                "Invalid aggregate public key"
+            );
+
+            // verify aggregate signature
+            let merkle_root = self.internal_compute_merkle_root();
+            assert!(
+                self.bn254_verify(merkle_root.clone(), aggregate_signature, aggregate_public_key),
+                "Invalid aggregate signature"
+            );
+
+            let header = BatchHeader {
+                height:     self.num_batches + 1,
+                state_root: CryptoHash::default(), // TODO
+            };
+
+            // create batch
+            let batch = Batch {
+                header:       header.clone(),
+                transactions: self.data_request_accumulator.to_vec(),
+            };
+
+            // calculate batch id
+            let batch_id = CryptoHash::hash_borsh(&MerklizedBatch {
+                prev_root: self.get_latest_batch_id(),
+                header,
+                transactions: merkle_root,
+            });
+
             // store batch
             self.num_batches += 1;
             self.batch_by_id.insert(&batch_id, &batch);
@@ -137,12 +137,6 @@ impl MainchainContract {
 
             // clear data request accumulator
             self.data_request_accumulator.clear();
-
-            // if this is the last slot of the epoch, process the next epoch
-            if self.get_current_slot_within_epoch() == SLOTS_PER_EPOCH - 1 {
-                log!("Posted batch for last slot within epoch, calling `process_epoch()`");
-                self.internal_process_epoch(self.get_current_epoch() + 1);
-            }
         }); // end manage_storage_deposit
     }
 }

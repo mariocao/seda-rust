@@ -1,4 +1,4 @@
-use near_sdk::{json_types::U128, test_utils::get_logs, testing_env};
+use near_sdk::{json_types::U128, testing_env};
 
 use super::test_utils::{
     bn254_sign,
@@ -74,7 +74,7 @@ fn integration_test_1() {
             let merkle_root = contract.compute_merkle_root().merkle_root;
 
             // gather the chosen committee test accounts for signing
-            let chosen_committee_account_ids = contract.get_committees().first().unwrap().clone();
+            let chosen_committee_account_ids = contract.get_committee(contract.get_current_epoch()).unwrap();
             let chosen_committee: Vec<TestAccount> = chosen_committee_account_ids
                 .iter()
                 .map(|acc_id| test_accounts.get(acc_id).unwrap().clone())
@@ -85,6 +85,7 @@ fn integration_test_1() {
             testing_env!(get_context_at_block(block_number));
             let slot_leader_account_id = contract.get_current_slot_leader().unwrap();
             let slot_leader_test_account = test_accounts.get(&slot_leader_account_id).unwrap();
+            println!("Slot leader {} at block {}", slot_leader_account_id, block_number);
 
             // sign and post the batch
             let num_batches = contract.num_batches;
@@ -103,15 +104,6 @@ fn integration_test_1() {
                 leader_sig.to_compressed().unwrap(),
             );
             assert_eq!(contract.num_batches, num_batches + 1);
-
-            // if we are in the last slot of this epoch, check the logs to see if
-            // process_epoch() was called
-            if contract.get_current_slot_within_epoch() == SLOTS_PER_EPOCH - 1 {
-                assert_eq!(
-                    get_logs().first().unwrap(),
-                    &"Posted batch for last slot within epoch, calling `process_epoch()`".to_string()
-                );
-            }
 
             let slot = contract.get_current_slot();
             println!("Posted batch for slot {}", slot);
