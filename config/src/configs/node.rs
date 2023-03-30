@@ -20,18 +20,12 @@ pub struct PartialNodeConfig {
     /// An option to override the node gas config value.
     #[arg(short, long)]
     pub gas:                     Option<u64>,
-    /// An option to override the node chain secret key config value.
-    #[arg(long)]
-    pub seda_chain_secret_key:   Option<String>,
     /// An option to override the node secret key config value.
     #[arg(long)]
     pub master_key:              Option<String>,
     /// The path where you want to write to the generated secret key.
     #[arg(long)]
     pub seda_sk_file_path:       Option<PathBuf>,
-    /// An option to override the node signer account ID config value.
-    #[arg(long)]
-    pub signer_account_id:       Option<String>,
     /// An option to override the node contract account ID config value.
     #[arg(long)]
     pub contract_account_id:     Option<String>,
@@ -44,24 +38,29 @@ pub struct PartialNodeConfig {
 }
 #[cfg(feature = "cli")]
 impl PartialNodeConfig {
-    pub fn ids(self, signer_account_id: Option<String>, contract_id: Option<String>) -> Result<(String, String)> {
-        let signer_account_id = match (self.signer_account_id, signer_account_id) {
-            (None, None) => Err(ConfigError::from("node.signer_account_id")),
-            (None, Some(field)) | (Some(field), None) | (Some(_), Some(field)) => Ok::<_, crate::ConfigError>(field),
-        }?;
-        let contract_id = match (self.contract_account_id, contract_id) {
-            (None, None) => Err(ConfigError::from("node.contract_account_id")),
-            (None, Some(field)) | (Some(field), None) | (Some(_), Some(field)) => Ok::<_, crate::ConfigError>(field),
-        }?;
+    pub fn get_node_public_key(self) -> Result<Vec<u8>> {
+        let default_cli_options = PartialNodeConfig::default();
+        let seda_sk_file_path = merge_config_cli!(
+            self,
+            default_cli_options,
+            seda_sk_file_path,
+            Ok(PathBuf::from(NodeConfigInner::SEDA_SECRET_KEY_PATH))
+        )?;
 
-        Ok((signer_account_id, contract_id))
-    }
+        let master_key_config_option = merge_config_cli!(self, default_cli_options, master_key);
 
-    pub fn to_contract_account_id(self, contract_id: Option<String>) -> Result<String> {
-        match (self.contract_account_id, contract_id) {
-            (None, None) => Err(ConfigError::from("node.contract_account_id")),
-            (None, Some(field)) | (Some(field), None) | (Some(_), Some(field)) => Ok::<_, crate::ConfigError>(field),
-        }
+        let master_key = if let Some(key) = master_key_config_option {
+            MasterKey::try_from(&key)?
+        } else if seda_sk_file_path.exists() {
+            MasterKey::read_from_path(&seda_sk_file_path)?
+        } else {
+            let mk = MasterKey::random();
+            mk.write_to_path(NodeConfigInner::SEDA_SECRET_KEY_PATH)?;
+
+            mk
+        };
+
+        Ok(master_key.derive_ed25519(0)?.public_key.to_bytes().to_vec())
     }
 
     pub fn to_config(self, cli_options: Self) -> Result<NodeConfig> {
@@ -69,12 +68,6 @@ impl PartialNodeConfig {
             .parse()
             .unwrap())?;
         let gas = merge_config_cli!(self, cli_options, gas, Ok(NodeConfigInner::GAS))?;
-        let seda_chain_secret_key = merge_config_cli!(
-            self,
-            cli_options,
-            seda_chain_secret_key,
-            Err(ConfigError::from("node.seda_chain_secret_key"))
-        )?;
 
         let seda_sk_file_path = merge_config_cli!(
             self,
@@ -99,12 +92,6 @@ impl PartialNodeConfig {
         let keypair_ed25519 = master_key.derive_ed25519(0)?;
         let keypair_bn254 = master_key.derive_bn254(0)?;
 
-        let signer_account_id = merge_config_cli!(
-            self,
-            cli_options,
-            signer_account_id,
-            Err(ConfigError::from("node.signer_account_id"))
-        )?;
         let contract_account_id = merge_config_cli!(
             self,
             cli_options,
@@ -133,10 +120,8 @@ impl PartialNodeConfig {
         Ok(Arc::new(NodeConfigInner {
             deposit,
             gas,
-            seda_chain_secret_key,
             keypair_bn254,
             keypair_ed25519,
-            signer_account_id,
             contract_account_id,
             job_manager_interval_ms,
             runtime_worker_threads,
@@ -150,10 +135,8 @@ impl Config for PartialNodeConfig {
         Self {
             deposit:                 None,
             gas:                     None,
-            seda_chain_secret_key:   None,
             master_key:              None,
             seda_sk_file_path:       None,
-            signer_account_id:       None,
             contract_account_id:     None,
             job_manager_interval_ms: None,
             runtime_worker_threads:  None,
@@ -161,7 +144,6 @@ impl Config for PartialNodeConfig {
     }
 
     fn overwrite_from_env(&mut self) {
-        env_overwrite!(self.seda_chain_secret_key, "SEDA_CHAIN_SECRET_KEY");
         env_overwrite!(self.master_key, "SEDA_SECRET_KEY");
     }
 }
@@ -169,10 +151,8 @@ impl Config for PartialNodeConfig {
 pub struct NodeConfigInner {
     pub deposit:                 u128,
     pub gas:                     u64,
-    pub seda_chain_secret_key:   String,
     pub keypair_bn254:           Bn254KeyPair,
     pub keypair_ed25519:         Ed25519KeyPair,
-    pub signer_account_id:       String,
     pub contract_account_id:     String,
     pub job_manager_interval_ms: u64,
     pub runtime_worker_threads:  usize,
@@ -188,8 +168,6 @@ impl NodeConfigInner {
             gas:                     Self::GAS,
             keypair_bn254:           master_key.derive_bn254(0).unwrap(),
             keypair_ed25519:         master_key.derive_ed25519(0).unwrap(),
-            seda_chain_secret_key:   String::new(),
-            signer_account_id:       String::new(),
             contract_account_id:     String::new(),
             job_manager_interval_ms: Self::JOB_MANAGER_INTERVAL_MS,
             runtime_worker_threads:  Self::RUNTIME_WORKER_THREADS,

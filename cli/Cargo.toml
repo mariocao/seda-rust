@@ -14,6 +14,7 @@ clap = { workspace = true, features = ["default"] }
 clap_complete = { workspace = true }
 clap-markdown = { workspace = true }
 dotenv = { workspace = true }
+hex = { workspace = true }
 jsonrpsee = { workspace = true, features = ["client"] }
 seda-chains = { workspace = true }
 seda-crypto = { workspace = true }
