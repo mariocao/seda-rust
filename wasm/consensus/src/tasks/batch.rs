@@ -80,12 +80,13 @@ impl Batch {
 #[no_mangle]
 fn batch_step_1() {
     // Retrieve data from shared memory
-    let contract_id = shared_memory_get("contract_id");
+    let contract_id =
+        String::from_utf8(shared_memory_get("contract_id")).expect("Could not read contract id from shared memory");
     let bn254_public_key = shared_memory_get("bn254_public_key");
     let ed25519_public_key = shared_memory_get("ed25519_public_key");
     let mut signature_store = get_or_create_batch_signature_store(BATCH_SIGNATURE_STORE_KEY);
 
-    // Retrieve results from promise results
+    // Retrieve batch from promise result
     let batch: ComputeMerkleRootResult = match Promise::result(0) {
         PromiseStatus::Fulfilled(Some(batch_bytes)) => serde_json::from_slice(&batch_bytes)
             .expect("Cannot convert `merkle_root` json to `ComputeMerkleRootResult`"),
@@ -97,19 +98,6 @@ fn batch_step_1() {
             panic!("`compute_merkle_root` promise other: {other:?}");
         }
     };
-    let chain_config = if let PromiseStatus::Fulfilled(Some(config)) = Promise::result(1) {
-        serde_json::from_slice::<MainChainConfig>(&config).expect("Config is not of type `MainChainConfig`")
-    } else {
-        panic!("Could not fetch config from contract");
-    };
-    let last_random_number = if let PromiseStatus::Fulfilled(Some(num)) = Promise::result(2) {
-        // Example of encoded number:
-        // 85808566236214186893554888775712866405891396064732569795826684455150103772489
-        let encoded = serde_json::from_slice::<String>(&num).expect("random number is not a string");
-        U256::from_dec_str(&encoded).expect("Generated number is not a U256")
-    } else {
-        panic!("Could not fetch random number");
-    };
 
     let node_implicit_account = hex::encode(&ed25519_public_key);
     log!(
@@ -120,10 +108,22 @@ fn batch_step_1() {
         Some(&node_implicit_account) == batch.current_slot_leader.as_ref()
     );
 
-    // ==========================
-    // || Process BATCH Logic  ||
-    // ==========================
+    // Process batch (includes verification and broadcasting)
+    process_batch(&batch, &mut signature_store, &ed25519_public_key, &bn254_public_key);
+    // Process slot leader logic (only if node is slot leader)
+    if batch.current_slot_leader.is_none() {
+        log!(Level::Info, "Main-chain contract still bootstrapping (no slot leader)");
+    } else if batch.current_slot_leader == Some(node_implicit_account) {
+        process_slot_leader(&batch, &mut signature_store, &contract_id);
+    }
+}
 
+fn process_batch(
+    batch: &ComputeMerkleRootResult,
+    signature_store: &mut BatchSignatureStore,
+    ed25519_public_key: &[u8],
+    bn254_public_key: &[u8],
+) {
     // Case 1. Check if it was already processed
     if batch.merkle_root == signature_store.batch_header && batch.current_slot == signature_store.slot {
         log!(
@@ -163,7 +163,7 @@ fn batch_step_1() {
         let bn254_signature = bn254_sign(&batch.merkle_root);
 
         // Update signature store with new batch data
-        signature_store = BatchSignatureStore::new(batch.current_slot, batch.clone().merkle_root);
+        let mut signature_store = BatchSignatureStore::new(batch.current_slot, batch.clone().merkle_root);
 
         signature_store.aggregated_signature = add_signature(signature_store.aggregated_signature, bn254_signature)
             .to_compressed()
@@ -171,24 +171,24 @@ fn batch_step_1() {
 
         signature_store.aggregated_public_keys = add_public_key(
             signature_store.aggregated_public_keys,
-            Bn254PublicKey::from_compressed(&bn254_public_key).expect("Could not derive key"),
+            Bn254PublicKey::from_compressed(bn254_public_key).expect("Could not derive key"),
         )
         .to_compressed()
         .expect("Could not compress Bn254 Public Key");
 
-        signature_store.signers.push(hex::encode(&ed25519_public_key));
+        signature_store.signers.push(hex::encode(ed25519_public_key));
 
         signature_store
             .signatures
-            .insert(hex::encode(&bn254_public_key), bn254_signature.to_compressed().unwrap());
+            .insert(hex::encode(bn254_public_key), bn254_signature.to_compressed().unwrap());
 
         signature_store.slot = batch.current_slot;
 
         let message = Message::Batch(BatchMessage {
-            batch_header: batch.clone().merkle_root,
-            bn254_public_key,
-            signature: bn254_signature.to_compressed().expect("TODO"),
-            ed25519_public_key,
+            batch_header:       batch.clone().merkle_root,
+            bn254_public_key:   bn254_public_key.to_vec(),
+            signature:          bn254_signature.to_compressed().expect("TODO"),
+            ed25519_public_key: ed25519_public_key.to_vec(),
         });
         signature_store.p2p_message =
             serde_json::to_vec(&message).expect("`BatchMessage` could not be serialized to bytes");
@@ -204,65 +204,68 @@ fn batch_step_1() {
 
         p2p_broadcast_message(signature_store.p2p_message.clone()).start();
     }
+}
 
-    // ========================
-    // || SLOT LEADER Logic  ||
-    // ========================
-
-    let current_slot_leader = match batch.current_slot_leader {
-        Some(leader) => leader,
-        None => panic!("Main-chain contract still bootstrapping (no slot leader)"),
+fn process_slot_leader(batch: &ComputeMerkleRootResult, signature_store: &mut BatchSignatureStore, contract_id: &str) {
+    // Retrieve chain config and last random number from promise results
+    let chain_config = if let PromiseStatus::Fulfilled(Some(config)) = Promise::result(1) {
+        serde_json::from_slice::<MainChainConfig>(&config).expect("Config is not of type `MainChainConfig`")
+    } else {
+        panic!("Could not fetch config from contract");
+    };
+    let last_random_number = if let PromiseStatus::Fulfilled(Some(num)) = Promise::result(2) {
+        // Example of encoded number:
+        // 85808566236214186893554888775712866405891396064732569795826684455150103772489
+        let encoded = serde_json::from_slice::<String>(&num).expect("random number is not a string");
+        U256::from_dec_str(&encoded).expect("Generated number is not a U256")
+    } else {
+        panic!("Could not fetch random number");
     };
 
-    // 1. Check if node is currrent leader
-    if current_slot_leader == node_implicit_account {
+    log!(
+        Level::Info,
+        "[BatchTask][Slot #{}] Selected as slot leader (got {}/{} signatures for batch #{})",
+        batch.current_slot,
+        signature_store.signatures.len(),
+        chain_config.committee_size,
+        hex::encode(&batch.merkle_root)
+    );
+
+    // Check if node has stored all signatures
+    // TODO: Change to 2/3 in the future
+    if chain_config.committee_size == signature_store.signatures.len() as u64 {
+        let mut last_random_value_bytes: [u8; 32] = [0; 32];
+        last_random_number.to_little_endian(&mut last_random_value_bytes);
+
+        let leader_signature_bytes = bn254_sign(&last_random_value_bytes)
+            .to_compressed()
+            .expect("Could not compress Bn254 signaturre");
+
         log!(
             Level::Info,
-            "[BatchTask][Slot #{}] Selected as slot leader (got {}/{} signatures for batch #{})",
+            "[BatchTask][Slot #{}] Submitting signed batch #{} to contract `{}` with {}/{} aggregated signagutes",
             batch.current_slot,
+            hex::encode(&batch.merkle_root),
+            contract_id,
             signature_store.signatures.len(),
             chain_config.committee_size,
-            hex::encode(&batch.merkle_root)
         );
-        // 2. Check if node has stored all signatures
-        // TODO: Change to 2/3 in the future
-        if chain_config.committee_size == signature_store.signatures.len() as u64 {
-            let mut last_random_value_bytes: [u8; 32] = [0; 32];
-            last_random_number.to_little_endian(&mut last_random_value_bytes);
 
-            let leader_signature_bytes = bn254_sign(&last_random_value_bytes)
-                .to_compressed()
-                .expect("Could not compress Bn254 signaturre");
-
-            let contract_id_string =
-                String::from_utf8(contract_id).expect("Could not read contract id from shared memory");
-
-            log!(
-                Level::Info,
-                "[BatchTask][Slot #{}] Submitting signed batch #{} to contract `{}` with {}/{} aggregated signagutes",
-                batch.current_slot,
-                hex::encode(&batch.merkle_root),
-                contract_id_string,
-                signature_store.signatures.len(),
-                chain_config.committee_size,
-            );
-
-            chain_call(
-                seda_runtime_sdk::Chain::Near,
-                contract_id_string,
-                "post_signed_batch",
-                json!({
-                    "aggregate_signature": signature_store.aggregated_signature,
-                    "aggregate_public_key": signature_store.aggregated_public_keys,
-                    "signers": signature_store.signers,
-                    "leader_signature": leader_signature_bytes
-                })
-                .to_string()
-                .into_bytes(),
-                // TODO: double-check deposit value
-                to_yocto("1"),
-            )
-            .start();
-        }
+        chain_call(
+            seda_runtime_sdk::Chain::Near,
+            contract_id,
+            "post_signed_batch",
+            json!({
+                "aggregate_signature": signature_store.aggregated_signature,
+                "aggregate_public_key": signature_store.aggregated_public_keys,
+                "signers": signature_store.signers,
+                "leader_signature": leader_signature_bytes
+            })
+            .to_string()
+            .into_bytes(),
+            // TODO: double-check deposit value
+            to_yocto("1"),
+        )
+        .start();
     }
 }
