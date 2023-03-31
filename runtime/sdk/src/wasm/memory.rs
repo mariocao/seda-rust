@@ -53,6 +53,6 @@ pub fn shared_memory_contains_key(key: &str) -> bool {
     match result {
         0 => false,
         1 => true,
-        _ => panic!("Bn254 verify returned invalid bool in u8: {}", result),
+        _ => unreachable!("Bn254 verify returned invalid bool in u8: {}", result),
     }
 }

@@ -2,9 +2,9 @@ mod bn254;
 mod call;
 #[cfg(feature = "full")]
 mod chain_interactor;
-mod config;
 #[cfg(feature = "full")]
 mod database;
+mod env;
 mod execution;
 mod http;
 mod log;
@@ -16,9 +16,9 @@ mod raw;
 pub use call::*;
 #[cfg(feature = "full")]
 pub use chain_interactor::*;
-pub use config::*;
 #[cfg(feature = "full")]
 pub use database::*;
+pub use env::*;
 pub use execution::*;
 pub use http::*;
 pub use log::*;

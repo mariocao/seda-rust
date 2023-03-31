@@ -2,8 +2,6 @@ use clap::Args;
 use primitive_types::U256;
 use seda_common::{ComputeMerkleRootResult, MainChainConfig};
 use seda_runtime_sdk::{
-    log,
-    to_yocto,
     wasm::{
         bn254_sign,
         call_self,
@@ -21,6 +19,7 @@ use seda_runtime_sdk::{
     FromBytes,
     Level,
     PromiseStatus,
+    *,
 };
 use serde_json::json;
 
@@ -88,12 +87,8 @@ fn batch_step_1() {
 
     // Retrieve results from promise results
     let batch: ComputeMerkleRootResult = match Promise::result(0) {
-        PromiseStatus::Fulfilled(Some(batch_bytes)) => {
-            let batch_string =
-                String::from_bytes_vec(batch_bytes).expect("Cannot convert `merkle_root` bytes to json string");
-
-            serde_json::from_str(&batch_string).expect("Cannot convert `merkle_root` json to `ComputeMerkleRootResult`")
-        }
+        PromiseStatus::Fulfilled(Some(batch_bytes)) => serde_json::from_slice(&batch_bytes)
+            .expect("Cannot convert `merkle_root` json to `ComputeMerkleRootResult`"),
         PromiseStatus::Rejected(error) => {
             let err = String::from_bytes_vec(error).unwrap();
             panic!("`compute_merkle_root` promise rejected: {err:?}");

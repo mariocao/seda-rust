@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use seda_runtime_sdk::{
-    wasm::{shared_memory_contains_key, shared_memory_get, Bn254PublicKey, Bn254Signature},
-    FromBytes,
-};
+use seda_runtime_sdk::wasm::{shared_memory_contains_key, shared_memory_get, Bn254PublicKey, Bn254Signature};
 use serde::{Deserialize, Serialize};
 
 pub const BATCH_SIGNATURE_STORE_KEY: &str = "batch_signatures";
@@ -56,10 +53,7 @@ impl BatchSignatureStore {
 
 pub fn get_or_create_batch_signature_store(storage_key: &str) -> BatchSignatureStore {
     if shared_memory_contains_key(storage_key) {
-        let result = shared_memory_get(storage_key);
-        let json_str = String::from_bytes_vec(result).unwrap();
-
-        serde_json::from_str(&json_str).expect("Invalid stored `BatchSignatureStore` object")
+        serde_json::from_slice(&shared_memory_get(storage_key)).expect("Invalid stored `BatchSignatureStore` object")
     } else {
         BatchSignatureStore::default()
     }
