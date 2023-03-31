@@ -54,7 +54,7 @@ impl NearChain {
         };
 
         let signed_transaction = transaction.sign(&signer);
-        
+
         Ok(signed_transaction.try_to_vec()?)
     }
 }

@@ -1,6 +1,6 @@
 use clap::Args;
 use seda_common::{GetNodeArgs, NodeInfo};
-use seda_config::{AppConfig, PartialChainConfigs};
+use seda_config::{AppConfig, PartialChainConfigs, PartialNodeConfig};
 use seda_runtime_sdk::Chain;
 
 use crate::{cli::commands::view, Result};
@@ -20,24 +20,18 @@ pub struct Node {
 impl Node {
     pub async fn handle(self, config: AppConfig, chains_config: PartialChainConfigs) -> Result<()> {
         let chains_config = config.chains.to_config(chains_config)?;
+        let node_config = config
+            .node
+            .to_config(PartialNodeConfig::default())
+            .expect("Could not get default node configuration");
 
-        let contract_id = if let Some(contract_id) = self.contract_id {
-            contract_id
-        } else {
-            config
-                .node
-                .contract_account_id
-                .clone()
-                .expect("contract_id is not configured")
-        };
-
-        let node_id = if let Some(node_id) = self.node_id {
-            node_id
-        } else {
-            hex::encode(config.node.get_node_public_key()?)
-        };
+        let contract_id = self.contract_id.unwrap_or(node_config.contract_account_id.clone());
+        let node_id = self
+            .node_id
+            .unwrap_or(hex::encode(node_config.keypair_ed25519.public_key.to_bytes()));
 
         let args = GetNodeArgs::from(node_id).to_string();
+
         view::<Option<NodeInfo>>(Chain::Near, &contract_id, "get_node", Some(args), &chains_config).await
     }
 }

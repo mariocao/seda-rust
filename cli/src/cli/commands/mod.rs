@@ -74,6 +74,6 @@ pub(crate) async fn view<T: DeserializeOwned + Serialize>(
     .await?;
     let value = serde_json::from_slice::<T>(&result)?;
     serde_json::to_writer_pretty(std::io::stdout(), &value)?;
-    
+
     Ok(())
 }

@@ -223,8 +223,7 @@ pub fn shared_memory_read_length_import_obj(store: &Store, vm_context: VmContext
     Function::new_native_with_env(store, vm_context, shared_memory_read_length)
 }
 
-/// Reads the value from memory as byte array and sends the number of bytes to
-/// WASM.
+/// Reads the value from memory as byte array and returns a bool if it exists
 pub fn shared_memory_contains_key_import_obj(store: &Store, vm_context: VmContext) -> Function {
     fn shared_memory_contains_key(env: &VmContext, key: WasmPtr<u8, Array>, key_length: i64) -> Result<u8> {
         let memory_ref = get_memory(env)?;

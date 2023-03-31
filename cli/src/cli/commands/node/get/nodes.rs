@@ -1,6 +1,6 @@
 use clap::Args;
 use seda_common::{GetNodesArgs, NodeInfo};
-use seda_config::{AppConfig, PartialChainConfigs};
+use seda_config::{AppConfig, PartialChainConfigs, PartialNodeConfig};
 use seda_runtime_sdk::Chain;
 
 use crate::{cli::commands::view, Result};
@@ -23,16 +23,12 @@ pub struct Nodes {
 impl Nodes {
     pub async fn handle(self, config: AppConfig, chains_config: PartialChainConfigs) -> Result<()> {
         let chains_config = config.chains.to_config(chains_config)?;
+        let node_config = config
+            .node
+            .to_config(PartialNodeConfig::default())
+            .expect("Could not get default node configuration");
 
-        let contract_id = if let Some(contract_id) = self.contract_id {
-            contract_id
-        } else {
-            config
-                .node
-                .contract_account_id
-                .clone()
-                .expect("contract_id is not configured")
-        };
+        let contract_id = self.contract_id.unwrap_or(node_config.contract_account_id.clone());
 
         let args = GetNodesArgs::from((self.limit, self.offset)).to_string();
         view::<Vec<NodeInfo>>(Chain::Near, &contract_id, "get_nodes", Some(args), &chains_config).await
