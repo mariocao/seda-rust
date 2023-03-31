@@ -25,7 +25,7 @@ impl TopUp {
         let signed_tx = chain::construct_transfer_tx(
             Chain::Near,
             Some(&config.signer_account_id),
-            signer_keypair,
+            &signer_keypair,
             &self.receiver,
             amount_yocto,
             &config.rpc_url,

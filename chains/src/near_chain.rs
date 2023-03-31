@@ -21,13 +21,13 @@ pub struct NearChain;
 impl NearChain {
     async fn construct_tx(
         signer_account_id: Option<&str>,
-        signer_keypair: Vec<u8>,
+        signer_keypair: &[u8],
         receiver_id: &str,
         rpc_url: &str,
         actions: Vec<Action>,
     ) -> Result<Vec<u8>> {
         let client = JsonRpcClient::connect(rpc_url);
-        let signer = get_in_memory_signer(signer_account_id, &signer_keypair)?;
+        let signer = get_in_memory_signer(signer_account_id, signer_keypair)?;
 
         let access_key_query_response = client
             .call(methods::query::RpcQueryRequest {
@@ -54,6 +54,7 @@ impl NearChain {
         };
 
         let signed_transaction = transaction.sign(&signer);
+        
         Ok(signed_transaction.try_to_vec()?)
     }
 }
@@ -69,7 +70,7 @@ impl ChainAdapterTrait for NearChain {
 
     async fn construct_signed_tx(
         signer_account_id: Option<&str>,
-        signer_keypair: Vec<u8>,
+        signer_keypair: &[u8],
         contract_id: &str,
         method_name: &str,
         args: Vec<u8>,
@@ -79,7 +80,7 @@ impl ChainAdapterTrait for NearChain {
     ) -> Result<Vec<u8>> {
         let client = JsonRpcClient::connect(server_url);
 
-        let signer = get_in_memory_signer(signer_account_id, &signer_keypair)?;
+        let signer = get_in_memory_signer(signer_account_id, signer_keypair)?;
         let access_key_query_response = client
             .call(methods::query::RpcQueryRequest {
                 block_reference: BlockReference::latest(),
@@ -109,12 +110,13 @@ impl ChainAdapterTrait for NearChain {
             })],
         };
         let signed_transaction = transaction.sign(&signer);
+
         Ok(signed_transaction.try_to_vec()?)
     }
 
     async fn construct_transfer_tx(
         signer_account_id: Option<&str>,
-        signer_keypair: Vec<u8>,
+        signer_keypair: &[u8],
         receiver_id: &str,
         deposit: u128,
         server_url: &str,

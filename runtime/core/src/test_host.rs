@@ -42,12 +42,14 @@ impl HostAdapter for RuntimeTestAdapter {
     async fn db_get(&self, key: &str) -> Result<Option<String>> {
         let db = HASHMAP.lock().await;
         let value = db.get(key);
+
         Ok(value.cloned())
     }
 
     async fn db_set(&self, key: &str, value: &str) -> Result<()> {
         let mut db = HASHMAP.lock().await;
         db.insert(key.to_string(), value.to_string());
+
         Ok(())
     }
 
@@ -57,6 +59,7 @@ impl HostAdapter for RuntimeTestAdapter {
 
     async fn chain_view(&self, chain: Chain, contract_id: &str, method_name: &str, args: Vec<u8>) -> Result<Vec<u8>> {
         let client = self.select_client_from_chain(chain);
+
         Ok(chain::view(chain, client, contract_id, method_name, args).await?)
     }
 
@@ -73,11 +76,12 @@ impl HostAdapter for RuntimeTestAdapter {
             Chain::Another => &self.chain_configs.another.chain_rpc_url,
             Chain::Near => &self.chain_configs.near.chain_rpc_url,
         };
+        let keypair_ed25519_bytes = Vec::<u8>::from(&node_config.keypair_ed25519);
 
         let signed_txn = chain::construct_signed_tx(
             chain,
             None,
-            node_config.keypair_ed25519.as_ref().into(),
+            &keypair_ed25519_bytes,
             contract_id,
             method_name,
             args,
@@ -87,6 +91,7 @@ impl HostAdapter for RuntimeTestAdapter {
         )
         .await?;
         let client = self.select_client_from_chain(chain);
+
         Ok(chain::send_tx(chain, client, &signed_txn).await?)
     }
 

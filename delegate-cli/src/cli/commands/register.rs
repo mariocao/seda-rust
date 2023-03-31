@@ -27,11 +27,12 @@ impl Register {
         let ed25519_public_key = ed25519_key.public_key.as_bytes().to_vec();
         let account_id = hex::encode(&ed25519_public_key);
         let signature = ECDSA::sign(&account_id, &bn254_key.private_key)?;
+        let ed25519_keypair_bytes = Vec::<u8>::from(&ed25519_key);
 
         let signed_tx = chain::construct_signed_tx(
             Chain::Near,
             None,
-            ed25519_key.as_ref().into(),
+            &ed25519_keypair_bytes,
             &self.delegation_contract_id,
             "register_node",
             json!({

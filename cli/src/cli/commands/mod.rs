@@ -28,11 +28,12 @@ pub(crate) async fn call<T: DeserializeOwned + Serialize>(
         Chain::Another => &chains_config.another.chain_rpc_url,
         Chain::Near => &chains_config.near.chain_rpc_url,
     };
+    let keypair_ed25519_bytes = Vec::<u8>::from(&node_config.keypair_ed25519);
 
     let signed_txn = chain::construct_signed_tx(
         chain,
         None,
-        node_config.keypair_ed25519.as_ref().into(),
+        &keypair_ed25519_bytes,
         contract_id,
         method_name,
         args.into_bytes(),
@@ -50,6 +51,7 @@ pub(crate) async fn call<T: DeserializeOwned + Serialize>(
                 "result": result_value,
         }),
     )?;
+
     Ok(())
 }
 
@@ -72,5 +74,6 @@ pub(crate) async fn view<T: DeserializeOwned + Serialize>(
     .await?;
     let value = serde_json::from_slice::<T>(&result)?;
     serde_json::to_writer_pretty(std::io::stdout(), &value)?;
+    
     Ok(())
 }

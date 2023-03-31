@@ -40,7 +40,7 @@ impl Stake {
         let signed_tx = chain::construct_signed_tx(
             Chain::Near,
             Some(&config.signer_account_id),
-            signer_keypair,
+            &signer_keypair,
             &self.delegation_contract_id,
             "deposit",
             json!({

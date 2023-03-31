@@ -52,7 +52,7 @@ pub mod chain {
     pub async fn construct_signed_tx(
         chain: Chain,
         signer_account_id: Option<&str>,
-        signer_keypair: Vec<u8>,
+        signer_keypair: &[u8],
         contract_id: &str,
         method_name: &str,
         args: Vec<u8>,
@@ -93,7 +93,7 @@ pub mod chain {
     pub async fn construct_transfer_tx(
         chain: Chain,
         signer_account_id: Option<&str>,
-        signer_keypair: Vec<u8>,
+        signer_keypair: &[u8],
         receiver_id: &str,
         amount: u128,
         server_url: &str,

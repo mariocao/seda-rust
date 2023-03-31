@@ -24,11 +24,12 @@ impl ChainCall {
             Chain::Another => &self.chains_config.another.chain_rpc_url,
             Chain::Near => &self.chains_config.near.chain_rpc_url,
         };
+        let keypair_ed25519: Vec<u8> = self.node_config.keypair_ed25519.as_ref().into();
 
         let signed_txn = chain::construct_signed_tx(
             self.chain,
             None,
-            self.node_config.keypair_ed25519.as_ref().into(),
+            &keypair_ed25519,
             &self.contract_id,
             &self.method_name,
             self.args,
