@@ -82,3 +82,29 @@ fn near_crypto_compat_2() {
 
     assert_eq!(derived_public_key, format!("ed25519:{}", expected_public_key));
 }
+
+#[test]
+fn derive_bn254_different_keys() {
+    let master_key: MasterKey = MasterKey::random();
+
+    let bn254_key_1 = master_key.derive_bn254(0).unwrap();
+    let bn254_key_2 = master_key.derive_bn254(1).unwrap();
+
+    let private_key_1 = bn254_key_1.private_key.to_bytes().unwrap();
+    let private_key_2 = bn254_key_2.private_key.to_bytes().unwrap();
+
+    assert_ne!(private_key_1, private_key_2)
+}
+
+#[test]
+fn derive_ed25519_different_keys() {
+    let master_key: MasterKey = MasterKey::random();
+
+    let bn254_key_1 = master_key.derive_ed25519(0).unwrap();
+    let bn254_key_2 = master_key.derive_ed25519(1).unwrap();
+
+    let private_key_1 = bn254_key_1.private_key.to_bytes();
+    let private_key_2 = bn254_key_2.private_key.to_bytes();
+
+    assert_ne!(private_key_1, private_key_2)
+}
