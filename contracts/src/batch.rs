@@ -82,12 +82,6 @@ impl MainchainContract {
             let new_random: near_bigint::U256 = near_bigint::U256::from_little_endian(&hash);
             self.last_generated_random_number = new_random;
 
-            // require the data request accumulator to be non-empty
-            assert!(
-                !self.data_request_accumulator.is_empty(),
-                "Data request accumulator is empty"
-            );
-
             // reconstruct the aggregate public key from signers[] to verify all signers are
             // eligible for this batch while also verifying individual eligibility
             let current_committee = self.committees.get(&self.get_current_epoch()).unwrap();

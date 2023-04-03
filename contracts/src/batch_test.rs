@@ -189,3 +189,96 @@ fn post_signed_batch_with_wrong_leader_sig() {
     );
     assert_eq!(contract.num_batches, num_batches + 1);
 }
+
+#[test]
+fn post_empty_signed_batch() {
+    let mut contract = new_contract();
+    let dao = make_test_account("dao_near".to_string());
+
+    let deposit_amount = U128(INIT_MINIMUM_STAKE);
+    let test_acc = make_test_account("test_near".to_string());
+
+    // no data requests posted
+
+    let mut test_accounts: HashMap<AccountId, TestAccount> = HashMap::new();
+    let num_of_nodes = 2;
+    for x in 0..num_of_nodes {
+        let acc_str = format!("{x:}_near");
+        let acc = make_test_account(acc_str.clone());
+
+        // transfer some tokens
+        testing_env!(get_context_with_deposit(dao.clone(),));
+        contract.storage_deposit(Some(acc_str.clone().try_into().unwrap()), None);
+        testing_env!(get_context_for_ft_transfer(dao.clone()));
+        contract.ft_transfer(acc_str.clone().try_into().unwrap(), deposit_amount, None);
+
+        test_accounts.insert(acc_str.parse().unwrap(), acc.clone());
+        let sig = bn254_sign(&acc.bn254_private_key.clone(), acc_str.as_bytes());
+
+        testing_env!(get_context_with_deposit(acc.clone()));
+        // register nodes
+        contract.register_node(
+            "0.0.0.0:8080".to_string(),
+            acc.bn254_public_key.to_compressed().unwrap(),
+            sig.to_compressed().unwrap(),
+        );
+        // deposit into contract
+        testing_env!(get_context_with_deposit(acc.clone()));
+        contract.deposit(deposit_amount, acc.ed25519_public_key.clone().into());
+    }
+
+    // time travel and activate nodes
+    testing_env!(get_context_with_deposit_at_block(test_acc.clone(), 1000000));
+    contract.process_epoch();
+
+    // assert we have committees for this epoch and the next 2
+    assert_ne!(contract.get_committee(contract.get_current_epoch()).unwrap().len(), 0);
+    assert_ne!(
+        contract.get_committee(contract.get_current_epoch() + 1).unwrap().len(),
+        0
+    );
+    assert_ne!(
+        contract.get_committee(contract.get_current_epoch() + 2).unwrap().len(),
+        0
+    );
+    assert_eq!(contract.get_committee(contract.get_current_epoch() + 3), None);
+
+    // assert each committee has config.committee_size members
+    assert_eq!(
+        contract.get_committee(contract.get_current_epoch()).unwrap().len(),
+        contract.config.committee_size as usize
+    );
+
+    // get the merkle root (for all nodes to sign)
+    let merkle_root = contract.compute_merkle_root().merkle_root;
+
+    // gather the chosen committee test accounts for signing
+    let chosen_committee_account_ids = contract.get_committee(contract.get_current_epoch()).unwrap();
+    let chosen_committee: Vec<TestAccount> = chosen_committee_account_ids
+        .iter()
+        .map(|acc_id| test_accounts.get(acc_id).unwrap().clone())
+        .collect();
+    let (agg_signature, agg_public_key) = bn254_sign_aggregate(chosen_committee, &merkle_root);
+
+    assert_eq!(contract.num_batches, 0);
+
+    // find the slot leader
+    testing_env!(get_context_for_post_signed_batch(test_acc.clone()));
+    let slot_leader_account_id = contract.get_current_slot_leader().unwrap();
+    let slot_leader_test_account = test_accounts.get(&slot_leader_account_id).unwrap();
+
+    // sign and post the batch
+    testing_env!(get_context_for_post_signed_batch(slot_leader_test_account.clone()));
+    let num_batches = contract.num_batches;
+    let leader_sig = bn254_sign(
+        &slot_leader_test_account.bn254_private_key,
+        &contract.last_generated_random_number.to_le_bytes(),
+    );
+    contract.post_signed_batch(
+        agg_signature.to_compressed().unwrap(),
+        agg_public_key.to_compressed().unwrap(),
+        chosen_committee_account_ids,
+        leader_sig.to_compressed().unwrap(),
+    );
+    assert_eq!(contract.num_batches, num_batches + 1);
+}
