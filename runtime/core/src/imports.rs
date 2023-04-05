@@ -354,8 +354,8 @@ pub fn bn254_verify_import_obj(store: &Store, vm_context: VmContext) -> Function
         let public_key: Vec<u8> = public_key.into_iter().map(|wc| wc.get()).collect();
 
         // `bn254` verification
-        let signature_obj = bn254::Signature::from_compressed(signature)?;
-        let public_key_obj = bn254::PublicKey::from_compressed(public_key)?;
+        let signature_obj = bn254::Signature::from_uncompressed(signature)?;
+        let public_key_obj = bn254::PublicKey::from_uncompressed(public_key)?;
 
         Ok(bn254::ECDSA::verify(message, &signature_obj, &public_key_obj)
             .is_ok()
@@ -391,7 +391,7 @@ pub fn bn254_sign_import_obj(store: &Store, vm_context: VmContext) -> Function {
 
         // `bn254` sign
         let signature = bn254::ECDSA::sign(&message, &env.node_config.keypair_bn254.private_key)?;
-        let result = signature.to_compressed()?;
+        let result = signature.to_uncompressed()?;
 
         if result_data_length as usize != result.len() {
             Err(format!(

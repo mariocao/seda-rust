@@ -55,8 +55,8 @@ fn total_supply_includes_staked() {
     testing_env!(get_context_with_deposit(bob.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        bob_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        bob_signature.to_uncompressed().unwrap(),
     );
 
     // bob deposits

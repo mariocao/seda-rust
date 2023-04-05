@@ -167,28 +167,29 @@ fn process_batch(
         let mut signature_store = BatchSignatureStore::new(batch.current_slot, batch.clone().merkle_root);
 
         signature_store.aggregated_signature = add_signature(signature_store.aggregated_signature, bn254_signature)
-            .to_compressed()
+            .to_uncompressed()
             .expect("Could not compress Bn254 signature");
 
         signature_store.aggregated_public_keys = add_public_key(
             signature_store.aggregated_public_keys,
-            Bn254PublicKey::from_compressed(bn254_public_key).expect("Could not derive key"),
+            Bn254PublicKey::from_uncompressed(bn254_public_key).expect("Could not derive key"),
         )
-        .to_compressed()
+        .to_uncompressed()
         .expect("Could not compress Bn254 Public Key");
 
         signature_store.signers.push(hex::encode(ed25519_public_key));
 
-        signature_store
-            .signatures
-            .insert(hex::encode(bn254_public_key), bn254_signature.to_compressed().unwrap());
+        signature_store.signatures.insert(
+            hex::encode(bn254_public_key),
+            bn254_signature.to_uncompressed().unwrap(),
+        );
 
         signature_store.slot = batch.current_slot;
 
         let message = Message::Batch(BatchMessage {
             batch_header:       batch.clone().merkle_root,
             bn254_public_key:   bn254_public_key.to_vec(),
-            signature:          bn254_signature.to_compressed().expect("TODO"),
+            signature:          bn254_signature.to_uncompressed().expect("TODO"),
             ed25519_public_key: ed25519_public_key.to_vec(),
         });
         signature_store.p2p_message =
@@ -239,7 +240,7 @@ fn process_slot_leader(batch: &ComputeMerkleRootResult, signature_store: &mut Ba
         last_random_number.to_little_endian(&mut last_random_value_bytes);
 
         let leader_signature_bytes = bn254_sign(&last_random_value_bytes)
-            .to_compressed()
+            .to_uncompressed()
             .expect("Could not compress Bn254 signaturre");
 
         log!(

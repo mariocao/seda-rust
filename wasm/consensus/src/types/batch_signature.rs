@@ -64,7 +64,7 @@ pub fn add_signature(aggregated_signature: Vec<u8>, signature: Bn254Signature) -
         return signature;
     }
 
-    Bn254Signature::from_compressed(aggregated_signature).expect("Given Bn254Signature signature is not decodable")
+    Bn254Signature::from_uncompressed(aggregated_signature).expect("Given Bn254Signature signature is not decodable")
         + signature
 }
 
@@ -73,5 +73,6 @@ pub fn add_public_key(aggregated_public_key: Vec<u8>, public_key: Bn254PublicKey
         return public_key;
     }
 
-    Bn254PublicKey::from_compressed(aggregated_public_key).expect("Given Bn254PublicKey is not decodable") + public_key
+    Bn254PublicKey::from_uncompressed(aggregated_public_key).expect("Given Bn254PublicKey is not decodable")
+        + public_key
 }

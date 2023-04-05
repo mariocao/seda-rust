@@ -60,15 +60,11 @@ impl MainchainContract {
             log!("slot leader: {}", self.get_current_slot_leader().unwrap());
             log!("block: {}", env::block_height());
             assert_eq!(self.get_current_slot_leader().unwrap(), env::signer_account_id());
-            let leader_pk = PublicKey::from_compressed(
-                self.active_nodes
-                    .get(&env::signer_account_id())
-                    .unwrap()
-                    .bn254_public_key,
-            )
-            .unwrap()
-            .to_compressed()
-            .unwrap();
+            let leader_pk = self
+                .active_nodes
+                .get(&env::signer_account_id())
+                .unwrap()
+                .bn254_public_key;
             assert!(
                 self.bn254_verify(
                     self.last_generated_random_number.to_le_bytes().to_vec(),
@@ -90,16 +86,16 @@ impl MainchainContract {
                 "Node is not part of the committee"
             );
             let aggregate_public_key_reconstructed = signers.iter().skip(1).fold(
-                PublicKey::from_compressed(self.active_nodes.get(&signers[0]).unwrap().bn254_public_key).unwrap(),
+                PublicKey::from_uncompressed(self.active_nodes.get(&signers[0]).unwrap().bn254_public_key).unwrap(),
                 |acc, signer| {
                     assert!(current_committee.contains(signer), "Node is not part of the committee");
                     let signer_public_key =
-                        PublicKey::from_compressed(self.active_nodes.get(signer).unwrap().bn254_public_key).unwrap();
+                        PublicKey::from_uncompressed(self.active_nodes.get(signer).unwrap().bn254_public_key).unwrap();
                     acc + signer_public_key
                 },
             );
             assert!(
-                aggregate_public_key_reconstructed.to_compressed().unwrap() == aggregate_public_key,
+                aggregate_public_key_reconstructed.to_uncompressed().unwrap() == aggregate_public_key,
                 "Invalid aggregate public key"
             );
 

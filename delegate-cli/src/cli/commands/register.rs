@@ -37,8 +37,8 @@ impl Register {
             "register_node",
             json!({
                 "multi_addr": self.multi_addr,
-                "bn254_public_key": &bn254_key.public_key.to_compressed()?,
-                "signature": &signature.to_compressed()?,
+                "bn254_public_key": &bn254_key.public_key.to_uncompressed()?,
+                "signature": &signature.to_uncompressed()?,
             })
             .to_string()
             .into_bytes(),

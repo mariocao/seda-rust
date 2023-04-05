@@ -129,12 +129,12 @@ fn bn254_verify_test() {
     // Signature
     let signature_hex = args.get(2).unwrap();
     let signature_bytes = decode_hex(signature_hex).unwrap();
-    let signature = Bn254Signature::from_compressed(signature_bytes).unwrap();
+    let signature = Bn254Signature::from_uncompressed(signature_bytes).unwrap();
 
     // Public key
     let public_key_hex = args.get(3).unwrap();
     let public_key_bytes = decode_hex(public_key_hex).unwrap();
-    let public_key = Bn254PublicKey::from_compressed(public_key_bytes).unwrap();
+    let public_key = Bn254PublicKey::from_uncompressed(public_key_bytes).unwrap();
 
     let result = bn254_verify(&message, &signature, &public_key);
     db_set("bn254_verify_result", &format!("{result}")).start();
@@ -155,7 +155,7 @@ fn bn254_sign_test() {
     let _private_key = Bn254PrivateKey::try_from(private_key_bytes.as_slice()).unwrap();
 
     let result = bn254_sign(&message);
-    let result_hex = encode_hex(&result.to_compressed().unwrap());
+    let result_hex = encode_hex(&result.to_uncompressed().unwrap());
     db_set("bn254_sign_result", &result_hex).start();
 }
 

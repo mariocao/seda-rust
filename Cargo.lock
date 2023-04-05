@@ -581,7 +581,7 @@ dependencies = [
 [[package]]
 name = "bn254"
 version = "0.0.1"
-source = "git+https://github.com/sedaprotocol/bn254?branch=main#658c3a26f519b004d071b6f9020cc37605196ab4"
+source = "git+https://github.com/mennatabuelnaga/bn254?branch=main#c6b7964695f71cff86c691646f1a8e6f1211cdda"
 dependencies = [
  "borsh",
  "byteorder",
@@ -3468,7 +3468,7 @@ dependencies = [
  "near-vm-errors 0.14.0",
  "ripemd",
  "serde",
- "sha2 0.10.6",
+ "sha2 0.9.9",
  "sha3",
  "zeropool-bn",
 ]

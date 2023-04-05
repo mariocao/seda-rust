@@ -137,7 +137,7 @@ impl<HA: HostAdapter> RunnableRuntime for Runtime<HA> {
                             )
                             .env(
                                 "BN254_PUBLIC_KEY",
-                                hex::encode(&self.node_config.keypair_bn254.public_key.to_compressed().unwrap()),
+                                hex::encode(&self.node_config.keypair_bn254.public_key.to_uncompressed().unwrap()),
                             )
                             .args(call_action.args.clone())
                             .stdout(Box::new(stdout_pipe))

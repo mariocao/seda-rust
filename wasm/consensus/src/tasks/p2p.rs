@@ -43,15 +43,15 @@ impl P2P {
                 // TODO: check that batch was signed by a member of the epoch committee
 
                 // Check valid bn254 signature
-                let bn254_signature = Bn254Signature::from_compressed(&batch_message.signature)
+                let bn254_signature = Bn254Signature::from_uncompressed(&batch_message.signature)
                     .expect("Could not get signature from compressed bytes");
-                let bn254_public_key = Bn254PublicKey::from_compressed(&batch_message.bn254_public_key)
+                let bn254_public_key = Bn254PublicKey::from_uncompressed(&batch_message.bn254_public_key)
                     .expect("Could not get signature from compressed bytes");
 
                 if !bn254_verify(
                     &batch_message.batch_header,
                     &bn254_signature,
-                    &Bn254PublicKey::from_compressed(&batch_message.bn254_public_key).unwrap(),
+                    &Bn254PublicKey::from_uncompressed(&batch_message.bn254_public_key).unwrap(),
                 ) {
                     // TODO: Check if we should disconnect p2p node/slashed/measures
                     log!(
@@ -81,11 +81,11 @@ impl P2P {
 
                     // Aggregate signature and public key
                     let new_aggregate_signature = add_signature(signature_store.aggregated_signature, bn254_signature)
-                        .to_compressed()
+                        .to_uncompressed()
                         .expect("Could not compress Bn254 signature");
                     let new_aggregate_public_key =
                         add_public_key(signature_store.aggregated_public_keys, bn254_public_key)
-                            .to_compressed()
+                            .to_uncompressed()
                             .expect("Could not compress Bn254 Public Key");
                     let ed25519_public_key_str = hex::encode(&batch_message.ed25519_public_key);
 

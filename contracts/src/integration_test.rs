@@ -98,10 +98,10 @@ fn integration_test_1() {
                 &contract.last_generated_random_number.to_le_bytes(),
             );
             contract.post_signed_batch(
-                agg_signature.to_compressed().unwrap(),
-                agg_public_key.to_compressed().unwrap(),
+                agg_signature.to_uncompressed().unwrap(),
+                agg_public_key.to_uncompressed().unwrap(),
                 chosen_committee_account_ids,
-                leader_sig.to_compressed().unwrap(),
+                leader_sig.to_uncompressed().unwrap(),
             );
             assert_eq!(contract.num_batches, num_batches + 1);
 

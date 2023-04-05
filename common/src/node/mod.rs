@@ -41,7 +41,12 @@ impl NodeInfo {
                 rng.gen_range(1..65535)
             ),
             balance:            rng.gen_range(0..u128::MAX),
-            bn254_public_key:   master_key.derive_bn254(0).unwrap().public_key.to_compressed().unwrap(),
+            bn254_public_key:   master_key
+                .derive_bn254(0)
+                .unwrap()
+                .public_key
+                .to_uncompressed()
+                .unwrap(),
             ed25519_public_key: master_key.derive_ed25519(0).unwrap().public_key.as_bytes().to_vec(),
         }
     }

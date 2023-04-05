@@ -27,8 +27,8 @@ fn register_and_get_node() {
     testing_env!(get_context_with_deposit(bob.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        bob_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        bob_signature.to_uncompressed().unwrap(),
     );
     assert_eq!(get_logs(), vec!["bob_near registered node"]);
     // check owner and multi_addr
@@ -40,7 +40,7 @@ fn register_and_get_node() {
 }
 
 #[test]
-#[should_panic(expected = "Insufficient storage, need 5240000000000000000000")]
+#[should_panic(expected = "Insufficient storage, need 6500000000000000000000")]
 fn register_not_enough_storage() {
     let mut contract = new_contract();
     let bob = make_test_account("bob_near".to_string());
@@ -50,8 +50,8 @@ fn register_not_enough_storage() {
     testing_env!(get_context(bob.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        bob_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        bob_signature.to_uncompressed().unwrap(),
     );
 }
 
@@ -65,8 +65,8 @@ fn set_node_multi_addr() {
     testing_env!(get_context_with_deposit(bob.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        bob_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        bob_signature.to_uncompressed().unwrap(),
     );
     assert_eq!(get_logs(), vec!["bob_near registered node"]);
 
@@ -109,20 +109,20 @@ fn get_nodes() {
     testing_env!(get_context_with_deposit(bob.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        bob_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        bob_signature.to_uncompressed().unwrap(),
     );
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "1.1.1.1:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
     testing_env!(get_context_with_deposit(carol.clone()));
     contract.register_node(
         "2.2.2.2:8080".to_string(),
-        carol.bn254_public_key.to_compressed().unwrap(),
-        carol_signature.to_compressed().unwrap(),
+        carol.bn254_public_key.to_uncompressed().unwrap(),
+        carol_signature.to_uncompressed().unwrap(),
     );
 
     // all nodes deposit the minimum stake
@@ -142,21 +142,21 @@ fn get_nodes() {
         account_id:         "bob_near".to_string(),
         balance:            deposit_amount.0,
         multi_addr:         "0.0.0.0:8080".to_string(),
-        bn254_public_key:   bob.clone().bn254_public_key.to_compressed().unwrap(),
+        bn254_public_key:   bob.clone().bn254_public_key.to_uncompressed().unwrap(),
         ed25519_public_key: bob.ed25519_public_key.into_bytes(),
     };
     let node2 = NodeInfo {
         account_id:         "alice_near".to_string(),
         balance:            deposit_amount.0,
         multi_addr:         "1.1.1.1:8080".to_string(),
-        bn254_public_key:   alice.clone().bn254_public_key.to_compressed().unwrap(),
+        bn254_public_key:   alice.clone().bn254_public_key.to_uncompressed().unwrap(),
         ed25519_public_key: alice.ed25519_public_key.into_bytes(),
     };
     let node3 = NodeInfo {
         account_id:         "carol_near".to_string(),
         balance:            deposit_amount.0,
         multi_addr:         "2.2.2.2:8080".to_string(),
-        bn254_public_key:   carol.clone().bn254_public_key.to_compressed().unwrap(),
+        bn254_public_key:   carol.clone().bn254_public_key.to_uncompressed().unwrap(),
         ed25519_public_key: carol.ed25519_public_key.into_bytes(),
     };
 
@@ -195,16 +195,16 @@ fn duplicated_key() {
     testing_env!(get_context_with_deposit(bob.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        bob_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        bob_signature.to_uncompressed().unwrap(),
     );
 
     // alice registers node with duplicated key
     testing_env!(get_context_with_deposit(alice));
     contract.register_node(
         "1.1.1.1:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
 }
 
@@ -226,8 +226,8 @@ fn deposit_withdraw() {
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
 
     // alice deposits into pool
@@ -290,8 +290,8 @@ fn withdraw_wrong_account() {
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
 
     // alice deposits into pool
@@ -337,8 +337,8 @@ fn deposit_withdraw_one_node_two_depositors() {
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
 
     // alice and bob deposit into alice's pool
@@ -388,14 +388,14 @@ fn deposit_withdraw_two_nodes_one_depositor() {
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
     testing_env!(get_context_with_deposit(bob.clone()));
     contract.register_node(
         "1.1.1.1:8080".to_string(),
-        bob.bn254_public_key.to_compressed().unwrap(),
-        bob_signature.to_compressed().unwrap(),
+        bob.bn254_public_key.to_uncompressed().unwrap(),
+        bob_signature.to_uncompressed().unwrap(),
     );
 
     // alice deposits into alice and bob's pool
@@ -480,8 +480,8 @@ fn cancel_withdraw_request() {
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
 
     // alice deposits into pool
@@ -523,8 +523,8 @@ fn withdraw_before_epoch() {
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
 
     // alice deposits into pool
@@ -562,8 +562,8 @@ fn unregister_nonzero_node() {
     testing_env!(get_context_with_deposit(alice.clone()));
     contract.register_node(
         "0.0.0.0:8080".to_string(),
-        alice.bn254_public_key.to_compressed().unwrap(),
-        alice_signature.to_compressed().unwrap(),
+        alice.bn254_public_key.to_uncompressed().unwrap(),
+        alice_signature.to_uncompressed().unwrap(),
     );
 
     // alice deposits into pool

@@ -21,13 +21,13 @@ impl Register {
         let node_config = &config.node.to_config(self.node_config)?;
 
         let sig = bn254::ECDSA::sign(
-            node_config.keypair_bn254.public_key.to_compressed()?,
+            node_config.keypair_bn254.public_key.to_uncompressed()?,
             &node_config.keypair_bn254.private_key,
         )?;
         let args = RegisterNodeArgs {
             multi_addr:       self.socket_address,
-            bn254_public_key: node_config.keypair_bn254.public_key.to_compressed()?,
-            signature:        sig.to_compressed()?,
+            bn254_public_key: node_config.keypair_bn254.public_key.to_uncompressed()?,
+            signature:        sig.to_uncompressed()?,
         }
         .to_string();
         call::<Option<serde_json::Value>>(

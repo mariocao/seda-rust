@@ -196,8 +196,8 @@ pub fn make_register_test_accounts(
         testing_env!(get_context_with_deposit(acc.clone()));
         contract.register_node(
             "0.0.0.0:8080".to_string(),
-            acc.bn254_public_key.to_compressed().unwrap(),
-            sig.to_compressed().unwrap(),
+            acc.bn254_public_key.to_uncompressed().unwrap(),
+            sig.to_uncompressed().unwrap(),
         );
         // deposit into contract
         testing_env!(get_context_with_deposit(acc.clone()));

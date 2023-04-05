@@ -1,5 +1,6 @@
 use std::{env, fs, path::PathBuf, sync::Arc};
 
+use bn254::{PrivateKey, PublicKey, Signature, ECDSA};
 use parking_lot::{Mutex, RwLock};
 use seda_config::{ChainConfigsInner, NodeConfigInner};
 use seda_crypto::MasterKey;
@@ -340,6 +341,15 @@ async fn test_bn254_verify_valid() {
             .await
             .unwrap();
     runtime.init(wasm_binary).unwrap();
+    let sig = hex::encode(
+        Signature::from_compressed(
+            hex::decode("020f047a153e94b5f109e4013d1bd078112817cf0d58cdf6ba8891f9849852ba5b").unwrap(),
+        )
+        .unwrap()
+        .to_uncompressed()
+        .unwrap(),
+    );
+    let pk = hex::encode(PublicKey::from_compressed(hex::decode("0b0087beab84f1aeacf30597cda920c6772ecd26ba95d84f66750a16dc9b68cea6d89173eff7f72817e4698f93fcb5a5b04b272a7085d8a12fceb5481e651df7a7").unwrap()).unwrap().to_uncompressed().unwrap());
 
     let runtime_execution_result = runtime
         .start_runtime(
@@ -347,10 +357,10 @@ async fn test_bn254_verify_valid() {
                 args:         vec![
                     // Message ("sample" in ASCII)
                     "73616d706c65".to_string(),
-                    // Signature (compressed G1 point)
-                    "020f047a153e94b5f109e4013d1bd078112817cf0d58cdf6ba8891f9849852ba5b".to_string(),
-                    // Public Key (compressed G2 point)
-                    "0b0087beab84f1aeacf30597cda920c6772ecd26ba95d84f66750a16dc9b68cea6d89173eff7f72817e4698f93fcb5a5b04b272a7085d8a12fceb5481e651df7a7".to_string()
+                    // Signature (uncompressed G1 point)
+                    sig,
+                    // Public Key (uncompressed G2 point)
+                    pk,
                 ],
                 program_name: "consensus".to_string(),
                 start_func:   Some("bn254_verify_test".to_string()),
@@ -386,7 +396,15 @@ async fn test_bn254_verify_invalid() {
             .await
             .unwrap();
     runtime.init(wasm_binary).unwrap();
-
+    let sig = hex::encode(
+        Signature::from_compressed(
+            hex::decode("020f047a153e94b5f109e4013d1bd078112817cf0d58cdf6ba8891f9849852ba5c").unwrap(),
+        )
+        .unwrap()
+        .to_uncompressed()
+        .unwrap(),
+    );
+    let pk = hex::encode(PublicKey::from_compressed(hex::decode("0b0087beab84f1aeacf30597cda920c6772ecd26ba95d84f66750a16dc9b68cea6d89173eff7f72817e4698f93fcb5a5b04b272a7085d8a12fceb5481e651df7a7").unwrap()).unwrap().to_uncompressed().unwrap());
     let runtime_execution_result = runtime
         .start_runtime(
             VmConfig {
@@ -394,9 +412,9 @@ async fn test_bn254_verify_invalid() {
                     // Message ("sample" in ASCII)
                     "73616d706c65".to_string(),
                     // WRONG Signature (compressed G1 point) -> 1 flipped bit!
-                    "020f047a153e94b5f109e4013d1bd078112817cf0d58cdf6ba8891f9849852ba5c".to_string(),
+                    sig,
                     // Public Key (compressed G2 point)
-                    "0b0087beab84f1aeacf30597cda920c6772ecd26ba95d84f66750a16dc9b68cea6d89173eff7f72817e4698f93fcb5a5b04b272a7085d8a12fceb5481e651df7a7".to_string()
+                    pk,
                 ],
                 program_name: "consensus".to_string(),
                 start_func:   Some("bn254_verify_test".to_string()),
@@ -450,7 +468,7 @@ async fn test_bn254_signature() {
             p2p_command_sender,
         )
         .await;
-
+    println!("********runtime_execution_result {:?}", runtime_execution_result);
     assert_eq!(runtime_execution_result.exit_info.exit_code, 0);
 
     // Fetch bn254 sign result from DB
@@ -459,8 +477,15 @@ async fn test_bn254_signature() {
     let result = db_result.unwrap();
 
     // Check if expected signature
-    let expected_signature = "03252a430535dfdf7c20713be125fbe3db4b9d5a38062cda01eb91a6611621049d";
-    assert_eq!(result, format!("{}", expected_signature));
+    let expected_signature = hex::encode(
+        Signature::from_compressed(
+            hex::decode("03252a430535dfdf7c20713be125fbe3db4b9d5a38062cda01eb91a6611621049d").unwrap(),
+        )
+        .unwrap()
+        .to_uncompressed()
+        .unwrap(),
+    );
+    assert_eq!(result, expected_signature);
 }
 
 #[tokio::test(flavor = "multi_thread")]
