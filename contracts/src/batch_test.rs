@@ -219,8 +219,8 @@ fn post_empty_signed_batch() {
         // register nodes
         contract.register_node(
             "0.0.0.0:8080".to_string(),
-            acc.bn254_public_key.to_compressed().unwrap(),
-            sig.to_compressed().unwrap(),
+            acc.bn254_public_key.to_uncompressed().unwrap(),
+            sig.to_uncompressed().unwrap(),
         );
         // deposit into contract
         testing_env!(get_context_with_deposit(acc.clone()));
@@ -275,10 +275,10 @@ fn post_empty_signed_batch() {
         &contract.last_generated_random_number.to_le_bytes(),
     );
     contract.post_signed_batch(
-        agg_signature.to_compressed().unwrap(),
-        agg_public_key.to_compressed().unwrap(),
+        agg_signature.to_uncompressed().unwrap(),
+        agg_public_key.to_uncompressed().unwrap(),
         chosen_committee_account_ids,
-        leader_sig.to_compressed().unwrap(),
+        leader_sig.to_uncompressed().unwrap(),
     );
     assert_eq!(contract.num_batches, num_batches + 1);
 }
