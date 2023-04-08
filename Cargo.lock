@@ -581,7 +581,7 @@ dependencies = [
 [[package]]
 name = "bn254"
 version = "0.0.1"
-source = "git+https://github.com/mennatabuelnaga/bn254?branch=main#c6b7964695f71cff86c691646f1a8e6f1211cdda"
+source = "git+https://github.com/sedaprotocol/bn254?branch=main#f61ef051e1f4c8c924fe4b1fc51c4f32bc40e4e2"
 dependencies = [
  "borsh",
  "byteorder",
